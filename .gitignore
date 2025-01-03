@@ -1,0 +1,8 @@
+flutter_app/.dart_tool/
+flutter_app/build/
+flutter_app/.idea/
+flutter_app/.packages
+flutter_app/*.iml
+api_server/node_modules/
+api_server/dist/
+api_server/.env
