@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Image recognition endpoint
-app.post('/recognize', upload.single('file'), (req, res) => {  
+app.post('/recognize', upload.single('file'), async (req, res) => {  
   // Log the received request
   console.log('Received POST request at /recognize');
   if (!req.file) {
@@ -36,13 +36,14 @@ app.post('/recognize', upload.single('file'), (req, res) => {
 
   try {
     // Call the recognizeImage function
-    const results = recognizeImage(imagePath);
-    res.status(200).json({ results });
+    const results = await recognizeImage(imagePath);
+    console.log('Recognition results:', results);
+    res.status(200).json({ results: results });
   } catch (error) {
     console.error('Error processing /recognize request:', error);
     res.status(500).json({ message: 'Failed to process the image' });
   }  
-}); 
+});
 
 // Start the Express server on the specified port
 const PORT = process.env.PORT || 3000;
