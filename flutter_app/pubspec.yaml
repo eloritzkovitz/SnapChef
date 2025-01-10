@@ -1,4 +1,4 @@
-name: SnapChef
+name: snapchef
 
 description: A new Flutter project.
 
@@ -10,10 +10,16 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
-  flutter:       
-    sdk: flutter 
+  flutter:      
+    sdk: flutter    
+  flutter_dotenv: ^5.2.1
   flutter_localizations: 
     sdk: flutter
   provider: ^6.0.0
   image_picker: ^0.8.5+3
-  http: ^0.13.4       
+  http: ^0.13.4
+  http_parser: ^4.0.0
+
+flutter:
+  assets:
+    - .env
