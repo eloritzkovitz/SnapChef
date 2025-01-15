@@ -23,45 +23,42 @@ async function recognizeImage(imagePath: string): Promise<{ ingredient: string; 
     const [result] = await client.labelDetection(imagePath);
     const labels = result.labelAnnotations;
 
-    // Log the detected labels
+    // Check if labels are defined and not empty
     if (labels && labels.length > 0) {
+      // Log the detected labels
       labels.forEach(label => {
         console.log(`Label: ${label.description}, Score: ${label.score}`);
       });
-    }
 
-    // Sort labels by confidence score in descending order and take the highest confidence label
-    const sortedLabels = (labels || [])
-      .filter(label => label.description)  // Only keep labels with descriptions
-      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0)); // Sort by confidence score in descending order
+      // Define category mapping
+      const categoriesPath = process.env.CATEGORIES_PATH || path.join(__dirname, '../../modules/ingredient/ingredientCategories.json');
+      const categoriesData: Categories = JSON.parse(await fs.promises.readFile(categoriesPath, 'utf-8'));
 
-    // The best match is the first label after sorting
-    const bestMatch = sortedLabels[0]?.description?.toLowerCase() ?? 'unknown';
- 
-    // Define category mapping
-    const categoriesPath = process.env.CATEGORIES_PATH || path.join(__dirname, '../../modules/ingredient/ingredientCategories.json');
-    const categoriesData: Categories = JSON.parse(await fs.promises.readFile(categoriesPath, 'utf-8'));
+      // Find the highest score label that has an exact match with an ingredient in one of the categories
+      let ingredientName = 'Unknown';
+      let categoryMatch = 'Unknown';
+      let highestScore = 0;
 
-    // Find the best category for the ingredient
-    let categoryMatch = 'Unknown';
-    for (const category of categoriesData.categories) {
-      // If the best match ingredient description contains any of the category keywords
-      if (category.keywords.some(keyword => bestMatch.includes(keyword))) {
-        categoryMatch = category.name;
-        break;  // Exit as soon as a match is found
+      for (const label of labels) {
+        const labelDescription = label.description?.toLowerCase() ?? '';
+        for (const category of categoriesData.categories) {
+          if (category.keywords.includes(labelDescription) && (label.score ?? 0) > highestScore) {
+            ingredientName = label.description ?? 'Unknown';
+            categoryMatch = category.name;
+            highestScore = label.score ?? 0;
+          }
+        }
       }
-    }
-    
-    // Log the recognized ingredient and category
-    console.log('Recognized:', bestMatch, categoryMatch);
 
-    return [{
-      ingredient: bestMatch,
-      category: categoryMatch
-    }];       
+      console.log(`Ingredient: ${ingredientName}, Category: ${categoryMatch}`);
+      return [{ ingredient: ingredientName, category: categoryMatch }];
+    } else {
+      console.log('No labels detected.');
+      return [{ ingredient: 'Unknown', category: 'Unknown' }];
+    }
   } catch (error) {
-    console.error('Error recognizing image:', error);
-    throw new Error(`Error recognizing image: ${(error as Error).message}`);
+    console.error('Error during label detection:', error);
+    return [{ ingredient: 'Unknown', category: 'Unknown' }];
   }
 }
 
