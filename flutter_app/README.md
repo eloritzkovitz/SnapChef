@@ -20,7 +20,7 @@ SnapChef is a Flutter application that allows users to capture images of food it
    flutter pub get
    ```
 
-3. **Set up anvironmental variables:**
+3. **Set up environmental variables:**
    In order to access the backend API from your mobile device, you will need to set:
 ```sh
    SERVER_IP=http://<YOUR_IP_ADDRESS:PORT>  
@@ -51,5 +51,6 @@ SnapChef is a Flutter application that allows users to capture images of food it
   * `main.dart:` Entry point of the application.
   * `services/:` Contains service classes for image processing and recognition.
     * `upload_photo.dart:` Handles image upload and recognition using Google Cloud Vision API.
+    * `generate_recipe.dart:` Handles recipe generation using OpenAI API.
 * `assets/:` Contains static assets such as images and icons.
 * `pubspec.yaml:` Defines the dependencies and assets for the Flutter project.
