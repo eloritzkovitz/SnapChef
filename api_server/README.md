@@ -30,7 +30,6 @@ The SnapChef Backend is a Node.js application that provides API endpoints for im
    npm install
    ```
 
-<<<<<<< HEAD
 3. **Set up environment variables:**
    Create a `.env` file in the `SnapChef/api_server` folder and add your API keys:
 ```sh
