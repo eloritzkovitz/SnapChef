@@ -14,7 +14,6 @@ The SnapChef Backend is a Node.js application that provides API endpoints for im
 
 - Node.js: [Install Node.js](https://nodejs.org/)
 - Google Cloud Vision API: [Set up Google Cloud Vision API](https://cloud.google.com/vision/docs/setup)
-<<<<<<< HEAD
 - OpenAI: [Set up OpenAI API](https://platform.openai.com/docs/quickstart)
 
 ### Installation
