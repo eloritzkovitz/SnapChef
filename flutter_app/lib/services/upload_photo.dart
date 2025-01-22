@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class UploadPhoto {
+  
   final BuildContext context;
 
   UploadPhoto(this.context);
@@ -28,12 +30,12 @@ class UploadPhoto {
     // Send the request and handle response
     var response = await request.send();
     var responseBody = await response.stream.bytesToString();
-    print('Response status: ${response.statusCode}');
-    print('Response body: $responseBody');
+    log('Response status: ${response.statusCode}');
+    log('Response body: $responseBody');
     
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image uploaded successfully')),
+        const SnackBar(content: Text('Image uploaded successfully')),
       );
 
       // Parse the JSON response
