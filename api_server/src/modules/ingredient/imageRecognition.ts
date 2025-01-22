@@ -1,20 +1,9 @@
 import 'dotenv/config';
 import vision from '@google-cloud/vision';
-import fs from 'fs';
-import path from 'path';
 import ingredient from './ingredient';
+import { loadIngredientData } from '../../utils/ingredientData';
 
 const client = new vision.ImageAnnotatorClient();
-
-interface Category {
-  name: string;
-  ingredients: string[];
-  keywords: string[];
-}
-
-interface Categories {
-  categories: Category[];
-}
 
 // Recognize an image and return the detected ingredient and category
 async function recognizePhoto(imagePath: string): Promise<{ ingredient: string; category: string }[]> {
@@ -30,9 +19,8 @@ async function recognizePhoto(imagePath: string): Promise<{ ingredient: string; 
         console.log(`Label: ${label.description}, Score: ${label.score}`);
       });
 
-      // Define category mapping
-      const categoriesPath = process.env.CATEGORIES_PATH || path.join(__dirname, '../../modules/ingredient/ingredientCategories.json');
-      const categoriesData: Categories = JSON.parse(await fs.promises.readFile(categoriesPath, 'utf-8'));
+      // Parse the ingredient data      
+      const categoriesData = await loadIngredientData();
 
       // Find the highest score label that has an exact match with an ingredient in one of the categories
       let ingredientName = 'Unknown';
@@ -41,12 +29,12 @@ async function recognizePhoto(imagePath: string): Promise<{ ingredient: string; 
 
       for (const label of labels) {
         const labelDescription = label.description?.toLowerCase() ?? '';
-        for (const category of categoriesData.categories) {
-          if (category.keywords.includes(labelDescription) && (label.score ?? 0) > highestScore) {
+        for (const [category, ingredients] of Object.entries(categoriesData)) {
+            if (ingredients.map((ingredient: string) => ingredient.toLowerCase()).includes(labelDescription) && label.score && label.score > highestScore) {
             ingredientName = label.description ?? 'Unknown';
-            categoryMatch = category.name;
-            highestScore = label.score ?? 0;
-          }
+            categoryMatch = category;
+            highestScore = label.score;
+            }
         }
       }
 
@@ -76,9 +64,8 @@ async function recognizeReceipt(imagePath: string): Promise<{ ingredient: string
         console.log(`Text: ${text.description}`);
       });
 
-      // Define category mapping
-      const categoriesPath = process.env.CATEGORIES_PATH || path.join(__dirname, '../../modules/ingredient/ingredientCategories.json');
-      const categoriesData: Categories = JSON.parse(await fs.promises.readFile(categoriesPath, 'utf-8'));
+      // Parse the ingredient data      
+      const categoriesData = await loadIngredientData();
 
       // Find the highest score text that has an exact match with an ingredient in one of the categories
       let ingredientName = 'Unknown';
@@ -122,10 +109,8 @@ async function recognizeBarcode(imagePath: string): Promise<{ ingredient: string
         console.log(`Barcode: ${barcode.description}`);
       });
 
-      // Define category mapping
-      const categoriesPath = process.env.CATEGORIES_PATH || path.join(__dirname, '../../modules/ingredient/ingredientCategories.json');
-      console.log("Categories Path:", categoriesPath);
-      const categoriesData: Categories = JSON.parse(await fs.promises.readFile(categoriesPath, 'utf-8'));
+      // Parse the ingredient data      
+      const categoriesData = await loadIngredientData();
 
       // Find the highest score barcode that has an exact match with an ingredient in one of the categories
       let ingredientName = 'Unknown';

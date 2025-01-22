@@ -11,6 +11,11 @@
     "node": "^23.5.0"
   },
   "devDependencies": {
-    "@types/jquery": "^3.5.32"
-  }
+    "@types/jquery": "^3.5.32",
+    "copyfiles": "^2.4.1"
+  },
+  "scripts": {
+      "build": "tsc && npm run copy-json",
+      "copy-json": "copyfiles -u 2 src/data/**/*.json dist/data"
+    }
 }
