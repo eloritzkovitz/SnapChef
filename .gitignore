@@ -17,10 +17,6 @@ build/
 # Environment files
 *.env
 
-#node
-api_server/node_modules/
-api_server/dist/
-
 # Android related
 **/android/**/gradle-wrapper.jar
 **/android/.gradle
