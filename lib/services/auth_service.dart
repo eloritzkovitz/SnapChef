@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:snapchef/models/user.dart';
 
 class AuthService {
   final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
@@ -12,10 +13,7 @@ class AuthService {
       Uri.parse('$baseUrl/api/users/login'),
       body: jsonEncode({'email': email, 'password': password}),
       headers: {'Content-Type': 'application/json'},
-    );
-
-    print('Login response status: ${response.statusCode}');
-    print('Login response body: ${response.body}');
+    );    
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -84,6 +82,30 @@ class AuthService {
       return data;
     } else {
       throw Exception('Token refresh failed');
+    }
+  }
+
+  // Get user profile
+  Future<User> getUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');    
+    final url = userId != null
+      ? Uri.parse('$baseUrl/api/users/user/$userId')
+      : Uri.parse('$baseUrl/api/users/user');       
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);  
+      print(data);    
+      return User.fromJson(data);
+    } else {      
+      throw Exception('Failed to fetch user profile');
     }
   }
 

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../models/user.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  User? _user; // Add a User object to store the profile data
 
   bool get isLoading => _isLoading;
+  User? get user => _user; // Expose the user data to the UI
 
   // Login
   Future<void> login(String email, String password, BuildContext context) async {
@@ -13,6 +16,9 @@ class AuthViewModel extends ChangeNotifier {
     try {
       // Call the AuthService login method
       await _authService.login(email, password);
+
+      // Fetch the user profile after login
+      await fetchUserProfile();
 
       // If login is successful, navigate to the main screen
       Navigator.pushReplacementNamed(context, '/main');
@@ -47,11 +53,34 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Fetch User Profile
+  Future<void> fetchUserProfile() async {
+    _setLoading(true);
+    try {
+      print('Fetching user profile...');
+      final userProfile = await _authService.getUserProfile();      
+ 
+      _user = userProfile;
+      print(userProfile);
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching user profile: $e');
+      _user = null;
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Google Sign-In
   Future<void> googleSignIn(String idToken, BuildContext context) async {
     _setLoading(true);
     try {
       await _authService.googleSignIn(idToken);
+
+      // Fetch the user profile after Google Sign-In
+      await fetchUserProfile();
+
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       _showError(context, e.toString());
@@ -60,11 +89,13 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // logout
+  // Logout
   Future<void> logout(BuildContext context) async {
     _setLoading(true);
     try {
       await _authService.logout();
+      _user = null; // Clear the user data on logout
+      notifyListeners(); // Notify listeners to update the UI
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       _showError(context, e.toString());
