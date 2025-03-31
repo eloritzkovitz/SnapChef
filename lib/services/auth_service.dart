@@ -18,7 +18,7 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await _saveTokens(data['accessToken'], data['refreshToken']);
+      await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
       throw Exception('Login failed');
@@ -55,7 +55,7 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await _saveTokens(data['accessToken'], data['refreshToken']);
+      await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
       throw Exception('Google Sign-In failed');
@@ -79,7 +79,7 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await _saveTokens(data['accessToken'], data['refreshToken']);
+      await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
       throw Exception('Token refresh failed');
@@ -163,10 +163,11 @@ class AuthService {
   }
 
   // Save tokens to SharedPreferences
-  Future<void> _saveTokens(String accessToken, String refreshToken) async {
+  Future<void> _saveTokens(String accessToken, String refreshToken, String _id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('accessToken', accessToken);
     await prefs.setString('refreshToken', refreshToken);
+    await prefs.setString('userId', _id);
   }
 
   Future<String?> getAccessToken() async {
