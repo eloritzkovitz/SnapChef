@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
+import 'dart:io';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -52,10 +53,27 @@ class AuthViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
+  
+  // Google Sign-In
+  Future<void> googleSignIn(String idToken, BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.googleSignIn(idToken);
+
+      // Fetch the user profile after Google Sign-In
+      await fetchUserProfile();
+
+      Navigator.pushReplacementNamed(context, '/main');
+    } catch (e) {
+      _showError(context, e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
 
   // Fetch User Profile
   Future<void> fetchUserProfile() async {
-    _setLoading(true);
+    //_setLoading(true);
     try {
       print('Fetching user profile...');
       final userProfile = await _authService.getUserProfile();      
@@ -72,18 +90,36 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Google Sign-In
-  Future<void> googleSignIn(String idToken, BuildContext context) async {
-    _setLoading(true);
-    try {
-      await _authService.googleSignIn(idToken);
+  // Update User Profile
+  Future<void> updateUserProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    File? profilePicture,
+  }) async {
+    //_setLoading(true);
+    try { 
+      // Call the AuthService to update the user profile
+      await _authService.updateUserProfile(       
+        firstName,
+        lastName,
+        email,
+        profilePicture,
+      );
 
-      // Fetch the user profile after Google Sign-In
-      await fetchUserProfile();
+      // Update the local user object
+      if (_user != null) {
+        _user = User(          
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          profilePicture: _user?.profilePicture,
+        );
+      }
 
-      Navigator.pushReplacementNamed(context, '/main');
+      //notifyListeners();
     } catch (e) {
-      _showError(context, e.toString());
+      print('Error updating profile: $e');
     } finally {
       _setLoading(false);
     }

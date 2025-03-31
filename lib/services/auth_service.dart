@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -101,11 +102,47 @@ class AuthService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);  
-      print(data);    
+      final data = jsonDecode(response.body);
       return User.fromJson(data);
     } else {      
       throw Exception('Failed to fetch user profile');
+    }
+  }
+
+  // Update user profile
+  Future<void> updateUserProfile(String firstName, String lastName, String email, File? profilePicture) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in SharedPreferences');
+    }
+
+    final url = Uri.parse('$baseUrl/api/users/user/$userId');
+    print('Updating user profile at URL: $url'); // Debug log
+
+    final request = http.MultipartRequest('PUT', url)
+      ..headers.addAll({
+        'Authorization': 'Bearer ${await getAccessToken()}',
+      })
+      ..fields['firstName'] = firstName
+      ..fields['lastName'] = lastName
+      ..fields['email'] = email;
+ 
+    if (profilePicture != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'profilePicture',
+        profilePicture.path,
+      ));
+    }
+
+    final response = await request.send();    
+
+    print('Response status code: ${response.statusCode}'); // Debug log
+    if (response.statusCode != 200) {
+      final responseBody = await response.stream.bytesToString();
+      print('Response body: $responseBody'); // Debug log
+      throw Exception('Failed to update profile: $responseBody');
     }
   }
 
@@ -121,8 +158,8 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
       );
     }
-
-    await prefs.clear();
+    
+    await prefs.clear();    
   }
 
   // Save tokens to SharedPreferences

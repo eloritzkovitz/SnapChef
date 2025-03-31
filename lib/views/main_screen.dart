@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/main_viewmodel.dart';
+import 'profile/edit_profile_screen.dart';
 import 'fridge/widgets/action_button.dart';
 
 class MainScreen extends StatelessWidget {
@@ -15,11 +16,42 @@ class MainScreen extends StatelessWidget {
         title: Text(viewModel.appBarTitle),
         actions: [
           if (viewModel.selectedIndex == 2)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                viewModel.logout(context);
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  // Navigate to the Edit Profile Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                  );
+                } else if (value == 'logout') {
+                  // Perform logout
+                  viewModel.logout(context);
+                }
               },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 10),
+                      Text('Edit Profile'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.logout, color: Colors.black),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
+                  ),
+                ),
+              ],
+              icon: const Icon(Icons.more_vert),
             ),
         ],
       ),
