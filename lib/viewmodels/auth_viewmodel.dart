@@ -11,7 +11,10 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> login(String email, String password, BuildContext context) async {
     _setLoading(true);
     try {
+      // Call the AuthService login method
       await _authService.login(email, password);
+
+      // If login is successful, navigate to the main screen
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       _showError(context, e.toString());
@@ -21,12 +24,23 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   // Signup
-  Future<void> signup(String email, String password, BuildContext context) async {
+  Future<void> signup(String firstName, String lastName, String email, String password, BuildContext context) async {
     _setLoading(true);
     try {
-      await _authService.signup(email, password);
+      await _authService.signup(firstName, lastName, email, password);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User created successfully!'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Navigate to the login screen
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
+      // Show error message
       _showError(context, e.toString());
     } finally {
       _setLoading(false);

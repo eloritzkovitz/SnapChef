@@ -4,15 +4,18 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? "https://localhost:3000";
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
 
   // Login
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/login'),
+      Uri.parse('$baseUrl/api/users/login'),
       body: jsonEncode({'email': email, 'password': password}),
       headers: {'Content-Type': 'application/json'},
     );
+
+    print('Login response status: ${response.statusCode}');
+    print('Login response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -24,16 +27,21 @@ class AuthService {
   }
 
   // Signup
-  Future<Map<String, dynamic>> signup(String email, String password) async {
+  Future<Map<String, dynamic>> signup(String firstName, String lastName, String email, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/register'),
-      body: jsonEncode({'email': email, 'password': password}),
+      Uri.parse('$baseUrl/api/users/register'),
+      body: jsonEncode({
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'password': password,
+      }),
       headers: {'Content-Type': 'application/json'},
     );
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
-    } else {
+    } else {      
       throw Exception('Signup failed');
     }
   }
@@ -41,7 +49,7 @@ class AuthService {
   // Google Sign-In
   Future<Map<String, dynamic>> googleSignIn(String idToken) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/google'),
+      Uri.parse('$baseUrl/api/users/google'),
       body: jsonEncode({'idToken': idToken}),
       headers: {'Content-Type': 'application/json'},
     );
@@ -65,7 +73,7 @@ class AuthService {
     }
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/refresh'),
+      Uri.parse('$baseUrl/api/users/refresh'),
       body: jsonEncode({'refreshToken': refreshToken}),
       headers: {'Content-Type': 'application/json'},
     );
@@ -86,7 +94,7 @@ class AuthService {
 
     if (refreshToken != null) {
       await http.post(
-        Uri.parse('$baseUrl/api/logout'),
+        Uri.parse('$baseUrl/api/users/logout'),
         body: jsonEncode({'refreshToken': refreshToken}),
         headers: {'Content-Type': 'application/json'},
       );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../views/main_screen.dart';
+import '../views/fridge/fridge_screen.dart';
 import '../views/cookbook/cookbook_screen.dart';
 import '../views/profile/profile_screen.dart';
 import '../views/notifications/notifications_screen.dart';
@@ -9,14 +9,14 @@ class MainViewModel extends ChangeNotifier {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const MainScreen(),
+    const FridgeScreen(),
     const CookbookScreen(),
     const ProfileScreen(),
     const NotificationsScreen(),
   ];
 
   final List<String> _titles = [
-    'Home',
+    'Fridge',
     'Cookbook',
     'Profile',
     'Notifications',
