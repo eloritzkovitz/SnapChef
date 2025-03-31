@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/main_viewmodel.dart';
-import '/views/main_screen.dart';
+import 'views/screens/main_screen.dart';
 
 // Main application entry point
 Future main() async {
