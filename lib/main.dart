@@ -2,21 +2,30 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'viewmodels/main_viewmodel.dart';
+import 'viewmodels/auth_viewmodel.dart';
+import 'views/auth/login_screen.dart';
+import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
 
 // Main application entry point
-Future main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Try loading the .env file  
-  try {    
+  // Try loading the .env file
+  try {
     await dotenv.load(fileName: ".env");
     log("Environment variables loaded successfully.");
-    runApp(const MyApp());
   } catch (e) {
     log("Error loading .env file: $e");
-  }  
+  }
+
+  // Check if the user is already logged in
+  final prefs = await SharedPreferences.getInstance();
+  final accessToken = prefs.getString('accessToken');
+
+  runApp(MyApp(isLoggedIn: accessToken != null));
 }
 
 const primaryColor = Color(0xffff794e);
@@ -24,13 +33,17 @@ const secondaryColor = Color(0xffff5722);
 
 // Add a new MyApp widget
 class MyApp extends StatelessWidget {
-  
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({required this.isLoggedIn, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => MainViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MainViewModel()),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+      ],
       child: MaterialApp(
         theme: ThemeData(
           primaryColor: primaryColor,
@@ -43,14 +56,19 @@ class MyApp extends StatelessWidget {
             backgroundColor: primaryColor,
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            type: BottomNavigationBarType.fixed,            
+            type: BottomNavigationBarType.fixed,
             selectedItemColor: primaryColor,
             unselectedItemColor: Colors.grey,
             showUnselectedLabels: false,
-            showSelectedLabels: false
+            showSelectedLabels: false,
           ),
         ),
-        home: const MainScreen(),
+        initialRoute: isLoggedIn ? '/main' : '/login',
+        routes: {
+          '/login': (context) => LoginScreen(),
+          '/signup': (context) => SignupScreen(),
+          '/main': (context) => const MainScreen(),
+        },
       ),
     );
   }

@@ -4,7 +4,6 @@ import '../viewmodels/main_viewmodel.dart';
 import 'fridge/widgets/action_button.dart';
 
 class MainScreen extends StatelessWidget {
-  
   const MainScreen({super.key});
 
   @override
@@ -12,18 +11,22 @@ class MainScreen extends StatelessWidget {
     final viewModel = Provider.of<MainViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('SnapChef')),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: Center(
-              child: viewModel.currentScreen,
+      appBar: AppBar(
+        title: Text(viewModel.appBarTitle),
+        actions: [
+          if (viewModel.selectedIndex == 2)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                viewModel.logout(context);
+              },
             ),
-          ),
         ],
       ),
-      floatingActionButton: viewModel.selectedIndex == 0 ? const ActionButton() : null,
+      body: viewModel.currentScreen,
+      floatingActionButton: viewModel.selectedIndex == 0
+          ? const ActionButton()
+          : null, // Show FAB only on the Home screen
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -34,7 +37,7 @@ class MainScreen extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Cookbook',
-          ),          
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
