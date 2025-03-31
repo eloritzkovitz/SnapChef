@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../views/screens/fridge/fridge_screen.dart';
-import '../views/screens/cookbook/cookbook_screen.dart';
-import '../views/screens/profile/profile_screen.dart';
-import '../views/screens/notifications/notifications_screen.dart';
+import '../views/fridge/fridge_screen.dart';
+import '../views/cookbook/cookbook_screen.dart';
+import '../views/profile/profile_screen.dart';
+import '../views/notifications/notifications_screen.dart';
 
 class MainViewModel extends ChangeNotifier {
   int _selectedIndex = 0;

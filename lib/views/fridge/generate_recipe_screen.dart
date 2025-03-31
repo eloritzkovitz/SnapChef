@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../services/generate_recipe.dart';
+import '../../services/generate_recipe.dart';
 
 class GenerateRecipeScreen extends StatelessWidget {
   

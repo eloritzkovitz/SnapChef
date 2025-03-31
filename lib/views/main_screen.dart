@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/main_viewmodel.dart';
+import '../viewmodels/main_viewmodel.dart';
 import 'fridge/widgets/action_button.dart';
 
 class MainScreen extends StatelessWidget {

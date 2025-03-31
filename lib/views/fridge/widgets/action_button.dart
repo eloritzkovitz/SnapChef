@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:snapchef/main.dart';
-import '../../../../services/upload_photo.dart';
+import '../../../services/upload_photo.dart';
 import '../generate_recipe_screen.dart';
 
 class ActionButton extends StatefulWidget {
