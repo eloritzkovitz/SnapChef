@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/fridge_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel(),)
       ],
       child: MaterialApp(
         theme: ThemeData(

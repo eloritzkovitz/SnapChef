@@ -26,31 +26,33 @@ class FridgeViewModel extends ChangeNotifier {
     ),
   ];
 
+  String _filter = '';
+
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
 
-  // Increase the count of an ingredient
+  List<Ingredient> get filteredIngredients {
+    if (_filter.isEmpty) {
+      return _ingredients;
+    }
+    return _ingredients
+        .where((ingredient) => ingredient.name.toLowerCase().contains(_filter.toLowerCase()))
+        .toList();
+  }
+
+  void setFilter(String filter) {
+    _filter = filter;
+    notifyListeners();
+  }
+
   void increaseCount(int index) {
     _ingredients[index].count++;
     notifyListeners();
   }
 
-  // Decrease the count of an ingredient
   void decreaseCount(int index) {
     if (_ingredients[index].count > 0) {
       _ingredients[index].count--;
       notifyListeners();
     }
-  }
-
-  // Add a new ingredient to the list
-  void addIngredient(Ingredient ingredient) {
-    _ingredients.add(ingredient);
-    notifyListeners();
-  }
-
-  // Remove an ingredient by index
-  void removeIngredient(int index) {
-    _ingredients.removeAt(index);
-    notifyListeners();
   }
 }
