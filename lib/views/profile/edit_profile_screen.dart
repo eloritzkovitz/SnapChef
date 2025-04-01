@@ -68,7 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     backgroundImage: _selectedImage != null
                         ? FileImage(_selectedImage!)
                         : authViewModel.user?.profilePicture != null
-                            ? NetworkImage(authViewModel.user!.profilePicture!) as ImageProvider
+                            ? NetworkImage(authViewModel.getFullImageUrl(authViewModel.user!.profilePicture!)) as ImageProvider
                             : const AssetImage('assets/images/default_profile.png'),
                   ),
                 ),
@@ -132,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           firstName: _firstNameController.text,
                           lastName: _lastNameController.text,
                           email: _emailController.text,
-                          profilePicture: _selectedImage, // Pass the selected image
+                          profilePicture: _selectedImage,
                         );
 
                         // Close the loading indicator

@@ -1,7 +1,8 @@
+import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
-import 'dart:io';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -100,24 +101,28 @@ class AuthViewModel extends ChangeNotifier {
     //_setLoading(true);
     try { 
       // Call the AuthService to update the user profile
-      await _authService.updateUserProfile(       
+      final updatedData = await _authService.updateUserProfile(       
         firstName,
         lastName,
         email,
         profilePicture,
       );
 
+      print('Updated data from backend: $updatedData');
+
+      // Extract the new profile picture relative path from the response
+      final newProfilePicture = updatedData['profilePicture'];
+
       // Update the local user object
-      if (_user != null) {
+      if (_user != null) {        
         _user = User(          
           firstName: firstName,
           lastName: lastName,
           email: email,
-          profilePicture: _user?.profilePicture,
-        );
-      }
-
-      //notifyListeners();
+          profilePicture: newProfilePicture ?? _user!.profilePicture,
+      );
+      notifyListeners();
+      }      
     } catch (e) {
       print('Error updating profile: $e');
     } finally {
@@ -147,5 +152,13 @@ class AuthViewModel extends ChangeNotifier {
 
   void _showError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String getFullImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return ''; // Return an empty string or a default image URL if the path is null
+    }
+    final serverIp = dotenv.env['SERVER_IP'] ?? 'http://192.168.1.230:3000';
+    return '$serverIp$imagePath';
   }
 }

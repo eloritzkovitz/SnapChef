@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CircleAvatar(
                         radius: 80, // Larger profile picture
                         backgroundImage: authViewModel.user?.profilePicture != null
-                            ? NetworkImage(authViewModel.user!.profilePicture!)
+                            ? NetworkImage(authViewModel.getFullImageUrl(authViewModel.user!.profilePicture!)) as ImageProvider
                             : const AssetImage('assets/images/default_profile.png') as ImageProvider,
                       ),
                       const SizedBox(height: 30),

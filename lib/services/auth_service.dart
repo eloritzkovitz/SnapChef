@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/models/user.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 class AuthService {
   final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
@@ -110,7 +112,7 @@ class AuthService {
   }
 
   // Update user profile
-  Future<void> updateUserProfile(String firstName, String lastName, String email, File? profilePicture) async {
+  Future<Map<String, dynamic>> updateUserProfile(String firstName, String lastName,  String email, File? profilePicture,) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -119,7 +121,6 @@ class AuthService {
     }
 
     final url = Uri.parse('$baseUrl/api/users/user/$userId');
-    print('Updating user profile at URL: $url'); // Debug log
 
     final request = http.MultipartRequest('PUT', url)
       ..headers.addAll({
@@ -128,20 +129,27 @@ class AuthService {
       ..fields['firstName'] = firstName
       ..fields['lastName'] = lastName
       ..fields['email'] = email;
- 
+
     if (profilePicture != null) {
-      request.files.add(await http.MultipartFile.fromPath(
-        'profilePicture',
-        profilePicture.path,
-      ));
+      final mimeType = lookupMimeType(profilePicture.path);
+      if (mimeType != null && mimeType.startsWith('image/')) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'profilePicture',
+          profilePicture.path,
+          contentType: MediaType.parse(mimeType),
+        ));
+      } else {
+        throw Exception('Invalid file type. Only images are allowed.');
+      }
     }
 
-    final response = await request.send();    
+    final response = await request.send();
 
-    print('Response status code: ${response.statusCode}'); // Debug log
-    if (response.statusCode != 200) {
-      final responseBody = await response.stream.bytesToString();
-      print('Response body: $responseBody'); // Debug log
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();     
+      return jsonDecode(responseBody);
+    } else {
+      final responseBody = await response.stream.bytesToString();      
       throw Exception('Failed to update profile: $responseBody');
     }
   }
