@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class UploadPhoto {
   
@@ -16,15 +17,19 @@ class UploadPhoto {
   Future<String> processImage(File image, String endpoint) async {
 
     // Prepare the HTTP request
-    String? serverIp = dotenv.env['SERVER_IP'];
-    final mimeType = 'image/${image.path.split('.').last}';
+    String? serverIp = dotenv.env['SERVER_IP'];    
+    final mimeType = lookupMimeType(image.path);
 
-    var request = http.MultipartRequest('POST', Uri.parse('$serverIp/api/recognize/$endpoint'))
+    if (mimeType == null || !mimeType.startsWith('image/')) {
+      throw Exception('Invalid file type. Only images are allowed.');
+    }
+
+    var request = http.MultipartRequest('POST', Uri.parse('$serverIp/api/ingredients/recognize/$endpoint'))
       ..headers['Content-Type'] = mimeType
       ..files.add(await http.MultipartFile.fromPath(
         'file',
         image.path,
-        contentType: MediaType('image', mimeType),
+        contentType: MediaType.parse(mimeType),
       ));
 
     // Send the request and handle response
