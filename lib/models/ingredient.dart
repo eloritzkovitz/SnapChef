@@ -3,12 +3,14 @@ class Ingredient {
   final String name;
   final String category;
   final String imageURL;
+  int count;
 
   Ingredient({
     required this.id,
     required this.name,
     required this.category,
     required this.imageURL,
+    this.count = 0,
   });
 
   // Convert from JSON, ensuring `_id` is mapped to `id`
@@ -18,6 +20,7 @@ class Ingredient {
       name: json['name'] as String,
       category: json['category'] as String,
       imageURL: json['imageURL'] as String,
+      count: json['count'] as int? ?? 0,
     );
   }
 
@@ -27,6 +30,7 @@ class Ingredient {
       'name': name,
       'category': category,
       'imageURL': imageURL,
+      'count': count,
     };
   }
 }
