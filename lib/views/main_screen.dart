@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/main_viewmodel.dart';
+import 'profile/edit_profile_screen.dart';
 import 'fridge/widgets/action_button.dart';
 
 class MainScreen extends StatelessWidget {
-  
   const MainScreen({super.key});
 
   @override
@@ -12,18 +12,53 @@ class MainScreen extends StatelessWidget {
     final viewModel = Provider.of<MainViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('SnapChef')),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: Center(
-              child: viewModel.currentScreen,
+      appBar: AppBar(
+        title: Text(viewModel.appBarTitle),
+        actions: [
+          if (viewModel.selectedIndex == 2)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  // Navigate to the Edit Profile Screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                  );
+                } else if (value == 'logout') {
+                  // Perform logout
+                  viewModel.logout(context);
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 10),
+                      Text('Edit Profile'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.logout, color: Colors.black),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
+                  ),
+                ),
+              ],
+              icon: const Icon(Icons.more_vert),
             ),
-          ),
         ],
       ),
-      floatingActionButton: viewModel.selectedIndex == 0 ? const ActionButton() : null,
+      body: viewModel.currentScreen,
+      floatingActionButton: viewModel.selectedIndex == 0
+          ? const ActionButton()
+          : null, // Show FAB only on the Home screen
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -34,7 +69,7 @@ class MainScreen extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Cookbook',
-          ),          
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
