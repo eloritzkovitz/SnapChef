@@ -13,7 +13,17 @@ class MainScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(viewModel.appBarTitle),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/icon_appbar.png',
+              height: 36,
+              width: 36,
+            ),
+            const SizedBox(width: 8),
+            const Text('SnapChef', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),        
         actions: [
           if (viewModel.selectedIndex == 2)
             PopupMenuButton<String>(

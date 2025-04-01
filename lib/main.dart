@@ -47,9 +47,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         theme: ThemeData(
           primaryColor: primaryColor,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(            
+            foregroundColor: secondaryColor,
             iconTheme: IconThemeData(color: Colors.white),
           ),
           floatingActionButtonTheme: const FloatingActionButtonThemeData(

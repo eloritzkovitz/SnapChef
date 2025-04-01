@@ -11,6 +11,10 @@ class FridgeScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => FridgeViewModel(),
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text('My Fridge'),
+          foregroundColor: Colors.black,
+        ),
         body: SafeArea(
           child: Column(
             children: [              
