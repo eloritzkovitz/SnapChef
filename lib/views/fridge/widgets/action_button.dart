@@ -7,7 +7,6 @@ import '../../../theme/colors.dart';
 import '../generate_recipe_screen.dart';
 
 class ActionButton extends StatefulWidget {
-  
   const ActionButton({super.key});
 
   @override
@@ -18,15 +17,37 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
   final ImagePicker _picker = ImagePicker();
   bool _isExpanded = false;
 
-  // Pick and image and wait for the result
+  // Pick an image and wait for the result
   Future<void> _pickImage(String endpoint) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
       File image = File(pickedFile.path);
       log('Picked image path: ${pickedFile.path}'); // Debug print
-      final result = await UploadPhoto(context).processImage(image, endpoint);
-      _showResultDialog(result);
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      try {
+        final result = await UploadPhoto(context).processImage(image, endpoint);
+        Navigator.of(context).pop(); // Close the loading indicator
+        if (result.isNotEmpty) {
+          _showResultDialog(result);
+        } else {
+          _showResultDialog('No ingredient recognized. Please try again.');
+        }
+      } catch (e) {
+        Navigator.of(context).pop(); // Close the loading indicator
+        _showResultDialog('An error occurred: $e');
+      }
     } else {
       log('No image selected.');
     }
@@ -39,7 +60,10 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Recognition Result'),
-          content: Text(result),
+          content: Text(
+            result,
+            style: const TextStyle(fontSize: 16, color: Colors.black),
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
@@ -62,7 +86,7 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
           FloatingActionButton(
             onPressed: () => _pickImage('photo'),
             tooltip: 'Capture Photo',
-            child: const Icon(Icons.photo_camera, color: Colors.white),            
+            child: const Icon(Icons.photo_camera, color: Colors.white),
           ),
           const SizedBox(height: 10),
           FloatingActionButton(
@@ -77,8 +101,8 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
             child: const Icon(Icons.qr_code_scanner, color: Colors.white),
           ),
           const SizedBox(height: 10),
-          FloatingActionButton(  
-            backgroundColor: secondaryColor,          
+          FloatingActionButton(
+            backgroundColor: secondaryColor,
             onPressed: () {
               Navigator.push(
                 context,
@@ -92,9 +116,9 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
         ],
         FloatingActionButton(
           shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 3, color: primaryColor),
-              borderRadius: BorderRadius.circular(100),
-            ),
+            side: const BorderSide(width: 3, color: primaryColor),
+            borderRadius: BorderRadius.circular(100),
+          ),
           onPressed: () {
             setState(() {
               _isExpanded = !_isExpanded;

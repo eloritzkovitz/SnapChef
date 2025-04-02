@@ -8,23 +8,24 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 class UploadPhoto {
-  
   final BuildContext context;
 
   UploadPhoto(this.context);
 
   // Process image using the specified endpoint
   Future<String> processImage(File image, String endpoint) async {
-
     // Prepare the HTTP request
-    String? serverIp = dotenv.env['SERVER_IP'];    
+    String? serverIp = dotenv.env['SERVER_IP'];
     final mimeType = lookupMimeType(image.path);
 
     if (mimeType == null || !mimeType.startsWith('image/')) {
       throw Exception('Invalid file type. Only images are allowed.');
     }
 
-    var request = http.MultipartRequest('POST', Uri.parse('$serverIp/api/ingredients/recognize/$endpoint'))
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$serverIp/api/ingredients/recognize/$endpoint'),
+    )
       ..headers['Content-Type'] = mimeType
       ..files.add(await http.MultipartFile.fromPath(
         'file',
@@ -37,21 +38,22 @@ class UploadPhoto {
     var responseBody = await response.stream.bytesToString();
     log('Response status: ${response.statusCode}');
     log('Response body: $responseBody');
-    
+
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Image uploaded successfully')),
       );
 
       // Parse the JSON response
-      var jsonResponse = jsonDecode(responseBody);      
-      if (jsonResponse is List && jsonResponse.isNotEmpty) {      
-        var firstResult = jsonResponse[0];
-        var ingredient = firstResult['ingredient'];
-        var category = firstResult['category'];
+      var jsonResponse = jsonDecode(responseBody);
 
-        // Return the recognition result        
-        return 'Ingredient: $ingredient\nCategory: $category';        
+      // Check if the response contains an ingredient object directly
+      if (jsonResponse is Map && jsonResponse['name'] != null && jsonResponse['category'] != null) {
+        var name = jsonResponse['name'];
+        var category = jsonResponse['category'];
+
+        // Return the recognition result
+        return 'Ingredient: $name\nCategory: $category';
       } else {
         return 'No recognition results found.';
       }
@@ -61,5 +63,5 @@ class UploadPhoto {
       );
       return 'Failed to upload image.';
     }
-  }  
+  }
 }
