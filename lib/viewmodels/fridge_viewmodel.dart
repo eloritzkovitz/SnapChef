@@ -113,20 +113,62 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Update ingredient count in fridge (local and backend)
+  Future<bool> updateItem(String fridgeId, String itemId, int newCount) async {
+    String? serverIp = dotenv.env['SERVER_IP'];
+
+    try {
+      // Send PUT request to backend
+      final response = await http.put(
+        Uri.parse('$serverIp/api/fridge/$fridgeId/items/$itemId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'quantity': newCount}),
+      );
+
+      if (response.statusCode == 200) {
+        // Update the local ingredient list
+        final index = _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
+        if (index != -1) {
+          _ingredients[index].count = newCount;
+          notifyListeners();
+        }
+        return true;
+      } else {
+        log('Failed to update item: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      log('Error updating item: $e');
+      return false;
+    }
+  }
+
   void setFilter(String filter) {
     _filter = filter;
     notifyListeners();
   }
 
-  void increaseCount(int index) {
-    _ingredients[index].count++;
-    notifyListeners();
+  void increaseCount(int index, String fridgeId) async {
+    final ingredient = _ingredients[index];
+    final newCount = ingredient.count + 1;
+
+    final success = await updateItem(fridgeId, ingredient.id, newCount);
+    if (success) {
+      ingredient.count = newCount;
+      notifyListeners();
+    }
   }
 
-  void decreaseCount(int index) {
-    if (_ingredients[index].count > 0) {
-      _ingredients[index].count--;
-      notifyListeners();
+  void decreaseCount(int index, String fridgeId) async {
+    final ingredient = _ingredients[index];
+    if (ingredient.count > 0) {
+      final newCount = ingredient.count - 1;
+
+      final success = await updateItem(fridgeId, ingredient.id, newCount);
+      if (success) {
+        ingredient.count = newCount;
+        notifyListeners();
+      }
     }
   }
 }

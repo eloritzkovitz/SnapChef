@@ -65,8 +65,8 @@ class FridgeScreen extends StatelessWidget {
                   final ingredient = viewModel.filteredIngredients[index];
                   return IngredientCard(
                     ingredient: ingredient,
-                    onIncrease: () => viewModel.increaseCount(index),
-                    onDecrease: () => viewModel.decreaseCount(index),
+                    onIncrease: () => viewModel.increaseCount(index, fridgeId!),
+                    onDecrease: () => viewModel.decreaseCount(index, fridgeId!),
                   );
                 },
               );
