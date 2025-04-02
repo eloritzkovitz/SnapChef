@@ -3,23 +3,15 @@ class Ingredient {
   final String name;
   final String category;
   final String imageURL;
+  int count;
 
   Ingredient({
     required this.id,
     required this.name,
     required this.category,
     required this.imageURL,
-  });
-
-  // Convert from JSON, ensuring `_id` is mapped to `id`
-  factory Ingredient.fromJson(Map<String, dynamic> json) {
-    return Ingredient(
-      id: json['_id'] ?? json['id'] as String,
-      name: json['name'] as String,
-      category: json['category'] as String,
-      imageURL: json['imageURL'] as String,
-    );
-  }
+    required this.count,
+  });  
 
   Map<String, dynamic> toJson() {
     return {
@@ -27,6 +19,7 @@ class Ingredient {
       'name': name,
       'category': category,
       'imageURL': imageURL,
+      'count': count,
     };
   }
 }

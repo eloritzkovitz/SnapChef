@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme/colors.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/fridge_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
@@ -25,31 +27,34 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final accessToken = prefs.getString('accessToken');
 
-  runApp(MyApp(isLoggedIn: accessToken != null));
+  // Initialize AuthViewModel and fetch user profile if logged in
+  final authViewModel = AuthViewModel();
+  if (accessToken != null) {
+    await authViewModel.fetchUserProfile();
+  }
+
+  runApp(MyApp(isLoggedIn: accessToken != null, authViewModel: authViewModel));
 }
 
-const primaryColor = Color(0xffff794e);
-const secondaryColor = Color(0xffff5722);
-
-// Add a new MyApp widget
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
+  final AuthViewModel authViewModel;
 
-  const MyApp({required this.isLoggedIn, super.key});
+  const MyApp({required this.isLoggedIn, required this.authViewModel, super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => authViewModel),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
       ],
       child: MaterialApp(
         theme: ThemeData(
           primaryColor: primaryColor,
           appBarTheme: const AppBarTheme(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
+            foregroundColor: secondaryColor,
             iconTheme: IconThemeData(color: Colors.white),
           ),
           floatingActionButtonTheme: const FloatingActionButtonThemeData(

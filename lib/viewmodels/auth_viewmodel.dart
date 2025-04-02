@@ -7,11 +7,15 @@ import '../models/user.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
-  User? _user; // Add a User object to store the profile data
+  bool isLoggingOut = false;
+  User? _user;
 
   bool get isLoading => _isLoading;
-  User? get user => _user; // Expose the user data to the UI
+  User? get user => _user;
 
+  String? get fridgeId => _user?.fridgeId;
+  String? get cookbookId => _user?.cookbookId;
+  
   // Login
   Future<void> login(String email, String password, BuildContext context) async {
     _setLoading(true);
@@ -120,6 +124,8 @@ class AuthViewModel extends ChangeNotifier {
           lastName: lastName,
           email: email,
           profilePicture: newProfilePicture ?? _user!.profilePicture,
+          fridgeId: _user!.fridgeId,
+          cookbookId: _user!.cookbookId,
       );
       notifyListeners();
       }      
@@ -145,8 +151,15 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Set the loading state
   void _setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  // Set the logging out state
+  void setLoggingOut(bool value) {
+    isLoggingOut = value;
     notifyListeners();
   }
 
