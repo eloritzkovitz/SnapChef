@@ -27,27 +27,33 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final accessToken = prefs.getString('accessToken');
 
-  runApp(MyApp(isLoggedIn: accessToken != null));
+  // Initialize AuthViewModel and fetch user profile if logged in
+  final authViewModel = AuthViewModel();
+  if (accessToken != null) {
+    await authViewModel.fetchUserProfile();
+  }
+
+  runApp(MyApp(isLoggedIn: accessToken != null, authViewModel: authViewModel));
 }
 
-// Add a new MyApp widget
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
+  final AuthViewModel authViewModel;
 
-  const MyApp({required this.isLoggedIn, super.key});
+  const MyApp({required this.isLoggedIn, required this.authViewModel, super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
-        ChangeNotifierProvider(create: (_) => FridgeViewModel(),)
+        ChangeNotifierProvider(create: (_) => authViewModel),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
       ],
       child: MaterialApp(
         theme: ThemeData(
           primaryColor: primaryColor,
-          appBarTheme: const AppBarTheme(            
+          appBarTheme: const AppBarTheme(
             foregroundColor: secondaryColor,
             iconTheme: IconThemeData(color: Colors.white),
           ),

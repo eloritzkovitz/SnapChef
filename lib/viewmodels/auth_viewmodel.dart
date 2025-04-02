@@ -11,8 +11,11 @@ class AuthViewModel extends ChangeNotifier {
   User? _user;
 
   bool get isLoading => _isLoading;
-  User? get user => _user; // Expose the user data to the UI
+  User? get user => _user;
 
+  String? get fridgeId => _user?.fridgeId;
+  String? get cookbookId => _user?.cookbookId;
+  
   // Login
   Future<void> login(String email, String password, BuildContext context) async {
     _setLoading(true);
@@ -121,6 +124,8 @@ class AuthViewModel extends ChangeNotifier {
           lastName: lastName,
           email: email,
           profilePicture: newProfilePicture ?? _user!.profilePicture,
+          fridgeId: _user!.fridgeId,
+          cookbookId: _user!.cookbookId,
       );
       notifyListeners();
       }      

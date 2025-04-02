@@ -2,7 +2,10 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../services/upload_photo.dart';
+import '../../../viewmodels/auth_viewmodel.dart';
+import '../../../viewmodels/fridge_viewmodel.dart';
 import '../../../theme/colors.dart';
 import '../generate_recipe_screen.dart';
 
@@ -17,7 +20,7 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
   final ImagePicker _picker = ImagePicker();
   bool _isExpanded = false;
 
-  // Pick an image and wait for the result
+  // Pick an image and process it
   Future<void> _pickImage(String endpoint) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
 
@@ -37,34 +40,81 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
       );
 
       try {
-        final result = await UploadPhoto(context).processImage(image, endpoint);
+        // Process the image using UploadPhoto
+        final uploadPhoto = UploadPhoto(context);
+        final result = await uploadPhoto.processImage(image, endpoint);
+
         Navigator.of(context).pop(); // Close the loading indicator
+
         if (result.isNotEmpty) {
-          _showResultDialog(result);
-        } else {
-          _showResultDialog('No ingredient recognized. Please try again.');
+          // Extract the fields from the result
+          final id = result['id'];
+          final name = result['name'];
+          final category = result['category'];
+
+          // Show the recognition result dialog
+          _showResultDialog(name, category, id);
         }
       } catch (e) {
         Navigator.of(context).pop(); // Close the loading indicator
-        _showResultDialog('An error occurred: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
       }
-    } else {
-      log('No image selected.');
     }
   }
 
   // Show recognition result dialog
-  void _showResultDialog(String result) {
+  void _showResultDialog(String? name, String? category, String? id) {
+    final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+    final userViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final fridgeId = userViewModel.fridgeId;
+
+    if (fridgeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fridge ID not found. Please log in again.')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Recognition Result'),
-          content: Text(
-            result,
-            style: const TextStyle(fontSize: 16, color: Colors.black),
-          ),
+          content: name != null && category != null
+              ? Text(
+                  'Ingredient: $name\nCategory: $category',
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                )
+              : const Text(
+                  'No recognition results found.',
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                ),
           actions: <Widget>[
+            if (name != null && category != null)
+              TextButton(
+                child: const Text('Add to Fridge'),
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close the dialog
+                  final success = await fridgeViewModel.addIngredientToFridge(
+                    fridgeId,
+                    id ?? 'generated-id', // Pass the id or a default value
+                    name,
+                    category,
+                    1, // Default quantity
+                  );
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ingredient added to fridge successfully')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to add ingredient to fridge')),
+                    );
+                  }
+                },
+              ),
             TextButton(
               child: const Text('OK'),
               onPressed: () {

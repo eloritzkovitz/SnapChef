@@ -13,7 +13,7 @@ class UploadPhoto {
   UploadPhoto(this.context);
 
   // Process image using the specified endpoint
-  Future<String> processImage(File image, String endpoint) async {
+  Future<Map<String, String>> processImage(File image, String endpoint) async {
     // Prepare the HTTP request
     String? serverIp = dotenv.env['SERVER_IP'];
     final mimeType = lookupMimeType(image.path);
@@ -51,17 +51,22 @@ class UploadPhoto {
       if (jsonResponse is Map && jsonResponse['name'] != null && jsonResponse['category'] != null) {
         var name = jsonResponse['name'];
         var category = jsonResponse['category'];
+        var id = jsonResponse['id'];
 
         // Return the recognition result
-        return 'Ingredient: $name\nCategory: $category';
-      } else {
-        return 'No recognition results found.';
-      }
+        return {
+          'id': id,
+          'name': name,
+          'category': category,
+        };
+    } else {
+      throw Exception('No recognition results found.');
+    }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to upload image: ${response.statusCode}')),
       );
-      return 'Failed to upload image.';
+      throw Exception('Failed to upload image.');
     }
   }
 }
