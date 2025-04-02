@@ -171,4 +171,32 @@ class FridgeViewModel extends ChangeNotifier {
       }
     }
   }
+
+  // Delete ingredient from fridge (local and backend)
+  Future<bool> deleteItem(String fridgeId, String itemId) async {
+    String? serverIp = dotenv.env['SERVER_IP'];
+
+    try {
+      log('Deleting item with fridgeId: $fridgeId, itemId: $itemId');
+
+      // Send DELETE request to backend
+      final response = await http.delete(
+        Uri.parse('$serverIp/api/fridge/$fridgeId/items/$itemId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Remove the item locally
+        _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
+        notifyListeners();
+        return true;
+      } else {
+        log('Failed to delete item: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      log('Error deleting item: $e');
+      return false;
+    }
+  }
 }

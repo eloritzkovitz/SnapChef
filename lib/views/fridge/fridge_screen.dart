@@ -67,6 +67,7 @@ class FridgeScreen extends StatelessWidget {
                     ingredient: ingredient,
                     onIncrease: () => viewModel.increaseCount(index, fridgeId!),
                     onDecrease: () => viewModel.decreaseCount(index, fridgeId!),
+                    onDelete: () => viewModel.deleteItem(fridgeId!, ingredient.id),
                   );
                 },
               );
