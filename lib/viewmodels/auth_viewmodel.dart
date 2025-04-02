@@ -7,7 +7,8 @@ import '../models/user.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
-  User? _user; // Add a User object to store the profile data
+  bool isLoggingOut = false;
+  User? _user;
 
   bool get isLoading => _isLoading;
   User? get user => _user; // Expose the user data to the UI
@@ -145,8 +146,15 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Set the loading state
   void _setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  // Set the logging out state
+  void setLoggingOut(bool value) {
+    isLoggingOut = value;
     notifyListeners();
   }
 

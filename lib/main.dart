@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme/colors.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
@@ -28,9 +29,6 @@ Future<void> main() async {
 
   runApp(MyApp(isLoggedIn: accessToken != null));
 }
-
-const primaryColor = Color(0xffff794e);
-const secondaryColor = Color(0xffff5722);
 
 // Add a new MyApp widget
 class MyApp extends StatelessWidget {

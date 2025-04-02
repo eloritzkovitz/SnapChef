@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../theme/colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -51,7 +52,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),        
+        foregroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -59,18 +62,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
-              children: [
-                // Profile Picture
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : authViewModel.user?.profilePicture != null
-                            ? NetworkImage(authViewModel.getFullImageUrl(authViewModel.user!.profilePicture!)) as ImageProvider
-                            : const AssetImage('assets/images/default_profile.png'),
-                  ),
+              children: [                
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: _selectedImage != null
+                          ? FileImage(_selectedImage!)
+                          : authViewModel.user?.profilePicture != null
+                              ? NetworkImage(authViewModel.getFullImageUrl(authViewModel.user!.profilePicture!)) as ImageProvider
+                              : const AssetImage('assets/images/default_profile.png'),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 

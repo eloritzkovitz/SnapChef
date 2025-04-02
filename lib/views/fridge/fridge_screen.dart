@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import './widgets/ingredient_card.dart';
 import './ingredient_search_delegate.dart';
+import './widgets/action_button.dart';
 
 class FridgeScreen extends StatelessWidget {
   const FridgeScreen({super.key});
@@ -57,6 +58,8 @@ class FridgeScreen extends StatelessWidget {
             ],
           ),
         ),
+        floatingActionButton: const ActionButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,        
       ),
     );
   }
