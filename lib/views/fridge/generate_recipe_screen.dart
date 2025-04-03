@@ -8,7 +8,11 @@ class GenerateRecipeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Generate Recipe')),
+      appBar: AppBar(
+        title: const Text('Generate Recipe', style: TextStyle(fontWeight: FontWeight.bold)),        
+        foregroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: const GenerateRecipe(),
     );
   }
