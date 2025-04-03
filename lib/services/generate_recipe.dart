@@ -41,7 +41,7 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
 
     try {
       final response = await http.post(
-        Uri.parse("$serverUrl/api/recipe/generate"),
+        Uri.parse("$serverUrl/api/recipes/generate"),
         headers: {
           'Content-Type': 'application/json',
         },
