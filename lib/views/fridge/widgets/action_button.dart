@@ -1,13 +1,11 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../services/upload_photo.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/fridge_viewmodel.dart';
-import '../../../theme/colors.dart';
 import '../generate_recipe_screen.dart';
+import '../../../theme/colors.dart';
 
 class ActionButton extends StatefulWidget {
   const ActionButton({super.key});
@@ -16,7 +14,7 @@ class ActionButton extends StatefulWidget {
   _ActionButtonState createState() => _ActionButtonState();
 }
 
-class _ActionButtonState extends State<ActionButton> with SingleTickerProviderStateMixin {
+class _ActionButtonState extends State<ActionButton> {
   final ImagePicker _picker = ImagePicker();
   bool _isExpanded = false;
 
@@ -26,7 +24,6 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
 
     if (pickedFile != null) {
       File image = File(pickedFile.path);
-      log('Picked image path: ${pickedFile.path}'); // Debug print
 
       // Show loading indicator
       showDialog(
@@ -39,21 +36,19 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
         },
       );
 
+      final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+
       try {
-        // Process the image using UploadPhoto
-        final uploadPhoto = UploadPhoto(context);
-        final result = await uploadPhoto.processImage(image, endpoint);
+        // Recognize ingredients
+        await fridgeViewModel.recognizeIngredients(image, endpoint);
 
         Navigator.of(context).pop(); // Close the loading indicator
 
-        if (result.isNotEmpty) {
-          // Extract the fields from the result
-          final id = result['id'];
-          final name = result['name'];
-          final category = result['category'];
-
-          // Show the recognition result dialog
-          _showResultDialog(name, category, id);
+        // Show the recognition results
+        if (fridgeViewModel.recognizedIngredients.isNotEmpty) {
+          _showRecognitionResults(fridgeViewModel.recognizedIngredients);
+        } else {
+          _showNoIngredientsPopup();
         }
       } catch (e) {
         Navigator.of(context).pop(); // Close the loading indicator
@@ -64,62 +59,117 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
     }
   }
 
-  // Show recognition result dialog
-  void _showResultDialog(String? name, String? category, String? id) {
+  // Show recognition results dialog
+  void _showRecognitionResults(List<dynamic> ingredients) {
     final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
-    final userViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    final fridgeId = userViewModel.fridgeId;
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final fridgeId = authViewModel.fridgeId;
 
-    if (fridgeId == null) {
+    if (fridgeId == null || fridgeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fridge ID not found. Please log in again.')),
+        const SnackBar(content: Text('Fridge ID is missing. Please log in again.')),
       );
       return;
     }
 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Recognized Ingredients',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  if (ingredients.isEmpty)
+                    const Text(
+                      'All ingredients have been processed.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ...ingredients.map((ingredient) {
+                    final name = ingredient['name'];
+                    final category = ingredient['category'];
+                    final id = ingredient['id'];
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        title: Text(name),
+                        subtitle: Text('Category: $category'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: () async {
+                                final success = await fridgeViewModel.addIngredientToFridge(
+                                  fridgeId,
+                                  id,
+                                  name,
+                                  category,
+                                  1, // Default quantity
+                                );
+                                if (success) {
+                                  setState(() {
+                                    ingredients.remove(ingredient); // Remove the ingredient from the list
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('$name added to fridge successfully')),
+                                  );
+                                  if (ingredients.isEmpty) {
+                                    Navigator.pop(context); // Close the bottom sheet if all are processed
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to add $name to fridge')),
+                                  );
+                                }
+                              },
+                              child: const Text('Add to Fridge'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  ingredients.remove(ingredient); // Remove the ingredient from the list
+                                });
+                                if (ingredients.isEmpty) {
+                                  Navigator.pop(context); // Close the bottom sheet if all are discarded
+                                }
+                              },
+                              child: const Text('Discard'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Show a popup if no ingredients are recognized
+  void _showNoIngredientsPopup() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
-          title: const Text('Recognition Result'),
-          content: name != null && category != null
-              ? Text(
-                  'Ingredient: $name\nCategory: $category',
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                )
-              : const Text(
-                  'No recognition results found.',
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-          actions: <Widget>[
-            if (name != null && category != null)
-              TextButton(
-                child: const Text('Add to Fridge'),
-                onPressed: () async {
-                  Navigator.of(context).pop(); // Close the dialog
-                  final success = await fridgeViewModel.addIngredientToFridge(
-                    fridgeId,
-                    id ?? 'generated-id', // Pass the id or a default value
-                    name,
-                    category,
-                    1, // Default quantity
-                  );
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ingredient added to fridge successfully')),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to add ingredient to fridge')),
-                    );
-                  }
-                },
-              ),
+          title: const Text('No Ingredients Recognized'),
+          content: const Text('No ingredients were recognized in the uploaded image.'),
+          actions: [
             TextButton(
+              onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
             ),
           ],
         );
@@ -134,12 +184,14 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
       children: [
         if (_isExpanded) ...[
           FloatingActionButton(
+            backgroundColor: primarySwatch[300],
             onPressed: () => _pickImage('photo'),
             tooltip: 'Capture Photo',
             child: const Icon(Icons.photo_camera, color: Colors.white),
           ),
           const SizedBox(height: 10),
           FloatingActionButton(
+            backgroundColor: primarySwatch[200],
             onPressed: () => _pickImage('receipt'),
             tooltip: 'Scan Receipt',
             child: const Icon(Icons.receipt_long, color: Colors.white),
@@ -152,7 +204,7 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
           ),
           const SizedBox(height: 10),
           FloatingActionButton(
-            backgroundColor: secondaryColor,
+            backgroundColor: primarySwatch[100],
             onPressed: () {
               Navigator.push(
                 context,
@@ -165,6 +217,7 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
           const SizedBox(height: 10),
         ],
         FloatingActionButton(
+          backgroundColor: primaryColor,
           shape: RoundedRectangleBorder(
             side: const BorderSide(width: 3, color: primaryColor),
             borderRadius: BorderRadius.circular(100),
