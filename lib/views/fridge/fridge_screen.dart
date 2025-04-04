@@ -11,7 +11,20 @@ class FridgeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final fridgeId = Provider.of<AuthViewModel>(context, listen: false).fridgeId;
+
+    // Check if the user is null
+    if (authViewModel.user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Failed to load user data',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
 
     return ChangeNotifierProvider(
       create: (_) => FridgeViewModel()..fetchFridgeIngredients(fridgeId!),
