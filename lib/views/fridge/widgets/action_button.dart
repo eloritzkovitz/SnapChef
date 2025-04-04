@@ -156,7 +156,7 @@ class _ActionButtonState extends State<ActionButton> with SingleTickerProviderSt
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const GenerateRecipeScreen()),
+                MaterialPageRoute(builder: (context) => GenerateRecipeScreen()),
               );
             },
             tooltip: 'Generate Recipe',
