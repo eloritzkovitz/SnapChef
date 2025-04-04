@@ -110,9 +110,7 @@ class AuthViewModel extends ChangeNotifier {
         lastName,
         email,
         profilePicture,
-      );
-
-      print('Updated data from backend: $updatedData');
+      );      
 
       // Extract the new profile picture relative path from the response
       final newProfilePicture = updatedData['profilePicture'];
@@ -123,7 +121,9 @@ class AuthViewModel extends ChangeNotifier {
           firstName: firstName,
           lastName: lastName,
           email: email,
-          profilePicture: newProfilePicture ?? _user!.profilePicture,
+          profilePicture: profilePicture != null // Check if a new profile picture was provided
+            ? newProfilePicture ?? _user!.profilePicture
+            : _user!.profilePicture,
           fridgeId: _user!.fridgeId,
           cookbookId: _user!.cookbookId,
       );
