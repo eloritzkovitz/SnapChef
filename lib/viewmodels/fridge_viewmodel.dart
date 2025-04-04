@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../models/ingredient.dart';
-import '../services/upload_photo.dart';
+import '../services/image_service.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
@@ -74,7 +74,7 @@ class FridgeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uploadPhoto = UploadPhoto();
+      final uploadPhoto = ImageService();
       recognizedIngredients = await uploadPhoto.processImage(image, endpoint);
     } catch (e) {
       log('Error recognizing ingredients: $e');
@@ -90,36 +90,64 @@ class FridgeViewModel extends ChangeNotifier {
     String? serverIp = dotenv.env['SERVER_IP'];
 
     try {
-      final response = await http.post(
-        Uri.parse('$serverIp/api/fridge/$fridgeId/items'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'id': id,
-          'name': name,
-          'category': category,
-          'imageURL': '',
-          'quantity': quantity,
-        }),
-      );
+      // Check if the ingredient already exists in the fridge
+      final existingIngredientIndex = _ingredients.indexWhere((ingredient) => ingredient.id == id);
 
-      if (response.statusCode == 201) {
-        final jsonResponse = jsonDecode(response.body);
-        final newItem = jsonResponse['ingredient'];
+      if (existingIngredientIndex != -1) {
+        // Ingredient exists, increment its quantity
+        final existingIngredient = _ingredients[existingIngredientIndex];
+        final newQuantity = existingIngredient.count + quantity;
 
-        _ingredients.add(
-          Ingredient(
-            id: newItem['id'],
-            name: newItem['name'],
-            category: newItem['category'],
-            imageURL: newItem['imageURL'] ?? '',
-            count: newItem['quantity'],
-          ),
+        // Update the quantity on the backend
+        final response = await http.put(
+          Uri.parse('$serverIp/api/fridge/$fridgeId/items/${existingIngredient.id}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'quantity': newQuantity}),
         );
-        notifyListeners();
-        return true;
+
+        if (response.statusCode == 200) {
+          // Update the quantity locally
+          _ingredients[existingIngredientIndex].count = newQuantity;
+          notifyListeners();
+          return true;
+        } else {
+          log('Failed to update ingredient quantity: ${response.statusCode}');
+          return false;
+        }
       } else {
-        log('Failed to add ingredient to fridge: ${response.statusCode}');
-        return false;
+        // Ingredient does not exist, add it as a new ingredient
+        final response = await http.post(
+          Uri.parse('$serverIp/api/fridge/$fridgeId/items'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'id': id,
+            'name': name,
+            'category': category,
+            'imageURL': '',
+            'quantity': quantity,
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          final jsonResponse = jsonDecode(response.body);
+          final newItem = jsonResponse['ingredient'];
+
+          // Add the new ingredient locally
+          _ingredients.add(
+            Ingredient(
+              id: newItem['id'],
+              name: newItem['name'],
+              category: newItem['category'],
+              imageURL: newItem['imageURL'] ?? '',
+              count: newItem['quantity'],
+            ),
+          );
+          notifyListeners();
+          return true;
+        } else {
+          log('Failed to add ingredient to fridge: ${response.statusCode}');
+          return false;
+        }
       }
     } catch (e) {
       log('Error adding ingredient to fridge: $e');

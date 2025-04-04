@@ -4,9 +4,25 @@ import 'dart:developer';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 
-class UploadPhoto {
+class ImageService {
+
+  final ImagePicker _picker = ImagePicker();
+
+  // Pick an image from the specified source (camera or gallery)
+  Future<File?> pickImage(String source) async {
+    final pickedFile = await _picker.pickImage(
+      source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+    );
+
+    if (pickedFile != null) {
+      return File(pickedFile.path);
+    }
+    return null;
+  }
+
   // Process image using the specified endpoint
   Future<List<dynamic>> processImage(File image, String endpoint) async {
     // Prepare the HTTP request
