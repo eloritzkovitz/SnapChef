@@ -56,6 +56,13 @@ class _TTSWidgetState extends State<TTSWidget> {
     });
   }
 
+  // Stop the TTS when the widget is disposed
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SpeedDial(
