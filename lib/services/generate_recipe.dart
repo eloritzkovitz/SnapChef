@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class GenerateRecipe extends StatefulWidget {
   const GenerateRecipe({super.key});
@@ -15,6 +16,7 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
   bool isLoading = false;
   String _recipe = '';
   String _imageUrl = '';
+  final FlutterTts _flutterTts = FlutterTts();
 
   Future<void> _generateRecipe() async {
     setState(() {
@@ -73,6 +75,15 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
     }
   }
 
+  // Function to speak the recipe using FlutterTTS
+  Future<void> _speakRecipe() async {
+    if (_recipe.isNotEmpty) {
+      await _flutterTts.setLanguage("en-US");
+      await _flutterTts.setPitch(1.0);
+      await _flutterTts.speak(_recipe);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -111,6 +122,13 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
                     ),
                   const SizedBox(height: 10),
                   Text(_recipe),
+                  const SizedBox(height: 10),
+                  if (_recipe.isNotEmpty)
+                    ElevatedButton.icon(
+                      onPressed: _speakRecipe,
+                      icon: const Icon(Icons.volume_up),
+                      label: const Text("Read Recipe"),
+                    ),
                   const SizedBox(height: 20),
                   if (_imageUrl.isNotEmpty)
                     Column(
