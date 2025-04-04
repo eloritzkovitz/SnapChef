@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+import '../../widgets/tts_widget.dart';
 
 class RecipeResultScreen extends StatelessWidget {
   final String recipe;
@@ -7,22 +7,12 @@ class RecipeResultScreen extends StatelessWidget {
 
   RecipeResultScreen({super.key, required this.recipe, required this.imageUrl});
 
-  final FlutterTts _flutterTts = FlutterTts();
-
-  Future<void> _speakRecipe(String recipe) async {
-    if (recipe.isNotEmpty) {
-      await _flutterTts.setLanguage("en-US");
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.speak(recipe);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Result'),
-        foregroundColor: Colors.black,
+        title: const Text('Recipe Result', style: TextStyle(fontWeight: FontWeight.bold)),
+        foregroundColor: Colors.black,        
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
@@ -71,10 +61,7 @@ class RecipeResultScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: recipe.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: () => _speakRecipe(recipe),
-              child: const Icon(Icons.volume_up),
-            )
+          ? TTSWidget(text: recipe)
           : null,
     );
   }
