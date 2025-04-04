@@ -61,7 +61,7 @@ class _TTSWidgetState extends State<TTSWidget> {
     return SpeedDial(
       backgroundColor: primarySwatch[100],
       foregroundColor: Colors.white,
-      icon: Icons.volume_up,
+      icon: _isPlaying ? Icons.pause : Icons.volume_up,
       activeIcon: Icons.close,
       children: [
         SpeedDialChild(
