@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GenerateRecipe extends StatefulWidget {
-  
   const GenerateRecipe({super.key});
 
   @override
@@ -15,11 +14,13 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
   final TextEditingController _ingredientsController = TextEditingController();
   bool isLoading = false;
   String _recipe = '';
+  String _imageUrl = '';
 
   Future<void> _generateRecipe() async {
     setState(() {
       isLoading = true;
       _recipe = "";
+      _imageUrl = "";
     });
 
     if (_ingredientsController.text.trim().isEmpty) {
@@ -51,9 +52,10 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final Map<String, dynamic> data = jsonDecode(response.body);
         setState(() {
-          _recipe = data['recipe'];
+          _recipe = data['recipe'] ?? 'No recipe found.';
+          _imageUrl = data['imageUrl'] ?? '';
         });
       } else {
         setState(() {
@@ -100,11 +102,40 @@ class _RecipeGeneratorState extends State<GenerateRecipe> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_recipe.isNotEmpty)
-                    const Text("Recipe:",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Recipe:",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   const SizedBox(height: 10),
                   Text(_recipe),
+                  const SizedBox(height: 20),
+                  if (_imageUrl.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Generated Image:",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Image.network(
+                          _imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Text(
+                              'Failed to load image.',
+                              style: TextStyle(color: Colors.red),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
