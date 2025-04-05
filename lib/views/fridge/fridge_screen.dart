@@ -26,11 +26,10 @@ class FridgeScreen extends StatelessWidget {
       );
     }
 
-    return ChangeNotifierProvider(
-      create: (_) => FridgeViewModel()..fetchFridgeIngredients(fridgeId!),
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           actions: [
             IconButton(
@@ -87,9 +86,8 @@ class FridgeScreen extends StatelessWidget {
             },
           ),
         ),
-        floatingActionButton: const ActionButton(),
+        floatingActionButton: ActionButton(),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      ),
-    );
+      );
   }
 }

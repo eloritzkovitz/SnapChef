@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/fridge_viewmodel.dart';
 
-class RecognitionResultsWidget extends StatelessWidget {
+class RecognitionResultsWidget extends StatefulWidget {
   final Map<String, Map<String, dynamic>> groupedIngredients;
   final String fridgeId;
 
@@ -11,6 +11,20 @@ class RecognitionResultsWidget extends StatelessWidget {
     required this.groupedIngredients,
     required this.fridgeId,
   }) : super(key: key);
+
+  @override
+  State<RecognitionResultsWidget> createState() => _RecognitionResultsWidgetState();
+}
+
+class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
+  late Map<String, Map<String, dynamic>> localIngredients;
+
+  @override
+  void initState() {
+    super.initState();
+    // Clone the original map so we can modify it locally
+    localIngredients = Map.from(widget.groupedIngredients);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +40,12 @@ class RecognitionResultsWidget extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          if (groupedIngredients.isEmpty)
+          if (localIngredients.isEmpty)
             const Text(
               'All ingredients have been processed.',
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-          ...groupedIngredients.values.map((ingredient) {
+          ...localIngredients.values.map((ingredient) {
             final name = ingredient['name'];
             final category = ingredient['category'];
             final id = ingredient['id'];
@@ -48,19 +62,21 @@ class RecognitionResultsWidget extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         final success = await fridgeViewModel.addIngredientToFridge(
-                          fridgeId,
+                          widget.fridgeId,
                           id,
                           name,
                           category,
                           quantity,
                         );
                         if (success) {
-                          groupedIngredients.remove(name); // Remove the ingredient group
+                          setState(() {
+                            localIngredients.remove(name);
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('$name added to fridge successfully')),
                           );
-                          if (groupedIngredients.isEmpty) {
-                            Navigator.pop(context); // Close the bottom sheet if all are processed
+                          if (localIngredients.isEmpty) {
+                            Navigator.pop(context);
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -72,9 +88,11 @@ class RecognitionResultsWidget extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        groupedIngredients.remove(name); // Remove the ingredient from the list
-                        if (groupedIngredients.isEmpty) {
-                          Navigator.pop(context); // Close the bottom sheet if all are discarded
+                        setState(() {
+                          localIngredients.remove(name);
+                        });
+                        if (localIngredients.isEmpty) {
+                          Navigator.pop(context);
                         }
                       },
                       child: const Text('Discard'),
