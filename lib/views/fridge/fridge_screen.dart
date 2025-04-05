@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
+import '../../services/ingredient_service.dart';
 import './widgets/ingredient_card.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
@@ -13,6 +14,7 @@ class FridgeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final fridgeId = Provider.of<AuthViewModel>(context, listen: false).fridgeId;
+    final ingredientService = IngredientService();
 
     // Check if the user is null
     if (authViewModel.user == null) {
@@ -37,7 +39,7 @@ class FridgeScreen extends StatelessWidget {
               onPressed: () {
                 showSearch(
                   context: context,
-                  delegate: IngredientSearchDelegate(),
+                  delegate: IngredientSearchDelegate(ingredientService: ingredientService),
                 );
               },
             ),
