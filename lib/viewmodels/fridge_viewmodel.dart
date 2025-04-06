@@ -9,23 +9,26 @@ import '../services/image_service.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
+  List<Ingredient> filteredIngredients = [];
   List<dynamic> recognizedIngredients = [];
 
   String _filter = '';
+  String? _selectedCategory;
+  String? _selectedSortOption;
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
 
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
 
-  List<Ingredient> get filteredIngredients {
-    if (_filter.isEmpty) {
-      return _ingredients;
-    }
-    return _ingredients
-        .where((ingredient) => ingredient.name.toLowerCase().contains(_filter.toLowerCase()))
-        .toList();
-  }
+  // List<Ingredient> get filteredIngredients {
+  //   if (_filter.isEmpty) {
+  //     return _ingredients;
+  //   }
+  //   return _ingredients
+  //       .where((ingredient) => ingredient.name.toLowerCase().contains(_filter.toLowerCase()))
+  //       .toList();
+  // }
 
   // Fetch ingredients from the user's fridge
   Future<void> fetchFridgeIngredients(String fridgeId) async {
@@ -50,12 +53,17 @@ class FridgeViewModel extends ChangeNotifier {
                 id: item['id'],
                 name: item['name'],
                 category: item['category'],
-                imageURL: item['imageURL'] ?? 'assets/images/placeholder_image.png',
+                imageURL:
+                    item['imageURL'] ?? 'assets/images/placeholder_image.png',
                 count: item['quantity'],
               );
             }).toList(),
           );
         }
+
+        // Apply the current filter and sort options
+        _applyFiltersAndSorting();
+        notifyListeners();
       } else {
         log('Failed to fetch fridge ingredients: ${response.statusCode}');
       }
@@ -85,13 +93,72 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Get unique categories from the ingredients
+  List<String> getCategories() {
+    final categories =
+        _ingredients.map((ingredient) => ingredient.category).toSet().toList();
+    categories.sort();
+    return categories;
+  }
+
+  // Filter ingredients by category
+  void filterByCategory(String? category) {
+    _selectedCategory = category;
+    _applyFiltersAndSorting();
+  }
+
+  // Sort ingredients
+  void sortIngredients(String sortOption) {
+    _selectedSortOption = sortOption;
+    _applyFiltersAndSorting();
+  }
+
+  // Apply filters and sorting
+  void _applyFiltersAndSorting() {
+    // Start with the full list of ingredients
+    filteredIngredients = List.from(_ingredients);
+
+    // Apply category filter
+    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      filteredIngredients = filteredIngredients.where((ingredient) {
+        return ingredient.category.toLowerCase() ==
+            _selectedCategory!.toLowerCase();
+      }).toList();
+    }
+
+    // Apply search filter
+    if (_filter.isNotEmpty) {
+      filteredIngredients = filteredIngredients.where((ingredient) {
+        return ingredient.name.toLowerCase().contains(_filter.toLowerCase());
+      }).toList();
+    }
+
+    // Apply sorting
+    if (_selectedSortOption == 'Name') {
+      filteredIngredients.sort((a, b) => a.name.compareTo(b.name));
+    } else if (_selectedSortOption == 'Quantity') {
+      filteredIngredients
+          .sort((a, b) => b.count.compareTo(a.count)); // Descending by quantity
+    }
+
+    notifyListeners();
+  }
+
+  // Set filter for searching ingredients
+  void setFilter(String filter) {
+    _filter = filter;
+    _applyFiltersAndSorting();
+  }
+
   // Add ingredient to fridge (local and backend)
-  Future<bool> addIngredientToFridge(String fridgeId, String id, String name, String category, int quantity) async {
+  Future<bool> addIngredientToFridge(String fridgeId, String id, String name,
+      String category, int quantity) async {
     String? serverIp = dotenv.env['SERVER_IP'];
 
     try {
       // Check if the ingredient already exists in the fridge
-      final existingIngredientIndex = _ingredients.indexWhere((ingredient) => ingredient.id == id);
+      final existingIngredientIndex =
+          _ingredients.indexWhere((ingredient) => ingredient.id == id);
 
       if (existingIngredientIndex != -1) {
         // Ingredient exists, increment its quantity
@@ -100,7 +167,8 @@ class FridgeViewModel extends ChangeNotifier {
 
         // Update the quantity on the backend
         final response = await http.put(
-          Uri.parse('$serverIp/api/fridge/$fridgeId/items/${existingIngredient.id}'),
+          Uri.parse(
+              '$serverIp/api/fridge/$fridgeId/items/${existingIngredient.id}'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'quantity': newQuantity}),
         );
@@ -108,7 +176,7 @@ class FridgeViewModel extends ChangeNotifier {
         if (response.statusCode == 200) {
           // Update the quantity locally
           _ingredients[existingIngredientIndex].count = newQuantity;
-          notifyListeners();
+          _applyFiltersAndSorting();
           return true;
         } else {
           log('Failed to update ingredient quantity: ${response.statusCode}');
@@ -142,7 +210,7 @@ class FridgeViewModel extends ChangeNotifier {
               count: newItem['quantity'],
             ),
           );
-          notifyListeners();
+          _applyFiltersAndSorting();
           return true;
         } else {
           log('Failed to add ingredient to fridge: ${response.statusCode}');
@@ -152,6 +220,8 @@ class FridgeViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error adding ingredient to fridge: $e');
       return false;
+    } finally {
+      notifyListeners();
     }
   }
 
@@ -167,10 +237,11 @@ class FridgeViewModel extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final index = _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
+        final index =
+            _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
         if (index != -1) {
           _ingredients[index].count = newCount;
-          notifyListeners();
+          _applyFiltersAndSorting();
         }
         return true;
       } else {
@@ -180,6 +251,8 @@ class FridgeViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error updating item: $e');
       return false;
+    } finally {
+      notifyListeners();
     }
   }
 
@@ -195,7 +268,7 @@ class FridgeViewModel extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
-        notifyListeners();
+        _applyFiltersAndSorting();
         return true;
       } else {
         log('Failed to delete item: ${response.statusCode}');
@@ -204,13 +277,9 @@ class FridgeViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error deleting item: $e');
       return false;
+    } finally {
+      notifyListeners();
     }
-  }
-
-  // Set filter for searching ingredients
-  void setFilter(String filter) {
-    _filter = filter;
-    notifyListeners();
   }
 
   // Increase ingredient count

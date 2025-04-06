@@ -46,28 +46,27 @@ class IngredientCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Decrease Quantity Button
                 IconButton(
                   onPressed: onDecrease,
                   icon: const Icon(Icons.remove_circle),
                   color: Colors.red,
                 ),
+                // Quantity Display
                 Text(
                   '${ingredient.count}',
                   style: const TextStyle(fontSize: 18.0),
                 ),
+                // Increase Quantity Button
                 IconButton(
                   onPressed: onIncrease,
                   icon: const Icon(Icons.add_circle),
                   color: Colors.green,
                 ),
+                // Delete Button
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.grey),
-                  onPressed: () async {
-                    final shouldDelete = await _showDeleteConfirmationDialog(context);
-                    if (shouldDelete) {
-                      onDelete();
-                    }
-                  },
+                  onPressed: onDelete, // Use the provided onDelete callback
                 ),
               ],
             ),
@@ -75,32 +74,5 @@ class IngredientCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<bool> _showDeleteConfirmationDialog(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Delete Ingredient'),
-              content: const Text('Are you sure you want to delete this ingredient?'),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                ),
-                TextButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(true);
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
   }
 }
