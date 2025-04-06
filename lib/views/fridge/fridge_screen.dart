@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../services/ingredient_service.dart';
-import './widgets/ingredient_card.dart';
+import './fridge_list_view.dart';
+import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 
@@ -37,8 +38,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         actions: [
@@ -53,8 +53,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
                   Provider.of<FridgeViewModel>(context, listen: false)
                       .getCategories();
               return [
-                const PopupMenuItem(
-                    value: 'All', child: Text('All Categories')),
+                const PopupMenuItem(value: 'All', child: Text('All Categories')),
                 ...categories.map((category) =>
                     PopupMenuItem(value: category, child: Text(category))),
               ];
@@ -69,8 +68,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'Name', child: Text('Sort by Name')),
-              const PopupMenuItem(
-                  value: 'Quantity', child: Text('Sort by Quantity')),
+              const PopupMenuItem(value: 'Quantity', child: Text('Sort by Quantity')),
             ],
             icon: const Icon(Icons.sort, color: Colors.black),
           ),
@@ -119,90 +117,20 @@ class _FridgeScreenState extends State<FridgeScreen> {
 
             // Render GridView or ListView based on the selected view mode
             return isListView
-                ? ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: viewModel.filteredIngredients.length,
-                    itemBuilder: (context, index) {
-                      final ingredient = viewModel.filteredIngredients[index];
-                      return ListTile(
-                        leading: ingredient.imageURL.isNotEmpty
-                            ? Image.network(
-                                ingredient.imageURL,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              )
-                            : const Icon(Icons.image_not_supported),
-                        title: Text(ingredient.name),
-                        subtitle: Text('Category: ${ingredient.category}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Decrease Quantity Button
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  color: Colors.red),
-                              onPressed: () {
-                                if (ingredient.count > 1) {
-                                  viewModel.decreaseCount(index, fridgeId!);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Quantity cannot be less than 1')),
-                                  );
-                                }
-                              },
-                            ),
-                            // Quantity Display
-                            Text(
-                              '${ingredient.count}',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            // Increase Quantity Button
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline,
-                                  color: Colors.green),
-                              onPressed: () {
-                                viewModel.increaseCount(index, fridgeId!);
-                              },
-                            ),
-                            // Delete Button
-                            IconButton(
-                              icon:
-                                  const Icon(Icons.delete, color: Colors.grey),
-                              onPressed: () {
-                                _showDeleteConfirmationDialog(
-                                    context, ingredient, fridgeId!, viewModel);
-                              },
-                            ),
-                          ],
-                        ),
-                      );
+                ? FridgeListView(
+                    ingredients: viewModel.filteredIngredients,
+                    fridgeId: fridgeId!,
+                    viewModel: viewModel,
+                    onDelete: (ingredient) {
+                      _showDeleteConfirmationDialog(context, ingredient, fridgeId, viewModel);
                     },
                   )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16.0,
-                      mainAxisSpacing: 16.0,
-                      childAspectRatio: 0.8,
-                    ),
-                    itemCount: viewModel.filteredIngredients.length,
-                    itemBuilder: (context, index) {
-                      final ingredient = viewModel.filteredIngredients[index];
-                      return IngredientCard(
-                        ingredient: ingredient,
-                        onIncrease: () =>
-                            viewModel.increaseCount(index, fridgeId!),
-                        onDecrease: () =>
-                            viewModel.decreaseCount(index, fridgeId!),
-                        onDelete: () =>
-                            viewModel.deleteItem(fridgeId!, ingredient.id),
-                      );
+                : FridgeGridView(
+                    ingredients: viewModel.filteredIngredients,
+                    fridgeId: fridgeId!,
+                    viewModel: viewModel,
+                    onDelete: (ingredient) {
+                      _showDeleteConfirmationDialog(context, ingredient, fridgeId, viewModel);
                     },
                   );
           },
