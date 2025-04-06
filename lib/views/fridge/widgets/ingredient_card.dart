@@ -21,6 +21,7 @@ class IngredientCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
       ),
+      color: Colors.white,
       elevation: 4.0,
       child: Padding(
         padding: const EdgeInsets.all(0.0),

@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         theme: ThemeData(
           primaryColor: primaryColor,
+          scaffoldBackgroundColor: Colors.white,
           appBarTheme: const AppBarTheme(
             foregroundColor: secondaryColor,
             iconTheme: IconThemeData(color: Colors.white),
@@ -64,6 +65,7 @@ class MyApp extends StatelessWidget {
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
             selectedItemColor: primaryColor,
             unselectedItemColor: Colors.grey,
             showUnselectedLabels: false,
