@@ -5,6 +5,10 @@ allprojects {
     }
 }
 
+dependencies {
+    classpath 'com.google.gms:google-services:4.3.15' // Add this line
+}
+
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"

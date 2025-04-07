@@ -23,6 +23,7 @@ dependencies:
   http_parser: ^4.0.0
   shared_preferences: ^2.5.3
   mime: ^1.0.6
+  firebase_messaging: ^14.6.6
 
 flutter:
   uses-material-design: true
