@@ -17,20 +17,21 @@ SnapChef is a mobile application designed to create customized recipes based on 
 - 🥬 **Dietary Preferences:** Save your dietary preferences, restrictions and allergies for future use.
 - 🍴 **Meal Options:** Choose from categories like breakfast, lunch, dinner, or snacks.
 - ⏱️ **Time-Based Filters:** Filter recipes by preparation and cooking time.
-- 📷 **Visual Appeal:** View high-quality images of your meal options for inspiration.
+- 🍰 **Visual Appeal:** View high-quality images of your meal options for inspiration.
 
 ### 👩‍🍳 **Cooking Assistance**
 - 🗣️ **Voice Guidance:** Follow cooking steps with text and voice instructions for hands-free help.
 - 🥡 **Storage Tips:** Learn how to store meals and leftovers to maximize freshness.
 
-### 📚 **Your Personal Cookbook**
+### 📙 **Your Personal Cookbook**
 - ❤️ **Save Recipes:** Create a personal collection of your favorite recipes.
 - ⭐ **Rate and Review:** Share your thoughts and photos of the recipes you’ve tried.
-- 🔗 **Sharing:** Share recipes and meal ideas with friends in-app.
+- 🔗 **Share:** Share recipes and meal ideas with friends in-app.
 
 ### 🔔 **Notifications and Updates**
+- ⏰ **Expiration:** Set and receive alerts for expiring ingredients.
 - 📣 **Recipe Reminders:** Get notified about saved or bookmarked recipes.
-- 👫 **Friend Activities:** Stay updated on what your friends are cooking and sharing.
+- 👫 **Friend Activity:** Stay updated on what your friends are cooking and sharing.
 - 📰 **App Updates:** Receive news about new features and updates.
 
 ### 🔐 **User Management**
@@ -58,7 +59,7 @@ SnapChef is a mobile application designed to create customized recipes based on 
 ---
 
 ## 📖 API Documentation
-TBA
+[Visit the SnapChef API server](https://github.com/Elor-Itz/SnapChef-API)
 
 ---
 
