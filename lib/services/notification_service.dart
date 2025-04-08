@@ -22,7 +22,7 @@ class NotificationService {
 
     // prepare the initialization settings for Android
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_notification');
 
     // Initialize settings
     const initSettings = InitializationSettings(
