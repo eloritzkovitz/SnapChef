@@ -7,6 +7,7 @@ import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
+import './widgets/expiry_alert.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -38,7 +39,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
+        title:
+            const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         actions: [
@@ -53,7 +55,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
                   Provider.of<FridgeViewModel>(context, listen: false)
                       .getCategories();
               return [
-                const PopupMenuItem(value: 'All', child: Text('All Categories')),
+                const PopupMenuItem(
+                    value: 'All', child: Text('All Categories')),
                 ...categories.map((category) =>
                     PopupMenuItem(value: category, child: Text(category))),
               ];
@@ -68,7 +71,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'Name', child: Text('Sort by Name')),
-              const PopupMenuItem(value: 'Quantity', child: Text('Sort by Quantity')),
+              const PopupMenuItem(
+                  value: 'Quantity', child: Text('Sort by Quantity')),
             ],
             icon: const Icon(Icons.sort, color: Colors.black),
           ),
@@ -122,7 +126,11 @@ class _FridgeScreenState extends State<FridgeScreen> {
                     fridgeId: fridgeId!,
                     viewModel: viewModel,
                     onDelete: (ingredient) {
-                      _showDeleteConfirmationDialog(context, ingredient, fridgeId, viewModel);
+                      _showDeleteConfirmationDialog(
+                          context, ingredient, fridgeId, viewModel);
+                    },
+                    onSetExpiryAlert: (ingredient) {
+                      _showExpiryAlertDialog(context, ingredient);
                     },
                   )
                 : FridgeGridView(
@@ -130,7 +138,11 @@ class _FridgeScreenState extends State<FridgeScreen> {
                     fridgeId: fridgeId!,
                     viewModel: viewModel,
                     onDelete: (ingredient) {
-                      _showDeleteConfirmationDialog(context, ingredient, fridgeId, viewModel);
+                      _showDeleteConfirmationDialog(
+                          context, ingredient, fridgeId, viewModel);
+                    },
+                    onSetExpiryAlert: (ingredient) {
+                      _showExpiryAlertDialog(context, ingredient);
                     },
                   );
           },
@@ -141,6 +153,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
     );
   }
 
+  // Show delete confirmation dialog
   void _showDeleteConfirmationDialog(BuildContext context, dynamic ingredient,
       String fridgeId, FridgeViewModel viewModel) {
     showDialog(
@@ -148,7 +161,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Ingredient'),
-          content: const Text('Are you sure you want to delete this ingredient?'),
+          content:
+              const Text('Are you sure you want to delete this ingredient?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -168,6 +182,25 @@ class _FridgeScreenState extends State<FridgeScreen> {
               child: const Text('Delete'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  // Show expiry alert dialog
+  void _showExpiryAlertDialog(BuildContext context, dynamic ingredient) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return ExpiryAlertDialog(
+          ingredientName: ingredient.name,
+          onSetAlert: (DateTime alertDateTime) {
+            // Handle the expiry alert logic here
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Expiry alert set for ${ingredient.name}')),
+            );
+          },
         );
       },
     );

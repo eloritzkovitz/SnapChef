@@ -26,6 +26,8 @@ dependencies:
   mime: ^1.0.6
   firebase_messaging: ^14.6.6  
   firebase_core: ^2.32.0
+  timezone: ^0.10.0
+  flutter_timezone: ^4.1.0
 
 flutter:
   uses-material-design: true

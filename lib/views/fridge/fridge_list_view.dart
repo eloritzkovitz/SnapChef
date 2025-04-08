@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 
+
 class FridgeListView extends StatelessWidget {
   final List<dynamic> ingredients;
   final String fridgeId;
   final FridgeViewModel viewModel;
   final Function(dynamic ingredient) onDelete;
+  final Function(dynamic ingredient) onSetExpiryAlert;
 
   const FridgeListView({
     super.key,
@@ -13,6 +15,7 @@ class FridgeListView extends StatelessWidget {
     required this.fridgeId,
     required this.viewModel,
     required this.onDelete,
+    required this.onSetExpiryAlert,    
   });
 
   @override
@@ -63,6 +66,10 @@ class FridgeListView extends StatelessWidget {
                 onPressed: () {
                   onDelete(ingredient);
                 },
+              ),
+              IconButton(
+                icon: const Icon(Icons.alarm, color: Colors.blue),
+                onPressed: () => onSetExpiryAlert(ingredient),
               ),
             ],
           ),

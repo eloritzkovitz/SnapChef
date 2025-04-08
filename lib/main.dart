@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/notification_service.dart';
 import 'theme/colors.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'viewmodels/main_viewmodel.dart';
@@ -23,25 +24,17 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize the Notification Service
+  await NotificationService().initNotification();
+
   // Initialize Firebase
   await Firebase.initializeApp();
 
+  // Request notification permissions
+  await FirebaseMessagingUtil.requestNotificationPermissions(); 
+
   // Set up Firebase Messaging background handler
   FirebaseMessaging.onBackgroundMessage(FirebaseMessagingUtil.firebaseMessagingBackgroundHandler);
-
-  // Request notification permissions
-  await FirebaseMessagingUtil.requestNotificationPermissions();
-
-  // Initialize Flutter Local Notifications
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  const InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
-
-  await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings    
-  );
 
   // Load environment variables
   try {
