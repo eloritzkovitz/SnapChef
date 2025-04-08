@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/colors.dart';
@@ -15,10 +16,13 @@ import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
 
-// Main application entry point
+// Initialize Flutter Local Notifications
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await Firebase.initializeApp();
 
@@ -28,7 +32,18 @@ Future<void> main() async {
   // Request notification permissions
   await FirebaseMessagingUtil.requestNotificationPermissions();
 
-  // Try loading the .env file
+  // Initialize Flutter Local Notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings    
+  );
+
+  // Load environment variables
   try {
     await dotenv.load(fileName: ".env");
     log("Environment variables loaded successfully.");
@@ -46,9 +61,7 @@ Future<void> main() async {
     await authViewModel.fetchUserProfile();
   }
 
-  // Listen for foreground messages
-  FirebaseMessagingUtil.listenForForegroundMessages();
-
+  // Run the app
   runApp(MyApp(isLoggedIn: accessToken != null, authViewModel: authViewModel));
 }
 
