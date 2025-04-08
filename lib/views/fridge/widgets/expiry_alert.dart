@@ -87,10 +87,7 @@ class _ExpiryAlertDialogState extends State<ExpiryAlertDialog> {
               );
 
               // Call the onSetAlert callback
-              widget.onSetAlert(alertDateTime);
-
-              // Send a test notification
-              NotificationService().scheduleTestNotification();               
+              widget.onSetAlert(alertDateTime);                         
              
               // Schedule the notification
               await NotificationService().scheduleExpiryNotification(

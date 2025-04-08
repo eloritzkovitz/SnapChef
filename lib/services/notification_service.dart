@@ -55,7 +55,8 @@ class NotificationService {
       notificationDetails(),
     );
   }
-
+  
+  // Schedule expiry notification
   Future<void> scheduleExpiryNotification(
       String ingredientName, DateTime expiryDateTime) async {
     try {
@@ -75,7 +76,7 @@ class NotificationService {
       await notificationsPlugin.zonedSchedule(
         ingredientName.hashCode,
         "Expiry Alert",
-        "$ingredientName is about to expire!",
+        "$ingredientName is about to expire! Make sure to use it!",
         scheduledTime,
         notificationDetails(),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -86,27 +87,5 @@ class NotificationService {
     } catch (e) {
       debugPrint('Error scheduling expiry notification: $e');
     }
-  }
-
-  void scheduleTestNotification() async {
-    final DateTime now = DateTime.now();
-    final DateTime testDateTime = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      now.hour,
-      now.minute + 3, // Schedule for 1 minute in the future
-    );
-
-    await showNotification(
-      'Immediate Test', // Notification title
-      'This is a test notification sent immediately.', // Notification body
-    );
-
-    await NotificationService().scheduleExpiryNotification(
-      'Test Message', // Ingredient name or notification title
-      testDateTime,
-    );
-  }
+  }  
 }
