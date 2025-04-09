@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/expiry_notification.dart';
+import '../theme/colors.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -21,7 +22,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation(currentTimeZone));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_notification');
+        AndroidInitializationSettings('@mipmap/ic_notification');        
 
     const InitializationSettings initSettings = InitializationSettings(
       android: initializationSettingsAndroid,
@@ -31,6 +32,7 @@ class NotificationService {
     _isInitialized = true;
   }
 
+  // Define notification details
   NotificationDetails notificationDetails() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
@@ -40,14 +42,17 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
+        color: primaryColor,
       ),
     );
   }
 
+  // Show a simple notification (for testing purposes)
   Future<void> showNotification(String title, String body) async {
     await notificationsPlugin.show(0, title, body, notificationDetails());
   }
 
+  // Retrieve stored notifications from local storage
   Future<List<ExpiryNotification>> _getStoredNotifications() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final List<String>? jsonList = prefs.getStringList('scheduled_notifications');
@@ -55,18 +60,21 @@ class NotificationService {
     return jsonList.map((json) => ExpiryNotification.fromJson(jsonDecode(json))).toList();
   }
 
+  // Save notifications to local storage
   Future<void> _saveStoredNotifications(List<ExpiryNotification> notifications) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final List<String> jsonList = notifications.map((n) => jsonEncode(n.toJson())).toList();
     await prefs.setStringList('scheduled_notifications', jsonList);
   }
 
+  // Generate a unique notification ID
   Future<int> _generateUniqueNotificationId(List<ExpiryNotification> existingNotifications) async {
     if (existingNotifications.isEmpty) return 1;
     final ids = existingNotifications.map((n) => n.id).toList();
     return ids.reduce((a, b) => a > b ? a : b) + 1;
   }
-
+  
+  // Schedule a notification for an ingredient's expiry date
   Future<void> scheduleExpiryNotification(String ingredientName, DateTime expiryDateTime) async {
     try {
       final List<ExpiryNotification> notifications = await _getStoredNotifications();
@@ -102,6 +110,7 @@ class NotificationService {
     }
   }
 
+  // Edit an existing notification
   Future<void> editNotification(int id, ExpiryNotification updatedNotification) async {
     try {
       List<ExpiryNotification> notifications = await _getStoredNotifications();
@@ -132,6 +141,7 @@ class NotificationService {
     }
   }
 
+  // Remove a notification by ID
   Future<void> removeNotification(int id) async {
     try {
       List<ExpiryNotification> notifications = await _getStoredNotifications();
@@ -144,6 +154,7 @@ class NotificationService {
     }
   }
 
+  // Retrieve all scheduled notifications
   Future<List<ExpiryNotification>> getScheduledNotifications() async {
     List<ExpiryNotification> notifications = await _getStoredNotifications();
     // Clean up expired notifications
