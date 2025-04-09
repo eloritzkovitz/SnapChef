@@ -5,7 +5,7 @@ class RecipeResultScreen extends StatelessWidget {
   final String recipe;
   final String imageUrl;
 
-  RecipeResultScreen({super.key, required this.recipe, required this.imageUrl});
+  const RecipeResultScreen({super.key, required this.recipe, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ class FridgeGridView extends StatelessWidget {
   final String fridgeId;
   final FridgeViewModel viewModel;
   final Function(dynamic ingredient) onDelete;
+  final Function(dynamic ingredient) onSetExpiryAlert;
 
   const FridgeGridView({
     super.key,
@@ -14,6 +15,7 @@ class FridgeGridView extends StatelessWidget {
     required this.fridgeId,
     required this.viewModel,
     required this.onDelete,
+    required this.onSetExpiryAlert,
   });
 
   @override
@@ -34,6 +36,7 @@ class FridgeGridView extends StatelessWidget {
           onIncrease: () => viewModel.increaseCount(index, fridgeId),
           onDecrease: () => viewModel.decreaseCount(index, fridgeId),
           onDelete: () => onDelete(ingredient),
+          onSetExpiryAlert: () => onSetExpiryAlert(ingredient),
         );
       },
     );

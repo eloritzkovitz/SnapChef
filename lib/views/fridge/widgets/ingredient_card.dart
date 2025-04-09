@@ -6,6 +6,7 @@ class IngredientCard extends StatelessWidget {
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
   final VoidCallback onDelete;
+  final VoidCallback onSetExpiryAlert;
 
   const IngredientCard({
     super.key,
@@ -13,6 +14,7 @@ class IngredientCard extends StatelessWidget {
     required this.onIncrease,
     required this.onDecrease,
     required this.onDelete,
+    required this.onSetExpiryAlert,
   });
 
   @override
@@ -24,10 +26,11 @@ class IngredientCard extends StatelessWidget {
       color: Colors.white,
       elevation: 4.0,
       child: Padding(
-        padding: const EdgeInsets.all(0.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // Ingredient Image
             Image.asset(
               'assets/images/placeholder_image.png',
               height: 60,
@@ -35,6 +38,7 @@ class IngredientCard extends StatelessWidget {
               fit: BoxFit.cover,
             ),
             const SizedBox(height: 8.0),
+            // Ingredient Name
             Text(
               ingredient.name,
               style: const TextStyle(
@@ -43,6 +47,7 @@ class IngredientCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8.0),
+            // Quantity Controls
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -63,10 +68,23 @@ class IngredientCard extends StatelessWidget {
                   icon: const Icon(Icons.add_circle),
                   color: Colors.green,
                 ),
+              ],
+            ),
+            const SizedBox(),
+            // Action Buttons (Delete and Expiry Alert)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 // Delete Button
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.grey),
-                  onPressed: onDelete, // Use the provided onDelete callback
+                  onPressed: onDelete,
+                ),
+                const SizedBox(),
+                // Expiry Alert Button
+                IconButton(
+                  icon: const Icon(Icons.alarm_add, color: Colors.blue),
+                  onPressed: onSetExpiryAlert,
                 ),
               ],
             ),

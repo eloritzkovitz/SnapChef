@@ -27,6 +27,8 @@ build/
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+**/android/app/google-services.json
+**/android/**/.cxx/
 
 # Android Studio will place build artifacts here
 /android/app/debug

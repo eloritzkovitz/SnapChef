@@ -7,10 +7,10 @@ class RecognitionResultsWidget extends StatefulWidget {
   final String fridgeId;
 
   const RecognitionResultsWidget({
-    Key? key,
+    super.key,
     required this.groupedIngredients,
     required this.fridgeId,
-  }) : super(key: key);
+  });
 
   @override
   State<RecognitionResultsWidget> createState() => _RecognitionResultsWidgetState();
@@ -101,7 +101,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
