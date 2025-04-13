@@ -19,16 +19,7 @@ class FridgeViewModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
-
-  // List<Ingredient> get filteredIngredients {
-  //   if (_filter.isEmpty) {
-  //     return _ingredients;
-  //   }
-  //   return _ingredients
-  //       .where((ingredient) => ingredient.name.toLowerCase().contains(_filter.toLowerCase()))
-  //       .toList();
-  // }
+  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);  
 
   // Fetch ingredients from the user's fridge
   Future<void> fetchFridgeIngredients(String fridgeId) async {
