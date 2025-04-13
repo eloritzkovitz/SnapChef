@@ -8,14 +8,17 @@ class RecipeViewModel extends ChangeNotifier {
   String recipe = '';
   String imageUrl = '';
 
-  Future<void> generateRecipe(String ingredients) async {
+  // Generate a recipe based on a list of ingredients
+  Future<void> generateRecipe(List<String> ingredients) async {
     isLoading = true;
     recipe = '';
     imageUrl = '';
     notifyListeners();
 
     try {
-      final result = await _recipeService.generateRecipe(ingredients);
+      // Convert the list of ingredients to a format suitable for the backend
+      final ingredientsString = ingredients.join(',');
+      final result = await _recipeService.generateRecipe(ingredientsString);
       recipe = result['recipe']!;
       imageUrl = result['imageUrl']!;
     } catch (error) {
