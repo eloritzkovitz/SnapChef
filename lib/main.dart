@@ -48,10 +48,17 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final accessToken = prefs.getString('accessToken');
 
-  // Initialize AuthViewModel and fetch user profile if logged in
   final authViewModel = AuthViewModel();
+
   if (accessToken != null) {
-    await authViewModel.fetchUserProfile();
+    try {
+      await authViewModel.fetchUserProfile();
+    } catch (e) {
+      log('Error fetching user profile: $e');
+      // Clear invalid tokens and redirect to login
+      await prefs.remove('accessToken');
+      await prefs.remove('refreshToken');
+    }
   }
 
   // Run the app

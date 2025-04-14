@@ -16,7 +16,7 @@ class AuthService {
       Uri.parse('$baseUrl/api/users/login'),
       body: jsonEncode({'email': email, 'password': password}),
       headers: {'Content-Type': 'application/json'},
-    );    
+    );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -28,7 +28,8 @@ class AuthService {
   }
 
   // Signup
-  Future<Map<String, dynamic>> signup(String firstName, String lastName, String email, String password) async {
+  Future<Map<String, dynamic>> signup(
+      String firstName, String lastName, String email, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/users/register'),
       body: jsonEncode({
@@ -42,7 +43,7 @@ class AuthService {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
-    } else {      
+    } else {
       throw Exception('Signup failed');
     }
   }
@@ -65,7 +66,7 @@ class AuthService {
   }
 
   // Refresh tokens
-  Future<Map<String, dynamic>> refreshTokens() async {
+  Future<void> refreshTokens() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refreshToken');
 
@@ -81,20 +82,23 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
-      return data;
+      await prefs.setString('accessToken', data['accessToken']);
+      await prefs.setString('refreshToken', data['refreshToken']);
     } else {
-      throw Exception('Token refresh failed');
+      // Clear tokens if refresh fails
+      await prefs.remove('accessToken');
+      await prefs.remove('refreshToken');
+      throw Exception('Failed to refresh tokens: ${response.body}');
     }
   }
 
   // Get user profile
   Future<User> getUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');    
+    final userId = prefs.getString('userId');
     final url = userId != null
-      ? Uri.parse('$baseUrl/api/users/user/$userId')
-      : Uri.parse('$baseUrl/api/users/user');       
+        ? Uri.parse('$baseUrl/api/users/user/$userId')
+        : Uri.parse('$baseUrl/api/users/user');
 
     final response = await http.get(
       url,
@@ -106,13 +110,18 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return User.fromJson(data);
-    } else {      
+    } else {
       throw Exception('Failed to fetch user profile');
     }
   }
 
   // Update user profile
-  Future<Map<String, dynamic>> updateUserProfile(String firstName, String lastName,  String email, File? profilePicture,) async {
+  Future<Map<String, dynamic>> updateUserProfile(
+    String firstName,
+    String lastName,
+    String email,
+    File? profilePicture,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -146,10 +155,10 @@ class AuthService {
     final response = await request.send();
 
     if (response.statusCode == 200) {
-      final responseBody = await response.stream.bytesToString();     
+      final responseBody = await response.stream.bytesToString();
       return jsonDecode(responseBody);
     } else {
-      final responseBody = await response.stream.bytesToString();      
+      final responseBody = await response.stream.bytesToString();
       throw Exception('Failed to update profile: $responseBody');
     }
   }
@@ -166,12 +175,13 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
       );
     }
-    
-    await prefs.clear();    
+
+    await prefs.clear();
   }
 
   // Save tokens to SharedPreferences
-  Future<void> _saveTokens(String accessToken, String refreshToken, String _id) async {
+  Future<void> _saveTokens(
+      String accessToken, String refreshToken, String _id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('accessToken', accessToken);
     await prefs.setString('refreshToken', refreshToken);

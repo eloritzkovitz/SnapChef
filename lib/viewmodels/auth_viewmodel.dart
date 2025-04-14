@@ -15,9 +15,10 @@ class AuthViewModel extends ChangeNotifier {
 
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;
-  
+
   // Login
-  Future<void> login(String email, String password, BuildContext context) async {
+  Future<void> login(
+      String email, String password, BuildContext context) async {
     _setLoading(true);
     try {
       // Call the AuthService login method
@@ -36,7 +37,8 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   // Signup
-  Future<void> signup(String firstName, String lastName, String email, String password, BuildContext context) async {
+  Future<void> signup(String firstName, String lastName, String email,
+      String password, BuildContext context) async {
     _setLoading(true);
     try {
       await _authService.signup(firstName, lastName, email, password);
@@ -58,7 +60,7 @@ class AuthViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   // Google Sign-In
   Future<void> googleSignIn(String idToken, BuildContext context) async {
     _setLoading(true);
@@ -78,20 +80,29 @@ class AuthViewModel extends ChangeNotifier {
 
   // Fetch User Profile
   Future<void> fetchUserProfile() async {
-    //_setLoading(true);
-    try {
-      print('Fetching user profile...');
-      final userProfile = await _authService.getUserProfile();      
- 
-      _user = userProfile;
-      print(userProfile);
+    try {      
+      final userProfile = await _authService.getUserProfile();
+      _user = userProfile;      
       notifyListeners();
     } catch (e) {
-      print('Error fetching user profile: $e');
-      _user = null;
-      notifyListeners();
-    } finally {
-      _setLoading(false);
+      if (e.toString().contains('401')) {
+        // If the error is due to an expired token, attempt to refresh the token        
+        try {
+          await _authService.refreshTokens();          
+          // Retry fetching the user profile with the new access token
+          final userProfile = await _authService.getUserProfile();
+          _user = userProfile;          
+          notifyListeners();
+        } catch (refreshError) {          
+          _user = null;
+          notifyListeners();
+          throw Exception('Failed to refresh token and fetch user profile');
+        }
+      } else {        
+        _user = null;
+        notifyListeners();
+        throw Exception('Failed to fetch user profile');
+      }
     }
   }
 
@@ -103,32 +114,33 @@ class AuthViewModel extends ChangeNotifier {
     File? profilePicture,
   }) async {
     //_setLoading(true);
-    try { 
+    try {
       // Call the AuthService to update the user profile
-      final updatedData = await _authService.updateUserProfile(       
+      final updatedData = await _authService.updateUserProfile(
         firstName,
         lastName,
         email,
         profilePicture,
-      );      
+      );
 
       // Extract the new profile picture relative path from the response
       final newProfilePicture = updatedData['profilePicture'];
 
       // Update the local user object
-      if (_user != null) {        
-        _user = User(          
+      if (_user != null) {
+        _user = User(
           firstName: firstName,
           lastName: lastName,
           email: email,
-          profilePicture: profilePicture != null // Check if a new profile picture was provided
-            ? newProfilePicture ?? _user!.profilePicture
-            : _user!.profilePicture,
+          profilePicture: profilePicture !=
+                  null // Check if a new profile picture was provided
+              ? newProfilePicture ?? _user!.profilePicture
+              : _user!.profilePicture,
           fridgeId: _user!.fridgeId,
           cookbookId: _user!.cookbookId,
-      );
-      notifyListeners();
-      }      
+        );
+        notifyListeners();
+      }
     } catch (e) {
       print('Error updating profile: $e');
     } finally {
@@ -164,7 +176,8 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   String getFullImageUrl(String? imagePath) {
