@@ -15,9 +15,10 @@ class _MainScreenState extends State<MainScreen> {
   bool _hasInitializedFridge = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_hasInitializedFridge) {      
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (!_hasInitializedFridge) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final authViewModel = context.read<AuthViewModel>();
       final fridgeViewModel = context.read<FridgeViewModel>();
 
@@ -25,10 +26,11 @@ class _MainScreenState extends State<MainScreen> {
       if (fridgeId != null) {
         fridgeViewModel.fetchFridgeIngredients(fridgeId);
       }
+    });
 
-      _hasInitializedFridge = true;
-    }
+    _hasInitializedFridge = true;
   }
+}
 
   @override
   Widget build(BuildContext context) {
