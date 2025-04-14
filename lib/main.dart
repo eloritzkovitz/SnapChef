@@ -51,14 +51,7 @@ Future<void> main() async {
   final authViewModel = AuthViewModel();
 
   if (accessToken != null) {
-    try {
-      await authViewModel.fetchUserProfile();
-    } catch (e) {
-      log('Error fetching user profile: $e');
-      // Clear invalid tokens and redirect to login
-      await prefs.remove('accessToken');
-      await prefs.remove('refreshToken');
-    }
+    await authViewModel.fetchUserProfile();
   }
 
   // Run the app
