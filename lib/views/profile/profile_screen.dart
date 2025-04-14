@@ -26,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
       body: authViewModel.isLoading
