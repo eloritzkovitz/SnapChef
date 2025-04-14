@@ -16,6 +16,7 @@ dependencies:
   flutter_localizations: 
     sdk: flutter
   flutter_local_notifications: ^19.0.0
+  flutter_markdown: ^0.7.7
   flutter_speed_dial: ^7.0.0
   flutter_tts: ^4.2.2
   provider: ^6.0.0

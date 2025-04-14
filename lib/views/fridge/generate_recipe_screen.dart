@@ -25,6 +25,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
           'Generate Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
