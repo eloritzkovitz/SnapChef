@@ -5,7 +5,7 @@ import '../../viewmodels/fridge_viewmodel.dart';
 import 'recipe_result_screen.dart';
 
 class GenerateRecipeScreen extends StatefulWidget {
-  GenerateRecipeScreen({super.key});
+  const GenerateRecipeScreen({super.key});
 
   @override
   _GenerateRecipeScreenState createState() => _GenerateRecipeScreenState();
