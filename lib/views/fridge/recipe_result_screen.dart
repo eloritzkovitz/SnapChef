@@ -22,11 +22,20 @@ class RecipeResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Result',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Recipe Result',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_add),
+            tooltip: 'Save Recipe to Cookbook',
+            onPressed: () => _saveRecipeToCookbook(context),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -35,18 +44,11 @@ class RecipeResultScreen extends StatelessWidget {
             Expanded(
               child: DisplayRecipeWidget(
                 recipe: recipe,
-                imageUrl: imageUrl                
+                imageUrl: imageUrl,
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'saveRecipe',
-        foregroundColor: Colors.white,
-        onPressed: () => _saveRecipeToCookbook(context),
-        tooltip: 'Save Recipe to Cookbook',
-        child: const Icon(Icons.bookmark_add),
       ),
     );
   }
@@ -90,11 +92,6 @@ class RecipeResultScreen extends StatelessWidget {
       instructions: newRecipe.instructions,
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
-    );
-
-    // Show a confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Recipe saved to cookbook!')),
     );
 
     // Show a confirmation message

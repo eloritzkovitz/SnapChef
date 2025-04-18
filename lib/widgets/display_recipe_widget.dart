@@ -12,22 +12,37 @@ class DisplayRecipeWidget extends StatelessWidget {
     required this.imageUrl,
   });
 
+  // Strip markdown formatting from the recipe text
+  String stripMarkdown(String markdownText) {
+    return markdownText
+        .replaceAll(RegExp(r'\*\*|__'), '') // Remove bold markers
+        .replaceAll(RegExp(r'_'), '') // Remove italic markers
+        .replaceAll(RegExp(r'#+ '), '') // Remove heading markers
+        .replaceAll(RegExp(r'\[.*?\]\(.*?\)'), '') // Remove links
+        .replaceAll(RegExp(r'`'), '') // Remove inline code markers
+        .replaceAll(RegExp(r'\n'), ' ') // Replace newlines with spaces
+        .trim(); // Trim leading/trailing whitespace
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.transparent, // Ensure no default background color
+      body: Container(
+        color: Colors.white, // Set the background color explicitly
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [            
+          children: [
             // Render the recipe text as Markdown with proper constraints
             if (recipe.isNotEmpty)
               Expanded(
                 child: Markdown(
                   data: recipe,
                   styleSheet: MarkdownStyleSheet(
-                    h1: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    h2: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    h1: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                    h2: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                     p: const TextStyle(fontSize: 16),
                   ),
                 ),
@@ -60,9 +75,8 @@ class DisplayRecipeWidget extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: recipe.isNotEmpty
-          ? TTSWidget(text: recipe)
-          : null,
+      floatingActionButton:
+          recipe.isNotEmpty ? TTSWidget(text: stripMarkdown(recipe)) : null,
     );
   }
 }
