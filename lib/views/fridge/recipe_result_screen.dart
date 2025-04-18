@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import '../../widgets/tts_widget.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../models/ingredient.dart';
+import '../../models/recipe.dart';
+import '../../widgets/display_recipe_widget.dart';
 
 class RecipeResultScreen extends StatelessWidget {
   final String recipe;
   final String imageUrl;
+  final List<Ingredient> usedIngredients;
 
-  const RecipeResultScreen({super.key, required this.recipe, required this.imageUrl});
+  const RecipeResultScreen({
+    super.key,
+    required this.recipe,
+    required this.imageUrl,
+    required this.usedIngredients,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Result', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Recipe Result',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -20,60 +31,75 @@ class RecipeResultScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (recipe.isNotEmpty)
-              const Text(
-                "Recipe:",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            Expanded(
+              child: DisplayRecipeWidget(
+                recipe: recipe,
+                imageUrl: imageUrl                
               ),
-            const SizedBox(height: 10),
-            // Render the recipe text as Markdown with proper constraints
-            if (recipe.isNotEmpty)
-              Expanded(
-                child: Markdown(
-                  data: recipe,
-                  styleSheet: MarkdownStyleSheet(
-                    h1: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    h2: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    p: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-            if (imageUrl.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Generated Image:",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Text(
-                        'Failed to load image.',
-                        style: TextStyle(color: Colors.red),
-                      );
-                    },
-                  ),
-                ],
-              ),
+            ),
           ],
         ),
       ),
-      floatingActionButton: recipe.isNotEmpty
-          ? TTSWidget(text: recipe)
-          : null,
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'saveRecipe',
+        foregroundColor: Colors.white,
+        onPressed: () => _saveRecipeToCookbook(context),
+        tooltip: 'Save Recipe to Cookbook',
+        child: const Icon(Icons.bookmark_add),
+      ),
+    );
+  }
+
+  // Save the recipe to the cookbook
+  void _saveRecipeToCookbook(BuildContext context) {
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
+
+    // Get the cookbook ID dynamically from the user object
+    final user = Provider.of<AuthViewModel>(context, listen: false);
+    final String cookbookId = user.cookbookId ?? '';
+
+    // Create a Recipe object to save
+    final newRecipe = Recipe(
+      id: DateTime.now().toString(),
+      title: 'Generated Recipe',
+      description: 'A recipe generated based on your ingredients.',
+      mealType: 'Unknown',
+      cuisineType: 'Unknown',
+      difficulty: 'Medium',
+      cookingTime: 30,
+      prepTime: 10,
+      ingredients: usedIngredients,
+      instructions: recipe.split('\n'),
+      imageURL: imageUrl,
+      rating: null,
+    );
+
+    // Save the recipe to the cookbook
+    cookbookViewModel.addRecipeToCookbook(
+      cookbookId: cookbookId,
+      title: newRecipe.title,
+      description: newRecipe.description,
+      mealType: newRecipe.mealType,
+      cuisineType: newRecipe.cuisineType,
+      difficulty: newRecipe.difficulty,
+      cookingTime: newRecipe.cookingTime,
+      prepTime: newRecipe.prepTime,
+      ingredients: newRecipe.ingredients,
+      instructions: newRecipe.instructions,
+      imageURL: newRecipe.imageURL,
+      rating: newRecipe.rating,
+    );
+
+    // Show a confirmation message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Recipe saved to cookbook!')),
+    );
+
+    // Show a confirmation message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Recipe saved to cookbook!')),
     );
   }
 }

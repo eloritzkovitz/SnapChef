@@ -4,15 +4,8 @@ import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import 'recipe_result_screen.dart';
 
-class GenerateRecipeScreen extends StatefulWidget {
+class GenerateRecipeScreen extends StatelessWidget {
   const GenerateRecipeScreen({super.key});
-
-  @override
-  _GenerateRecipeScreenState createState() => _GenerateRecipeScreenState();
-}
-
-class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
-  final List<String> _selectedIngredients = []; // To store selected ingredients
 
   @override
   Widget build(BuildContext context) {
@@ -41,20 +34,18 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                       itemCount: fridgeViewModel.ingredients.length,
                       itemBuilder: (context, index) {
                         final ingredient = fridgeViewModel.ingredients[index];
-                        final isSelected = _selectedIngredients.contains(ingredient.name);
+                        final isSelected = recipeViewModel.isIngredientSelected(ingredient);
 
                         return CheckboxListTile(
                           title: Text(ingredient.name),
                           subtitle: Text('Quantity: ${ingredient.count}'),
                           value: isSelected,
                           onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                _selectedIngredients.add(ingredient.name);
-                              } else {
-                                _selectedIngredients.remove(ingredient.name);
-                              }
-                            });
+                            if (value == true) {
+                              recipeViewModel.addIngredient(ingredient);
+                            } else {
+                              recipeViewModel.removeIngredient(ingredient);
+                            }
                           },
                         );
                       },
@@ -63,11 +54,11 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
 
             // Generate Recipe Button
             ElevatedButton(
-              onPressed: recipeViewModel.isLoading || _selectedIngredients.isEmpty
+              onPressed: recipeViewModel.isLoading || recipeViewModel.selectedIngredients.isEmpty
                   ? null
                   : () async {
-                      // Send selected ingredients to the RecipeViewModel
-                      await recipeViewModel.generateRecipe(_selectedIngredients);
+                      // Generate the recipe through the view model
+                      await recipeViewModel.generateRecipe();
                       if (recipeViewModel.recipe.isNotEmpty) {
                         Navigator.push(
                           context,
@@ -75,6 +66,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                             builder: (context) => RecipeResultScreen(
                               recipe: recipeViewModel.recipe,
                               imageUrl: recipeViewModel.imageUrl,
+                              usedIngredients: recipeViewModel.selectedIngredients,
                             ),
                           ),
                         );

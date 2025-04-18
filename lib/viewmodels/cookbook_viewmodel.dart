@@ -17,19 +17,19 @@ class CookbookViewModel extends ChangeNotifier {
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
   // Fetch all recipes in the cookbook
-  Future<void> fetchCookbookRecipes() async {
+  Future<void> fetchCookbookRecipes(String cookbookId) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final items = await _cookbookService.fetchCookbookRecipes();
+      final items = await _cookbookService.fetchCookbookRecipes(cookbookId);
 
       _recipes.clear();
       if (items.isNotEmpty) {
         _recipes.addAll(
           items.map((item) {
             return Recipe(
-              id: item['_id'],
+              id: item['_id']?['\$oid'] ?? '',
               title: item['title'],
               description: item['description'],
               mealType: item['mealType'],
@@ -59,6 +59,7 @@ class CookbookViewModel extends ChangeNotifier {
 
   // Add a recipe to the cookbook
   Future<bool> addRecipeToCookbook({
+    required String cookbookId,
     required String title,
     required String description,
     required String mealType,
@@ -86,11 +87,11 @@ class CookbookViewModel extends ChangeNotifier {
         'rating': rating,
       };
 
-      final success = await _cookbookService.addRecipeToCookbook(recipeData);
+      final success = await _cookbookService.addRecipeToCookbook(recipeData, cookbookId);
       if (success) {
         _recipes.add(
           Recipe(
-            id: DateTime.now().toString(), // Temporary ID until backend returns one
+            id: DateTime.now().toString(),
             title: title,
             description: description,
             mealType: mealType,
@@ -115,6 +116,7 @@ class CookbookViewModel extends ChangeNotifier {
 
   // Update a recipe in the cookbook
   Future<bool> updateRecipe({
+    required String cookbookId,
     required String recipeId,
     required String title,
     required String description,
@@ -143,7 +145,7 @@ class CookbookViewModel extends ChangeNotifier {
         'rating': rating,
       };
 
-      final success = await _cookbookService.updateCookbookRecipe(recipeId, updatedData);
+      final success = await _cookbookService.updateCookbookRecipe(cookbookId, recipeId, updatedData);
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
@@ -172,9 +174,9 @@ class CookbookViewModel extends ChangeNotifier {
   }
 
   // Delete a recipe from the cookbook
-  Future<bool> deleteRecipe(String recipeId) async {
+  Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
-      final success = await _cookbookService.deleteCookbookRecipe(recipeId);
+      final success = await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
         _applyFilters();
