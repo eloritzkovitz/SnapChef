@@ -11,8 +11,20 @@ class Ingredient {
     required this.category,
     required this.imageURL,
     required this.count,
-  });  
+  });
 
+  // Convert JSON to Ingredient object
+  factory Ingredient.fromJson(Map<String, dynamic> json) {
+    return Ingredient(
+      id: json['id'],
+      name: json['name'],
+      category: json['category'],
+      imageURL: json['imageURL'] ?? 'assets/images/placeholder_image.png',
+      count: json['count'] ?? 0,
+    );
+  }
+
+  // Convert Ingredient object to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,

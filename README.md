@@ -3,8 +3,6 @@
 ## 🍳 Overview
 SnapChef is a mobile application designed to create customized recipes based on available products at home. The application will make use of AI to identify various ingredients (from a taken photo, a scanned receipt or a barcode), and then create cooking recipes based on the given data and other preferences. In addition, the application will provide guidance throughout the process and allow its users to save and rate their recipes, as well as share them with their friends.
 
----
-
 ## 🌟 Features
 
 ### 🍅 **Ingredient Recognition**
@@ -39,8 +37,6 @@ SnapChef is a mobile application designed to create customized recipes based on 
   - 🌟 **Custom Profiles:** Customize your own profile and preferences.
   - 👥 **Social Connectivity:** Add friends to collaborate and share recipes!
 
----
-
 ## ⚙️ Technology Stack
 
 ### 💻 Backend
@@ -56,12 +52,8 @@ SnapChef is a mobile application designed to create customized recipes based on 
 - **OCR** for receipt text extraction.
 - **AI Recipe Generator** for personalized recipe creation.
 
----
-
 ## 📖 API Documentation
 [Visit the SnapChef API server](https://github.com/Elor-Itz/SnapChef-API)
-
----
 
 ## 👤 Authors
 - [Elor Itzkovitz](https://github.com/Elor-Itz)

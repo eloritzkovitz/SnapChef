@@ -1,16 +1,15 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import '../models/ingredient.dart';
 import '../services/image_service.dart';
+import '../services/fridge_service.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
   List<Ingredient> filteredIngredients = [];
   List<dynamic> recognizedIngredients = [];
+  final FridgeService _fridgeService = FridgeService();
 
   String _filter = '';
   String? _selectedCategory;
@@ -19,54 +18,34 @@ class FridgeViewModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
-
-  // List<Ingredient> get filteredIngredients {
-  //   if (_filter.isEmpty) {
-  //     return _ingredients;
-  //   }
-  //   return _ingredients
-  //       .where((ingredient) => ingredient.name.toLowerCase().contains(_filter.toLowerCase()))
-  //       .toList();
-  // }
+  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);  
 
   // Fetch ingredients from the user's fridge
   Future<void> fetchFridgeIngredients(String fridgeId) async {
-    String? serverIp = dotenv.env['SERVER_IP'];
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse('$serverIp/api/fridge/$fridgeId/items'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final items = await _fridgeService.fetchFridgeItems(fridgeId);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonResponse = jsonDecode(response.body);
-
-        _ingredients.clear();
-        if (jsonResponse.isNotEmpty) {
-          _ingredients.addAll(
-            jsonResponse.map((item) {
-              return Ingredient(
-                id: item['id'],
-                name: item['name'],
-                category: item['category'],
-                imageURL:
-                    item['imageURL'] ?? 'assets/images/placeholder_image.png',
-                count: item['quantity'],
-              );
-            }).toList(),
-          );
-        }
-
-        // Apply the current filter and sort options
-        _applyFiltersAndSorting();
-        notifyListeners();
-      } else {
-        log('Failed to fetch fridge ingredients: ${response.statusCode}');
+      _ingredients.clear();
+      if (items.isNotEmpty) {
+        _ingredients.addAll(
+          items.map((item) {
+            return Ingredient(
+              id: item['id'],
+              name: item['name'],
+              category: item['category'],
+              imageURL: item['imageURL'] ?? 'assets/images/placeholder_image.png',
+              count: item['quantity'],
+            );
+          }).toList(),
+        );
       }
+
+      // Apply the current filter and sort options
+      _applyFiltersAndSorting();
+      notifyListeners();
     } catch (e) {
       log('Error fetching fridge ingredients: $e');
     } finally {
@@ -153,8 +132,6 @@ class FridgeViewModel extends ChangeNotifier {
   // Add ingredient to fridge (local and backend)
   Future<bool> addIngredientToFridge(String fridgeId, String id, String name,
       String category, int quantity) async {
-    String? serverIp = dotenv.env['SERVER_IP'];
-
     try {
       // Check if the ingredient already exists in the fridge
       final existingIngredientIndex =
@@ -165,55 +142,44 @@ class FridgeViewModel extends ChangeNotifier {
         final existingIngredient = _ingredients[existingIngredientIndex];
         final newQuantity = existingIngredient.count + quantity;
 
-        // Update the quantity on the backend
-        final response = await http.put(
-          Uri.parse(
-              '$serverIp/api/fridge/$fridgeId/items/${existingIngredient.id}'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'quantity': newQuantity}),
-        );
-
-        if (response.statusCode == 200) {
+        // Update the quantity on the backend using the service
+        final success = await _fridgeService.updateFridgeItem(
+            fridgeId, existingIngredient.id, newQuantity);
+        if (success) {
           // Update the quantity locally
           _ingredients[existingIngredientIndex].count = newQuantity;
           _applyFiltersAndSorting();
           return true;
         } else {
-          log('Failed to update ingredient quantity: ${response.statusCode}');
+          log('Failed to update ingredient quantity');
           return false;
         }
       } else {
         // Ingredient does not exist, add it as a new ingredient
-        final response = await http.post(
-          Uri.parse('$serverIp/api/fridge/$fridgeId/items'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'id': id,
-            'name': name,
-            'category': category,
-            'imageURL': '',
-            'quantity': quantity,
-          }),
-        );
+        final itemData = {
+          'id': id,
+          'name': name,
+          'category': category,
+          'imageURL': '',
+          'quantity': quantity,
+        };
 
-        if (response.statusCode == 201) {
-          final jsonResponse = jsonDecode(response.body);
-          final newItem = jsonResponse['ingredient'];
-
+        final success = await _fridgeService.addFridgeItem(fridgeId, itemData);
+        if (success) {
           // Add the new ingredient locally
           _ingredients.add(
             Ingredient(
-              id: newItem['id'],
-              name: newItem['name'],
-              category: newItem['category'],
-              imageURL: newItem['imageURL'] ?? '',
-              count: newItem['quantity'],
+              id: id,
+              name: name,
+              category: category,
+              imageURL: '',
+              count: quantity,
             ),
           );
           _applyFiltersAndSorting();
           return true;
         } else {
-          log('Failed to add ingredient to fridge: ${response.statusCode}');
+          log('Failed to add ingredient to fridge');
           return false;
         }
       }
@@ -227,16 +193,10 @@ class FridgeViewModel extends ChangeNotifier {
 
   // Update ingredient count in fridge (local and backend)
   Future<bool> updateItem(String fridgeId, String itemId, int newCount) async {
-    String? serverIp = dotenv.env['SERVER_IP'];
-
     try {
-      final response = await http.put(
-        Uri.parse('$serverIp/api/fridge/$fridgeId/items/$itemId'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'quantity': newCount}),
-      );
-
-      if (response.statusCode == 200) {
+      final success =
+          await _fridgeService.updateFridgeItem(fridgeId, itemId, newCount);
+      if (success) {
         final index =
             _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
         if (index != -1) {
@@ -245,7 +205,7 @@ class FridgeViewModel extends ChangeNotifier {
         }
         return true;
       } else {
-        log('Failed to update item: ${response.statusCode}');
+        log('Failed to update item');
         return false;
       }
     } catch (e) {
@@ -258,20 +218,15 @@ class FridgeViewModel extends ChangeNotifier {
 
   // Delete ingredient from fridge (local and backend)
   Future<bool> deleteItem(String fridgeId, String itemId) async {
-    String? serverIp = dotenv.env['SERVER_IP'];
-
     try {
-      final response = await http.delete(
-        Uri.parse('$serverIp/api/fridge/$fridgeId/items/$itemId'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
+      final success =
+          await _fridgeService.deleteFridgeItem(fridgeId, itemId);
+      if (success) {
         _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
         _applyFiltersAndSorting();
         return true;
       } else {
-        log('Failed to delete item: ${response.statusCode}');
+        log('Failed to delete item');
         return false;
       }
     } catch (e) {

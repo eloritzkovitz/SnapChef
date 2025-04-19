@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/main_viewmodel.dart';
 import '../viewmodels/fridge_viewmodel.dart';
+import '../viewmodels/cookbook_viewmodel.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 class MainScreen extends StatefulWidget {
@@ -13,20 +14,40 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   bool _hasInitializedFridge = false;
+  bool _hasInitializedCookbook = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_hasInitializedFridge) {      
-      final authViewModel = context.read<AuthViewModel>();
-      final fridgeViewModel = context.read<FridgeViewModel>();
+    
+    // Initialize fridge ingredients
+    if (!_hasInitializedFridge) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final authViewModel = context.read<AuthViewModel>();
+        final fridgeViewModel = context.read<FridgeViewModel>();
 
-      final fridgeId = authViewModel.fridgeId;
-      if (fridgeId != null) {
-        fridgeViewModel.fetchFridgeIngredients(fridgeId);
-      }
+        final fridgeId = authViewModel.fridgeId;
+        if (fridgeId != null) {
+          fridgeViewModel.fetchFridgeIngredients(fridgeId);
+        }
+      });
 
       _hasInitializedFridge = true;
+    }
+
+    // Initialize cookbook recipes
+    if (!_hasInitializedCookbook) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final authViewModel = context.read<AuthViewModel>();
+        final cookbookViewModel = context.read<CookbookViewModel>();
+
+        final cookbookId = authViewModel.cookbookId;
+        if (cookbookId != null) {
+          cookbookViewModel.fetchCookbookRecipes(cookbookId);
+        }
+      });
+
+      _hasInitializedCookbook = true;
     }
   }
 
@@ -47,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
                   const SizedBox(width: 8),
                   const Text('SnapChef',
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                ],                
+                ],
               ),
               backgroundColor: Colors.white,
             )
@@ -58,7 +79,8 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Cookbook'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.notifications), label: 'Notifications'),
         ],
         currentIndex: viewModel.selectedIndex,
         onTap: viewModel.onItemTapped,
