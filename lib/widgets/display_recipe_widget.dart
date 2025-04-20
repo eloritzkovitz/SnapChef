@@ -12,28 +12,27 @@ class DisplayRecipeWidget extends StatelessWidget {
     required this.imageUrl,
   });
 
-  // Strip markdown formatting from the recipe text
   String stripMarkdown(String markdownText) {
     return markdownText
-        .replaceAll(RegExp(r'\*\*|__'), '') // Remove bold markers
-        .replaceAll(RegExp(r'_'), '') // Remove italic markers
-        .replaceAll(RegExp(r'#+ '), '') // Remove heading markers
-        .replaceAll(RegExp(r'\[.*?\]\(.*?\)'), '') // Remove links
-        .replaceAll(RegExp(r'`'), '') // Remove inline code markers
-        .replaceAll(RegExp(r'\n'), ' ') // Replace newlines with spaces
-        .trim(); // Trim leading/trailing whitespace
+        .replaceAll(RegExp(r'\*\*|__'), '')
+        .replaceAll(RegExp(r'_'), '')
+        .replaceAll(RegExp(r'#+ '), '')
+        .replaceAll(RegExp(r'\[.*?\]\(.*?\)'), '')
+        .replaceAll(RegExp(r'`'), '')
+        .replaceAll(RegExp(r'\n'), ' ')
+        .trim();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Ensure no default background color
+      backgroundColor: Colors.transparent,
       body: Container(
-        color: Colors.white, // Set the background color explicitly
+        color: Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Render the recipe text as Markdown with proper constraints
+
             if (recipe.isNotEmpty)
               Expanded(
                 child: Markdown(
@@ -60,16 +59,24 @@ class DisplayRecipeWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Text(
-                        'Failed to load image.',
-                        style: TextStyle(color: Colors.red),
-                      );
-                    },
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        imageUrl,
+                        height: 300,
+                        width: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Text(
+                            'Failed to load image.',
+                            style: TextStyle(color: Colors.red),
+                          );
+                        },
+                      ),
+                    ),
                   ),
+
                 ],
               ),
           ],
