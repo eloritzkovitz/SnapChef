@@ -88,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
                       width: double.infinity,
-                      height: 50, // Set a fixed height
+                      height: 50,
                       child: ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
@@ -115,7 +115,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                height: 50, // Match the height of the login button
+                height: 50,
                 child: SignInButton(
                   Buttons.Google,
                   text: "Sign in with Google",
