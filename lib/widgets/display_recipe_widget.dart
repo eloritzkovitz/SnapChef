@@ -12,6 +12,7 @@ class DisplayRecipeWidget extends StatelessWidget {
     required this.imageUrl,
   });
 
+  // Strip markdown formatting from the recipe text
   String stripMarkdown(String markdownText) {
     return markdownText
         .replaceAll(RegExp(r'\*\*|__'), '')
@@ -27,46 +28,22 @@ class DisplayRecipeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Container(
-        color: Colors.white,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            if (recipe.isNotEmpty)
-              Expanded(
-                child: Markdown(
-                  data: recipe,
-                  styleSheet: MarkdownStyleSheet(
-                    h1: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                    h2: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                    p: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-            if (imageUrl.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Generated Image:",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+      body: SafeArea(
+        child: Container(
+          color: Colors.white,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (imageUrl.isNotEmpty)
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
                         imageUrl,
-                        height: 300,
-                        width: 200,
                         fit: BoxFit.cover,
+                        width: double.infinity,
                         errorBuilder: (context, error, stackTrace) {
                           return const Text(
                             'Failed to load image.',
@@ -76,10 +53,21 @@ class DisplayRecipeWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                ],
-              ),
-          ],
+                const SizedBox(height: 20),
+                if (recipe.isNotEmpty)
+                  MarkdownBody(
+                    data: recipe,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
+                      h2: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                      p: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton:
