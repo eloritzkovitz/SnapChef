@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
-import '../../theme/colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -23,9 +22,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    _firstNameController = TextEditingController(text: authViewModel.user?.firstName ?? '');
-    _lastNameController = TextEditingController(text: authViewModel.user?.lastName ?? '');
-    _emailController = TextEditingController(text: authViewModel.user?.email ?? '');
+    _firstNameController =
+        TextEditingController(text: authViewModel.user?.firstName ?? '');
+    _lastNameController =
+        TextEditingController(text: authViewModel.user?.lastName ?? '');
+    _emailController =
+        TextEditingController(text: authViewModel.user?.email ?? '');
   }
 
   @override
@@ -49,10 +51,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),        
+        title: const Text('Edit Profile',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
@@ -62,7 +67,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
-              children: [                
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Stack(
                   children: [
                     CircleAvatar(
@@ -70,8 +76,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
                           : authViewModel.user?.profilePicture != null
-                              ? NetworkImage(authViewModel.getFullImageUrl(authViewModel.user!.profilePicture!)) as ImageProvider
-                              : const AssetImage('assets/images/default_profile.png'),
+                              ? NetworkImage(authViewModel.getFullImageUrl(
+                                      authViewModel.user!.profilePicture!))
+                                  as ImageProvider
+                              : const AssetImage(
+                                  'assets/images/default_profile.png'),
                     ),
                     Positioned(
                       bottom: 0,
@@ -96,12 +105,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(
+                    height:
+                        20),
 
                 // First Name Field
                 TextFormField(
                   controller: _firstNameController,
-                  decoration: const InputDecoration(labelText: 'First Name'),
+                  decoration: InputDecoration(
+                    labelText: 'First Name',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[200],                   
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.person, color: Colors.grey),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your first name';
@@ -114,7 +135,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Last Name Field
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(labelText: 'Last Name'),
+                  decoration: InputDecoration(
+                    labelText: 'Last Name',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[200],                    
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon:
+                        const Icon(Icons.person_outline, color: Colors.grey),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your last name';
@@ -127,7 +159,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Email Field
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[200],                    
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
@@ -138,44 +180,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 32),
 
                 // Save Button
-                ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // Show a loading indicator while updating the profile
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-
-                      try {
-                        // Update the user profile
-                        await authViewModel.updateUserProfile(
-                          firstName: _firstNameController.text,
-                          lastName: _lastNameController.text,
-                          email: _emailController.text,
-                          profilePicture: _selectedImage,
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        // Show a loading indicator while updating the profile
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
 
-                        // Close the loading indicator
-                        Navigator.pop(context);
-
-                        // Navigate back to the ProfileScreen
-                        Navigator.pop(context);
-                      } catch (e) {
-                        // Close the loading indicator
-                        Navigator.pop(context);
-
-                        // Show an error message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to update profile: $e')),
-                        );
+                        try {
+                          // Update the user profile
+                          await authViewModel.updateUserProfile(
+                            firstName: _firstNameController.text,
+                            lastName: _lastNameController.text,
+                            email: _emailController.text,
+                            profilePicture: _selectedImage,
+                          );                          
+                          Navigator.pop(context); // Close the loading indicator                         
+                          Navigator.pop(context); // Go back to the previous screen after successful update
+                        } catch (e) {                          
+                          Navigator.pop(context);                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Failed to update profile: $e')),
+                          );
+                        }
                       }
-                    }
-                  },
-                  child: const Text('Save'),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ],
             ),
