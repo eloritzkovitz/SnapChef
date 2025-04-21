@@ -30,6 +30,7 @@ dependencies:
   timezone: ^0.10.0
   flutter_timezone: ^4.1.0
   google_sign_in: ^6.3.0
+  flutter_signin_button: ^2.0.0
 
 flutter:
   uses-material-design: true

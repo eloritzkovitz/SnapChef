@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 
@@ -13,6 +14,8 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
+
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       body: Padding(
@@ -35,7 +38,17 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 30),
               TextFormField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -48,9 +61,20 @@ class LoginScreen extends StatelessWidget {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                ),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -62,36 +86,59 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 20),
               authViewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          authViewModel.login(
-                            emailController.text,
-                            passwordController.text,
-                            context,
-                          );
-                        }
-                      },
-                      child: const Text('Login'),
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50, // Set a fixed height
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            authViewModel.login(
+                              emailController.text,
+                              passwordController.text,
+                              context,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
                     ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await authViewModel.googleSignIn(context);
-                },
-                icon: const Icon(Icons.login),
-                label: const Text('Sign in with Google'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  elevation: 2,
+              SizedBox(
+                width: double.infinity,
+                height: 50, // Match the height of the login button
+                child: SignInButton(
+                  Buttons.Google,
+                  text: "Sign in with Google",
+                  onPressed: () async {
+                    await authViewModel.googleSignIn(context);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
+              const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/signup');
                 },
-                child: const Text('Don\'t have an account?'),
+                child: Text(
+                  'Don\'t have an account?',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
