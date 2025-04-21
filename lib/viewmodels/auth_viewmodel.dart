@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
   bool _isLoading = false;
   bool isLoggingOut = false;
   User? _user;
@@ -62,17 +65,33 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   // Google Sign-In
-  Future<void> googleSignIn(String idToken, BuildContext context) async {
+  Future<void> googleSignIn(BuildContext context) async {
     _setLoading(true);
     try {
-      await _authService.googleSignIn(idToken);
+      // Start the Google Sign-In process
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
 
-      // Fetch the user profile after Google Sign-In
-      await fetchUserProfile();
+        // Retrieve the idToken
+        final idToken = googleAuth.idToken;
 
-      Navigator.pushReplacementNamed(context, '/main');
+        if (idToken != null) {
+          // Send the idToken to your backend for authentication
+          await _authService.googleSignIn(idToken);
+
+          // Fetch the user profile after successful sign-in
+          await fetchUserProfile();
+
+          // Navigate to the main screen
+          Navigator.pushReplacementNamed(context, '/main');
+        } else {
+          throw Exception('Failed to retrieve Google ID token');
+        }
+      }
     } catch (e) {
-      _showError(context, e.toString());
+      _showError(context, 'Google Sign-In failed: $e');
     } finally {
       _setLoading(false);
     }

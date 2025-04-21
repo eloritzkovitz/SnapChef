@@ -8,6 +8,8 @@ class LoginScreen extends StatelessWidget {
 
   final _formKey = GlobalKey<FormState>();
 
+  LoginScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
@@ -72,6 +74,19 @@ class LoginScreen extends StatelessWidget {
                       },
                       child: const Text('Login'),
                     ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await authViewModel.googleSignIn(context);
+                },
+                icon: const Icon(Icons.login),
+                label: const Text('Sign in with Google'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  elevation: 2,
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/signup');
