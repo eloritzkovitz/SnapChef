@@ -13,6 +13,8 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
+    
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       body: Padding(
@@ -32,10 +34,20 @@ class SignupScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 30),             
               TextFormField(
                 controller: firstNameController,
-                decoration: const InputDecoration(labelText: 'First Name'),
+                decoration: InputDecoration(
+                  labelText: 'First Name',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.person, color: Colors.grey),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'First name is required';
@@ -43,9 +55,20 @@ class SignupScreen extends StatelessWidget {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),             
               TextFormField(
                 controller: lastNameController,
-                decoration: const InputDecoration(labelText: 'Last Name'),
+                decoration: InputDecoration(
+                  labelText: 'Last Name',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.person_outline, color: Colors.grey),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Last name is required';
@@ -53,9 +76,20 @@ class SignupScreen extends StatelessWidget {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),             
               TextFormField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -68,9 +102,20 @@ class SignupScreen extends StatelessWidget {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),              
               TextFormField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                ),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -85,25 +130,46 @@ class SignupScreen extends StatelessWidget {
               const SizedBox(height: 20),
               authViewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          authViewModel.signup(
-                            firstNameController.text,
-                            lastNameController.text,
-                            emailController.text,
-                            passwordController.text,                            
-                            context,
-                          );
-                        }
-                      },
-                      child: const Text('Sign Up'),
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            authViewModel.signup(
+                              firstNameController.text,
+                              lastNameController.text,
+                              emailController.text,
+                              passwordController.text,
+                              context,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign Up',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
                     ),
+              const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/login');
                 },
-                child: const Text('Already have an account?'),
+                child: Text(
+                  'Already have an account?',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
