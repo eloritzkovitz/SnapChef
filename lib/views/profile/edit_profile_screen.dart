@@ -15,8 +15,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
-  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
   File? _selectedImage;
+
+  final placeholder = '********';
+  bool _isPasswordVisible = false; // To toggle password visibility
 
   @override
   void initState() {
@@ -26,15 +29,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextEditingController(text: authViewModel.user?.firstName ?? '');
     _lastNameController =
         TextEditingController(text: authViewModel.user?.lastName ?? '');
-    _emailController =
-        TextEditingController(text: authViewModel.user?.email ?? '');
+    _passwordController = TextEditingController(text: placeholder);
   }
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -154,11 +156,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email Field
+                // Password Field
                 TextFormField(
-                  controller: _emailController,
+                  controller: _passwordController,
+                  obscureText:
+                      !_isPasswordVisible, // Toggle password visibility
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'Password',
                     labelStyle: const TextStyle(color: Colors.grey),
                     filled: true,
                     fillColor: Colors.grey[200],
@@ -166,11 +170,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible =
+                              !_isPasswordVisible; // Toggle visibility
+                        });
+                      },
+                    ),
                   ),
+                  // Clear the placeholder when the user taps
+                  onTap: () {
+                    if (_passwordController.text == placeholder) {
+                      _passwordController
+                          .clear(); // Clear the placeholder when the user taps
+                    }
+                  },                  
+                  // Check if the password is empty and restore the placeholder
+                  onEditingComplete: () {                    
+                    if (_passwordController.text.isEmpty || 
+                        _passwordController.text == "") {
+                      setState(() {
+                        _passwordController.text = placeholder;
+                      });
+                    }
+                  },
+                  // Validate the password
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6 && value != placeholder) {
+                      return 'Password must be at least 6 characters long';
                     }
                     return null;
                   },
@@ -194,13 +232,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         );
 
                         try {
+                          // Check if the password has been changed
+                          final password = _passwordController
+                                      .text.isNotEmpty &&
+                                  _passwordController.text != placeholder
+                              ? _passwordController.text
+                              : null; // Keep the current password if unchanged
+
                           // Update the user profile
                           await authViewModel.updateUserProfile(
                             firstName: _firstNameController.text,
                             lastName: _lastNameController.text,
-                            email: _emailController.text,
+                            password: password, // Pass the new password or null
                             profilePicture: _selectedImage,
                           );
+
                           Navigator.pop(context); // Close the loading indicator
                           Navigator.pop(
                               context); // Go back to the previous screen after successful update
@@ -226,77 +272,75 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
-              // Delete Account Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final shouldDelete = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Account'),
-                        content: const Text(
-                          'This action will remove all your data and cannot be reverted. Are you sure you want to proceed?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(context, true),
-                            child: const Text(
-                              'Delete',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (shouldDelete == true) {                     
-                      showDialog(
+                const SizedBox(height: 16),
+                // Delete Account Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final shouldDelete = await showDialog<bool>(
                         context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const Center(
-                          child: CircularProgressIndicator(),
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Account'),
+                          content: const Text(
+                            'This action will remove all your data and cannot be reverted. Are you sure you want to proceed?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
                         ),
                       );
 
-                      try {
-                        await authViewModel.deleteAccount(context);
-                        Navigator.pop(context); // Close the loading indicator
-                        Navigator.pushReplacementNamed(
-                            context, '/login'); // Redirect to login screen
-                      } catch (e) {
-                        Navigator.pop(context); // Close the loading indicator
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('Failed to delete account: $e')),
+                      if (shouldDelete == true) {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
+
+                        try {
+                          await authViewModel.deleteAccount(context);
+                          Navigator.pop(context); // Close the loading indicator
+                          Navigator.pushReplacementNamed(
+                              context, '/login'); // Redirect to login screen
+                        } catch (e) {
+                          Navigator.pop(context); // Close the loading indicator
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Failed to delete account: $e')),
+                          );
+                        }
                       }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Delete Account',
+                      style: TextStyle(fontSize: 16),
                     ),
                   ),
-                  child: const Text(
-                    'Delete Account',
-                    style: TextStyle(fontSize: 16),
-                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
-            ),            
+            ),
           ),
         ),
       ),

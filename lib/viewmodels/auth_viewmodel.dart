@@ -99,25 +99,25 @@ class AuthViewModel extends ChangeNotifier {
 
   // Fetch User Profile
   Future<void> fetchUserProfile() async {
-    try {      
+    try {
       final userProfile = await _authService.getUserProfile();
-      _user = userProfile;      
+      _user = userProfile;
       notifyListeners();
     } catch (e) {
       if (e.toString().contains('401')) {
-        // If the error is due to an expired token, attempt to refresh the token        
+        // If the error is due to an expired token, attempt to refresh the token
         try {
-          await _authService.refreshTokens();          
+          await _authService.refreshTokens();
           // Retry fetching the user profile with the new access token
           final userProfile = await _authService.getUserProfile();
-          _user = userProfile;          
+          _user = userProfile;
           notifyListeners();
-        } catch (refreshError) {          
+        } catch (refreshError) {
           _user = null;
           notifyListeners();
           throw Exception('Failed to refresh token and fetch user profile');
         }
-      } else {        
+      } else {
         _user = null;
         notifyListeners();
         throw Exception('Failed to fetch user profile');
@@ -129,16 +129,16 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> updateUserProfile({
     required String firstName,
     required String lastName,
-    required String email,
+    String? password, // Make password optional
     File? profilePicture,
   }) async {
-    //_setLoading(true);
+    _setLoading(true);
     try {
       // Call the AuthService to update the user profile
       final updatedData = await _authService.updateUserProfile(
         firstName,
         lastName,
-        email,
+        password ?? '',
         profilePicture,
       );
 
@@ -147,21 +147,20 @@ class AuthViewModel extends ChangeNotifier {
 
       // Update the local user object
       if (_user != null) {
-        _user = User(
+        _user = _user!.copyWith(
           firstName: firstName,
           lastName: lastName,
-          email: email,
-          profilePicture: profilePicture !=
-                  null // Check if a new profile picture was provided
+          password: password ??
+              _user!.password, // Keep the current password if not updated
+          profilePicture: profilePicture != null
               ? newProfilePicture ?? _user!.profilePicture
-              : _user!.profilePicture,
-          fridgeId: _user!.fridgeId,
-          cookbookId: _user!.cookbookId,
+              : _user!.profilePicture, // Update profile picture if provided
         );
         notifyListeners();
       }
     } catch (e) {
       print('Error updating profile: $e');
+      throw Exception('Failed to update profile');
     } finally {
       _setLoading(false);
     }

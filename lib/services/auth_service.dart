@@ -119,7 +119,7 @@ class AuthService {
   Future<Map<String, dynamic>> updateUserProfile(
     String firstName,
     String lastName,
-    String email,
+    String password,
     File? profilePicture,
   ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -137,7 +137,7 @@ class AuthService {
       })
       ..fields['firstName'] = firstName
       ..fields['lastName'] = lastName
-      ..fields['email'] = email;
+      ..fields['password'] = password;
 
     if (profilePicture != null) {
       final mimeType = lookupMimeType(profilePicture.path);
