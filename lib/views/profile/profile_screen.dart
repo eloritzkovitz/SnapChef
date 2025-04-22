@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
-import 'edit_profile_screen.dart';
+import 'widgets/settings_menu.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +19,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     authViewModel.fetchUserProfile();
   }
 
+  // Open the side menu with a sliding animation
+  void _openSideMenu(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const SettingsMenu();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset(0.0, 0.0);
+        const curve = Curves.easeInOut;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
@@ -28,6 +55,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _openSideMenu(context),
+          ),
+        ],
       ),
       body: authViewModel.isLoading
           ? const Center(
@@ -78,47 +112,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           authViewModel.user?.email ?? 'No Email',
                           style: const TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Edit Profile Button
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-                              );
-                            },
-                            icon: const Icon(Icons.edit),
-                            label: const Text('Edit Profile'),
-                            style: ElevatedButton.styleFrom(                              
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Logout Button
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: authViewModel.isLoggingOut
-                                ? null
-                                : () async {
-                                    authViewModel.setLoggingOut(true);
-                                    await authViewModel.logout(context);
-                                    authViewModel.setLoggingOut(false);
-                                  },
-                            icon: const Icon(Icons.logout),
-                            label: Text(authViewModel.isLoggingOut ? 'Logging out...' : 'Logout'),
-                            style: ElevatedButton.styleFrom(                              
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
                         ),
                       ],
                     ),
