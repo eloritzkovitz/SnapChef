@@ -4,6 +4,11 @@ import '../viewmodels/main_viewmodel.dart';
 import '../viewmodels/fridge_viewmodel.dart';
 import '../viewmodels/cookbook_viewmodel.dart';
 import '../viewmodels/auth_viewmodel.dart';
+import '../views/home/home_screen.dart';
+import '../views/fridge/fridge_screen.dart';
+import '../views/cookbook/cookbook_screen.dart';
+import '../views/profile/profile_screen.dart';
+import '../views/notifications/notifications_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,7 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // Initialize fridge ingredients
     if (!_hasInitializedFridge) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,36 +60,40 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<MainViewModel>();
 
+    // Define the screens for the navigation bar
+    final screens = [
+      const HomeScreen(),
+      const FridgeScreen(),
+      const CookbookScreen(),
+      const ProfileScreen(),
+      const NotificationsScreen(),
+    ];
+
     return Scaffold(
-      appBar: viewModel.selectedIndex == 0 || viewModel.selectedIndex == 1
-          ? AppBar(
-              title: Row(
-                children: [
-                  Image.asset(
-                    'assets/images/icon_appbar.png',
-                    height: 36,
-                    width: 36,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('SnapChef',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              backgroundColor: Colors.white,
-            )
-          : null,
-      body: viewModel.currentScreen,
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Cookbook'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Notifications'),
-        ],
-        currentIndex: viewModel.selectedIndex,
-        onTap: viewModel.onItemTapped,
-      ),
-    );
+  body: screens[viewModel.selectedIndex],
+  bottomNavigationBar: Container(
+    decoration: BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 2,
+          
+        ),
+      ],
+    ),
+    child: BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Fridge'),
+        BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Cookbook'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
+      ],
+      currentIndex: viewModel.selectedIndex,
+      onTap: viewModel.onItemTapped,
+      iconSize: 30,
+    ),
+  ),
+);
   }
 }
