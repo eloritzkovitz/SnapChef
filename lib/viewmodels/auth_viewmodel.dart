@@ -167,6 +167,21 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Delete User Account
+  Future<void> deleteAccount(BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.deleteAccount();
+      _user = null; // Clear the user data on account deletion
+      notifyListeners(); // Notify listeners to update the UI
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      _showError(context, e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Logout
   Future<void> logout(BuildContext context) async {
     _setLoading(true);

@@ -163,6 +163,29 @@ class AuthService {
     }
   }
 
+  // Delete user account
+  Future<void> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in SharedPreferences');
+    }
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/users/user/$userId'),
+      headers: {
+        'Authorization': 'Bearer ${await getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.clear(); // Clear tokens and user data
+    } else {
+      throw Exception('Failed to delete account: ${response.body}');
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
