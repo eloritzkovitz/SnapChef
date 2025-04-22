@@ -30,31 +30,42 @@ class GenerateRecipeScreen extends StatelessWidget {
             Expanded(
               child: fridgeViewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: fridgeViewModel.ingredients.length,
-                      itemBuilder: (context, index) {
-                        final ingredient = fridgeViewModel.ingredients[index];
-                        final isSelected = recipeViewModel.isIngredientSelected(ingredient);
+                  : fridgeViewModel.ingredients.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No ingredients in the fridge. Please add some before generating a recipe.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: fridgeViewModel.ingredients.length,
+                          itemBuilder: (context, index) {
+                            final ingredient =
+                                fridgeViewModel.ingredients[index];
+                            final isSelected = recipeViewModel
+                                .isIngredientSelected(ingredient);
 
-                        return CheckboxListTile(
-                          title: Text(ingredient.name),
-                          subtitle: Text('Quantity: ${ingredient.count}'),
-                          value: isSelected,
-                          onChanged: (bool? value) {
-                            if (value == true) {
-                              recipeViewModel.addIngredient(ingredient);
-                            } else {
-                              recipeViewModel.removeIngredient(ingredient);
-                            }
+                            return CheckboxListTile(
+                              title: Text(ingredient.name),
+                              subtitle: Text('Quantity: ${ingredient.count}'),
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                if (value == true) {
+                                  recipeViewModel.addIngredient(ingredient);
+                                } else {
+                                  recipeViewModel.removeIngredient(ingredient);
+                                }
+                              },
+                            );
                           },
-                        );
-                      },
-                    ),
+                        ),
             ),
 
             // Generate Recipe Button
             ElevatedButton(
-              onPressed: recipeViewModel.isLoading || recipeViewModel.selectedIngredients.isEmpty
+              onPressed: recipeViewModel.isLoading ||
+                      recipeViewModel.selectedIngredients.isEmpty
                   ? null
                   : () async {
                       // Generate the recipe through the view model
@@ -66,7 +77,8 @@ class GenerateRecipeScreen extends StatelessWidget {
                             builder: (context) => RecipeResultScreen(
                               recipe: recipeViewModel.recipe,
                               imageUrl: recipeViewModel.imageUrl,
-                              usedIngredients: recipeViewModel.selectedIngredients,
+                              usedIngredients:
+                                  recipeViewModel.selectedIngredients,
                             ),
                           ),
                         );

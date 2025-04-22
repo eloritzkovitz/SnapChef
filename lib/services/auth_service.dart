@@ -119,7 +119,7 @@ class AuthService {
   Future<Map<String, dynamic>> updateUserProfile(
     String firstName,
     String lastName,
-    String email,
+    String password,
     File? profilePicture,
   ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -137,7 +137,7 @@ class AuthService {
       })
       ..fields['firstName'] = firstName
       ..fields['lastName'] = lastName
-      ..fields['email'] = email;
+      ..fields['password'] = password;
 
     if (profilePicture != null) {
       final mimeType = lookupMimeType(profilePicture.path);
@@ -160,6 +160,29 @@ class AuthService {
     } else {
       final responseBody = await response.stream.bytesToString();
       throw Exception('Failed to update profile: $responseBody');
+    }
+  }
+
+  // Delete user account
+  Future<void> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in SharedPreferences');
+    }
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/users/user/$userId'),
+      headers: {
+        'Authorization': 'Bearer ${await getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.clear(); // Clear tokens and user data
+    } else {
+      throw Exception('Failed to delete account: ${response.body}');
     }
   }
 
