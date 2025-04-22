@@ -20,16 +20,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final placeholder = '********';
   bool _isPasswordVisible = false; // To toggle password visibility
+  late FocusNode _passwordFocusNode;
 
   @override
   void initState() {
     super.initState();
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    
+      // Initialize controllers with current user data
     _firstNameController =
         TextEditingController(text: authViewModel.user?.firstName ?? '');
     _lastNameController =
         TextEditingController(text: authViewModel.user?.lastName ?? '');
     _passwordController = TextEditingController(text: placeholder);
+
+    // Initialize the focus node for the password field
+    _passwordFocusNode = FocusNode();
+    _passwordFocusNode.addListener(() {
+      if (!_passwordFocusNode.hasFocus) {
+        // When the password field loses focus, restore the placeholder if empty
+        if (_passwordController.text.isEmpty) {
+          setState(() {
+            _passwordController.text = placeholder;
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -37,6 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -159,8 +176,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Password Field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText:
-                      !_isPasswordVisible, // Toggle password visibility
+                  focusNode: _passwordFocusNode,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: Colors.grey),
@@ -180,8 +197,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          _isPasswordVisible =
-                              !_isPasswordVisible; // Toggle visibility
+                          _isPasswordVisible = !_isPasswordVisible;
                         });
                       },
                     ),
@@ -189,19 +205,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Clear the placeholder when the user taps
                   onTap: () {
                     if (_passwordController.text == placeholder) {
-                      _passwordController
-                          .clear(); // Clear the placeholder when the user taps
+                      _passwordController.clear();
                     }
                   },                  
-                  // Check if the password is empty and restore the placeholder
-                  onEditingComplete: () {                    
-                    if (_passwordController.text.isEmpty || 
-                        _passwordController.text == "") {
-                      setState(() {
-                        _passwordController.text = placeholder;
-                      });
-                    }
-                  },
                   // Validate the password
                   validator: (value) {
                     if (value == null || value.isEmpty) {
