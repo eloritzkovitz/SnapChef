@@ -29,6 +29,12 @@ class RecipeViewModel extends ChangeNotifier {
     return selectedIngredients.contains(ingredient);
   }
 
+  // Clear all selected ingredients
+  void clearSelectedIngredients() {
+    selectedIngredients.clear();
+    notifyListeners();
+  }
+
   // Generate a recipe based on the selected ingredients and additional options
   Future<void> generateRecipe({
     String? mealType,
