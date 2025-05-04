@@ -29,8 +29,14 @@ class RecipeViewModel extends ChangeNotifier {
     return selectedIngredients.contains(ingredient);
   }
 
-  // Generate a recipe based on the selected ingredients
-  Future<void> generateRecipe() async {
+  // Generate a recipe based on the selected ingredients and additional options
+  Future<void> generateRecipe({
+    String? mealType,
+    String? cuisine,
+    String? difficulty,
+    int? cookingTime,
+    int? prepTime,
+  }) async {
     isLoading = true;
     recipe = '';
     imageUrl = '';
@@ -38,10 +44,25 @@ class RecipeViewModel extends ChangeNotifier {
 
     try {
       // Convert the list of selected ingredients to a format suitable for the backend
-      final ingredientsString = selectedIngredients.map((e) => e.name).join(',');
-      final result = await _recipeService.generateRecipe(ingredientsString);
-      recipe = result['recipe']!;
-      imageUrl = result['imageUrl']!;
+      final ingredientsString =
+          selectedIngredients.map((e) => e.name).join(',');
+
+      // Prepare the request payload
+      final requestPayload = {
+        'ingredients': ingredientsString,
+        'mealType': mealType,
+        'cuisine': cuisine,
+        'difficulty': difficulty,
+        'cookingTime': cookingTime,
+        'prepTime': prepTime,
+      };
+
+      // Call the backend service to generate the recipe
+      final result = await _recipeService.generateRecipe(requestPayload);
+
+      // Update the recipe and image URL with the response from the backend
+      recipe = result['recipe'] ?? 'No recipe generated.';
+      imageUrl = result['imageUrl'] ?? '';
     } catch (error) {
       recipe = 'Failed to generate recipe: $error';
     } finally {

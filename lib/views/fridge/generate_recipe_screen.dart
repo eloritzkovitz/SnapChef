@@ -4,8 +4,31 @@ import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import 'recipe_result_screen.dart';
 
-class GenerateRecipeScreen extends StatelessWidget {
+class GenerateRecipeScreen extends StatefulWidget {
   const GenerateRecipeScreen({super.key});
+
+  @override
+  State<GenerateRecipeScreen> createState() => _GenerateRecipeScreenState();
+}
+
+class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
+  final TextEditingController _cookingTimeController = TextEditingController();
+  final TextEditingController _prepTimeController = TextEditingController();
+
+  String? _selectedMealType;
+  String? _selectedCuisine;
+  String? _selectedDifficulty;
+
+  final List<String> _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+  final List<String> _cuisines = ['Italian', 'Chinese', 'Indian', 'Mexican'];
+  final List<String> _difficulties = ['Easy', 'Medium', 'Hard'];
+
+  @override
+  void dispose() {
+    _cookingTimeController.dispose();
+    _prepTimeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +49,11 @@ class GenerateRecipeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Dropdowns and Input Fields for Recipe Options
+            _buildOptionsSection(),
+
+            const SizedBox(height: 16),
+
             // Display fridge items with checkboxes
             Expanded(
               child: fridgeViewModel.isLoading
@@ -69,7 +97,17 @@ class GenerateRecipeScreen extends StatelessWidget {
                   ? null
                   : () async {
                       // Generate the recipe through the view model
-                      await recipeViewModel.generateRecipe();
+                      await recipeViewModel.generateRecipe(
+                        mealType: _selectedMealType,
+                        cuisine: _selectedCuisine,
+                        difficulty: _selectedDifficulty,
+                        cookingTime: _cookingTimeController.text.isNotEmpty
+                            ? int.tryParse(_cookingTimeController.text)
+                            : null,
+                        prepTime: _prepTimeController.text.isNotEmpty
+                            ? int.tryParse(_prepTimeController.text)
+                            : null,
+                      );
                       if (recipeViewModel.recipe.isNotEmpty) {
                         Navigator.push(
                           context,
@@ -79,6 +117,16 @@ class GenerateRecipeScreen extends StatelessWidget {
                               imageUrl: recipeViewModel.imageUrl,
                               usedIngredients:
                                   recipeViewModel.selectedIngredients,
+                              mealType: _selectedMealType,
+                              cuisineType: _selectedCuisine,
+                              difficulty: _selectedDifficulty,
+                              cookingTime: _cookingTimeController
+                                      .text.isNotEmpty
+                                  ? int.tryParse(_cookingTimeController.text)
+                                  : null,
+                              prepTime: _prepTimeController.text.isNotEmpty
+                                  ? int.tryParse(_prepTimeController.text)
+                                  : null,
                             ),
                           ),
                         );
@@ -93,6 +141,97 @@ class GenerateRecipeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildOptionsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Meal Type Dropdown
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            labelText: 'Meal Type',
+            border: OutlineInputBorder(),
+          ),
+          value: _selectedMealType,
+          items: _mealTypes
+              .map((type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  ))
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedMealType = value;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+
+        // Cuisine Dropdown
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            labelText: 'Cuisine',
+            border: OutlineInputBorder(),
+          ),
+          value: _selectedCuisine,
+          items: _cuisines
+              .map((cuisine) => DropdownMenuItem(
+                    value: cuisine,
+                    child: Text(cuisine),
+                  ))
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedCuisine = value;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+
+        // Difficulty Dropdown
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            labelText: 'Difficulty',
+            border: OutlineInputBorder(),
+          ),
+          value: _selectedDifficulty,
+          items: _difficulties
+              .map((difficulty) => DropdownMenuItem(
+                    value: difficulty,
+                    child: Text(difficulty),
+                  ))
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedDifficulty = value;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+
+        // Cooking Time Input
+        TextFormField(
+          controller: _cookingTimeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Cooking Time (minutes)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Preparation Time Input
+        TextFormField(
+          controller: _prepTimeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Preparation Time (minutes)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
     );
   }
 }
