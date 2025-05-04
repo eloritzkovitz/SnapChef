@@ -206,4 +206,11 @@ class CookbookViewModel extends ChangeNotifier {
     _filter = filter;
     _applyFilters();
   }
+
+  // Search recipes by name
+  List<Recipe> searchRecipes(String query) {
+    return _recipes
+        .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
 }
