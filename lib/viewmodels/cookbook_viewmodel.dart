@@ -29,7 +29,7 @@ class CookbookViewModel extends ChangeNotifier {
         _recipes.addAll(
           items.map((item) {
             return Recipe(
-              id: item['_id']?['\$oid'] ?? '',
+              id: item['_id'] ?? '',
               title: item['title'],
               description: item['description'],
               mealType: item['mealType'],
@@ -205,5 +205,12 @@ class CookbookViewModel extends ChangeNotifier {
   void setFilter(String filter) {
     _filter = filter;
     _applyFilters();
+  }
+
+  // Search recipes by name
+  List<Recipe> searchRecipes(String query) {
+    return _recipes
+        .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 }

@@ -10,12 +10,22 @@ class RecipeResultScreen extends StatelessWidget {
   final String recipe;
   final String imageUrl;
   final List<Ingredient> usedIngredients;
+  final String? mealType;
+  final String? cuisineType;
+  final String? difficulty;
+  final int? cookingTime;
+  final int? prepTime;
 
   const RecipeResultScreen({
     super.key,
     required this.recipe,
     required this.imageUrl,
     required this.usedIngredients,
+    this.mealType,
+    this.cuisineType,
+    this.difficulty,
+    this.cookingTime,
+    this.prepTime,
   });
 
   @override
@@ -67,11 +77,11 @@ class RecipeResultScreen extends StatelessWidget {
       id: DateTime.now().toString(),
       title: 'Generated Recipe',
       description: 'A recipe generated based on your ingredients.',
-      mealType: 'Unknown',
-      cuisineType: 'Unknown',
-      difficulty: 'Medium',
-      cookingTime: 30,
-      prepTime: 10,
+      mealType: mealType ?? '',
+      cuisineType: cuisineType ?? '',
+      difficulty: difficulty ?? '',
+      cookingTime: cookingTime ?? 0,
+      prepTime: prepTime ?? 0,
       ingredients: usedIngredients,
       instructions: recipe.split('\n'),
       imageURL: imageUrl,

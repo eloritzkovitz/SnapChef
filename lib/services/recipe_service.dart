@@ -5,7 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class RecipeService {
   final String? serverUrl = dotenv.env['SERVER_IP'];
 
-  Future<Map<String, String>> generateRecipe(String ingredients) async {
+  // Generate a recipe based on the provided payload
+  Future<Map<String, String>> generateRecipe(Map<String, dynamic> payload) async {
     if (serverUrl == null) {
       throw Exception("Server URL not configured properly.");
     }
@@ -15,9 +16,7 @@ class RecipeService {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'ingredients': ingredients,
-      }),
+      body: jsonEncode(payload),
     );
 
     if (response.statusCode == 200) {
@@ -27,7 +26,7 @@ class RecipeService {
         'imageUrl': data['imageUrl'] ?? '',
       };
     } else {
-      throw Exception('Failed to generate recipe.');
+      throw Exception('Failed to generate recipe: ${response.body}');
     }
   }
 }
