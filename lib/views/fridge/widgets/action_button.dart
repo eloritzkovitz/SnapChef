@@ -13,7 +13,7 @@ class ActionButton extends StatelessWidget {
   final ImageService _imageService = ImageService();
 
   Future<void> _pickImage(BuildContext context, String endpoint) async {
-    final image = await _imageService.pickImage('camera');
+    final image = await _imageService.pickImage(context);
     if (image != null) {
       showDialog(
         context: context,

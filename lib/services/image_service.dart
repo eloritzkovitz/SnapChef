@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -8,17 +9,100 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 
 class ImageService {
-
   final ImagePicker _picker = ImagePicker();
 
-  // Pick an image from the specified source (camera or gallery)
-  Future<File?> pickImage(String source) async {
-    final pickedFile = await _picker.pickImage(
-      source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+  // Pick an image for source selection
+  Future<File?> pickImage(BuildContext context) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Take a Photo Button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context, ImageSource.camera),
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.camera_alt,
+                              size: 80, color: Theme.of(context).primaryColor),
+                          const SizedBox(height: 8),
+                          Text('Choose from Camera',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Theme.of(context).primaryColor,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Choose from Gallery Button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context, ImageSource.gallery),
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.photo_library,
+                              size: 80, color: Theme.of(context).primaryColor),
+                          const SizedBox(height: 8),
+                          Text('Choose from Gallery',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Theme.of(context).primaryColor,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
 
-    if (pickedFile != null) {
-      return File(pickedFile.path);
+    if (source != null) {
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        return File(pickedFile.path);
+      }
     }
     return null;
   }
