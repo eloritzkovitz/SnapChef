@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import 'view_recipe_screen.dart';
 import './widgets/recipe_card.dart';
 
@@ -46,7 +47,23 @@ class RecipeSearchDelegate extends SearchDelegate {
       itemCount: results.length,
       itemBuilder: (context, index) {
         final recipe = results[index];
-        return RecipeCard(recipe: recipe); // Use the RecipeCard widget
+        return RecipeCard(
+          recipe: recipe,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ViewRecipeScreen(
+                  recipeId: recipe.id,
+                  cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                  recipe: recipe.instructions.join('\n'),
+                  imageUrl: recipe.imageURL ?? '',
+                  usedIngredients: recipe.ingredients,
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -73,11 +90,12 @@ class RecipeSearchDelegate extends SearchDelegate {
         return RecipeCard(
           recipe: recipe,
           onTap: () {
-            // Navigate directly to the recipe view
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ViewRecipeScreen(
+                  recipeId: recipe.id,
+                  cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
                   recipe: recipe.instructions.join('\n'),
                   imageUrl: recipe.imageURL ?? '',
                   usedIngredients: recipe.ingredients,

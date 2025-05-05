@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../view_recipe_screen.dart';
 import '../../../models/recipe.dart';
 import '../../../theme/colors.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/auth_viewmodel.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
@@ -19,7 +21,7 @@ class RecipeCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      color: primarySwatch[900], // Match the card color from the CookbookScreen
+      color: primarySwatch[900],
       child: ListTile(
         leading: recipe.imageURL != null && recipe.imageURL!.isNotEmpty
             ? Image.network(
@@ -115,6 +117,8 @@ class RecipeCard extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ViewRecipeScreen(
+                    recipeId: recipe.id,
+                    cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
                     recipe: recipe.instructions.join('\n'),
                     imageUrl: recipe.imageURL ?? '',
                     usedIngredients: recipe.ingredients,

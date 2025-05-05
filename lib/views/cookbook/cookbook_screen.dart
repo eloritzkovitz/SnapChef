@@ -4,6 +4,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import 'recipe_search_delegate.dart';
 import './widgets/recipe_card.dart';
+import 'view_recipe_screen.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -71,7 +72,23 @@ class _CookbookScreenState extends State<CookbookScreen> {
             itemCount: cookbookViewModel.recipes.length,
             itemBuilder: (context, index) {
               final recipe = cookbookViewModel.recipes[index];
-              return RecipeCard(recipe: recipe); // Use the RecipeCard widget
+              return RecipeCard(
+                recipe: recipe,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewRecipeScreen(
+                        recipeId: recipe.id,
+                        cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                        recipe: recipe.instructions.join('\n'),
+                        imageUrl: recipe.imageURL ?? '',
+                        usedIngredients: recipe.ingredients,
+                      ),
+                    ),
+                  );
+                },
+              );
             },
           );
         },
