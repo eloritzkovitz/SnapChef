@@ -166,6 +166,20 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Update User Preferences
+  Future<void> updateUserPreferences({
+    required String allergies,
+    required Map<String, bool> dietaryPreferences,
+  }) async {
+    // Update the user's preferences in the backend
+    try {      
+
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Delete User Account
   Future<void> deleteAccount(BuildContext context) async {
     _setLoading(true);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../edit_profile_screen.dart';
+import '../edit_preferences_screen.dart';
 
 class SettingsMenu extends StatelessWidget {
   const SettingsMenu({super.key});
@@ -70,7 +71,7 @@ class SettingsMenu extends StatelessWidget {
                 text: 'Preferences',
                 onTap: () {
                   Navigator.pop(context); 
-                  // Preferences                 
+                  _openSlidingScreen(context, const EditPreferencesScreen());         
                 },
               ),
               _buildMenuItem(
