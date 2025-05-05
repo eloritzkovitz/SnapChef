@@ -48,7 +48,7 @@ class ImageService {
                           Text('Choose from Camera',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 14,
                                 color: Theme.of(context).primaryColor,
                               )),
                         ],
@@ -75,7 +75,7 @@ class ImageService {
                           Text('Choose from Gallery',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 14,
                                 color: Theme.of(context).primaryColor,
                               )),
                         ],
