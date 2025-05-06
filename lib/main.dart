@@ -48,15 +48,22 @@ Future<void> main() async {
   // Check if the user is already logged in
   final prefs = await SharedPreferences.getInstance();
   final accessToken = prefs.getString('accessToken');
-
   final authViewModel = AuthViewModel();
 
+  bool isLoggedIn = false;
+
   if (accessToken != null) {
-    await authViewModel.fetchUserProfile();
+    try {
+      await authViewModel.fetchUserProfile();
+      isLoggedIn = true;
+    } catch (e) {
+      log('Error during auto-login: $e');
+      // Tokens might have been cleared inside refreshTokens()
+      isLoggedIn = false;
+    }
   }
 
-  // Run the app
-  runApp(MyApp(isLoggedIn: accessToken != null, authViewModel: authViewModel));
+  runApp(MyApp(isLoggedIn: isLoggedIn, authViewModel: authViewModel));
 }
 
 class MyApp extends StatelessWidget {
