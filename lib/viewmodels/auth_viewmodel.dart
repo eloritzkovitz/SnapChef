@@ -105,22 +105,20 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (e.toString().contains('401')) {
-        // If the error is due to an expired token, attempt to refresh the token
         try {
-          await _authService.refreshTokens();
-          // Retry fetching the user profile with the new access token
+          await refreshTokens();
           final userProfile = await _authService.getUserProfile();
           _user = userProfile;
           notifyListeners();
         } catch (refreshError) {
           _user = null;
           notifyListeners();
-          throw Exception('Failed to refresh token and fetch user profile');
+          rethrow;
         }
       } else {
         _user = null;
         notifyListeners();
-        throw Exception('Failed to fetch user profile');
+        rethrow;
       }
     }
   }
@@ -129,7 +127,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> updateUserProfile({
     required String firstName,
     required String lastName,
-    String? password, // Make password optional
+    String? password,
     File? profilePicture,
   }) async {
     _setLoading(true);
@@ -166,14 +164,22 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Refresh Tokens
+  Future<void> refreshTokens() async {
+    try {
+      await _authService.refreshTokens();
+    } catch (e) {
+      throw Exception('Failed to refresh tokens: $e');
+    }
+  }
+
   // Update User Preferences
   Future<void> updateUserPreferences({
     required String allergies,
     required Map<String, bool> dietaryPreferences,
   }) async {
     // Update the user's preferences in the backend
-    try {      
-
+    try {
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -197,16 +203,13 @@ class AuthViewModel extends ChangeNotifier {
 
   // Logout
   Future<void> logout(BuildContext context) async {
-    _setLoading(true);
     try {
       await _authService.logout();
       _user = null; // Clear the user data on logout
-      notifyListeners(); // Notify listeners to update the UI
+      notifyListeners();
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       _showError(context, e.toString());
-    } finally {
-      _setLoading(false);
     }
   }
 

@@ -45,19 +45,39 @@ Future<void> main() async {
     log("Error loading .env file: $e");
   }
 
-  // Check if the user is already logged in
+  // Get SharedPreferences instance
   final prefs = await SharedPreferences.getInstance();
-  final accessToken = prefs.getString('accessToken');
 
+  // Retrieve the access and refresh tokens from SharedPreferences
+  final accessToken = prefs.getString('accessToken');
+  final refreshToken = prefs.getString('refreshToken');
+  
+  // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
 
-  if (accessToken != null) {
-    await authViewModel.fetchUserProfile();
+  bool isLoggedIn = false;
+
+  // Handle token validation and user profile fetching
+  if (accessToken != null && refreshToken != null) {
+    try {      
+      await authViewModel.fetchUserProfile();
+      isLoggedIn = authViewModel.user != null;
+    } catch (e) {      
+      try {        
+        await authViewModel.refreshTokens();        
+        await authViewModel.fetchUserProfile(); 
+        isLoggedIn = authViewModel.user != null;
+      } catch (e) {        
+        isLoggedIn = false;
+      }
+    }
+  } else {   
+    isLoggedIn = false;
   }
 
-  // Run the app
-  runApp(MyApp(isLoggedIn: accessToken != null, authViewModel: authViewModel));
-}
+  // Run the app with the login status and auth view model
+  runApp(MyApp(isLoggedIn: isLoggedIn, authViewModel: authViewModel));
+}  
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;

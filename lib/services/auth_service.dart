@@ -65,33 +65,6 @@ class AuthService {
     }
   }
 
-  // Refresh tokens
-  Future<void> refreshTokens() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString('refreshToken');
-
-    if (refreshToken == null) {
-      throw Exception('No refresh token found');
-    }
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/refresh'),
-      body: jsonEncode({'refreshToken': refreshToken}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await prefs.setString('accessToken', data['accessToken']);
-      await prefs.setString('refreshToken', data['refreshToken']);
-    } else {
-      // Clear tokens if refresh fails
-      await prefs.remove('accessToken');
-      await prefs.remove('refreshToken');
-      throw Exception('Failed to refresh tokens: ${response.body}');
-    }
-  }
-
   // Get user profile
   Future<User> getUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
@@ -110,8 +83,10 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return User.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw Exception('401');
     } else {
-      throw Exception('Failed to fetch user profile');
+      throw Exception('Failed to fetch user profile: ${response.statusCode}');
     }
   }
 
@@ -211,6 +186,7 @@ class AuthService {
     await prefs.setString('userId', _id);
   }
 
+  // Get tokens from SharedPreferences
   Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('accessToken');
@@ -219,5 +195,31 @@ class AuthService {
   Future<String?> getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('refreshToken');
+  }
+
+  // Refresh tokens
+  Future<void> refreshTokens() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refreshToken');
+
+    if (refreshToken == null) {
+      throw Exception('No refresh token found');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/users/refresh'),
+      body: jsonEncode({'refreshToken': refreshToken}),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);      
+      await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
+    } else {
+      // Clear tokens if refresh fails
+      await prefs.remove('accessToken');
+      await prefs.remove('refreshToken');
+      throw Exception('Failed to refresh tokens: ${response.body}');
+    }
   }
 }
