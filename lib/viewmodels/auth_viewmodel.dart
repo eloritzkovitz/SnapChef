@@ -105,22 +105,20 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (e.toString().contains('401')) {
-        // If the error is due to an expired token, attempt to refresh the token
         try {
           await refreshTokens();
-          // Retry fetching the user profile with the new access token
           final userProfile = await _authService.getUserProfile();
           _user = userProfile;
           notifyListeners();
         } catch (refreshError) {
           _user = null;
           notifyListeners();
-          throw Exception('Failed to refresh token and fetch user profile');
+          rethrow;
         }
       } else {
         _user = null;
         notifyListeners();
-        throw Exception('Failed to fetch user profile');
+        rethrow;
       }
     }
   }
@@ -129,7 +127,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> updateUserProfile({
     required String firstName,
     required String lastName,
-    String? password, // Make password optional
+    String? password,
     File? profilePicture,
   }) async {
     _setLoading(true);
