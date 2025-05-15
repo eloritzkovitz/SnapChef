@@ -15,12 +15,18 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
 
   // Dietary preferences
   final Map<String, bool> _dietaryPreferences = {
-    'Kosher': false,
-    'Halal': false,
     'Vegan': false,
     'Vegetarian': false,
     'Pescatarian': false,
+    'Carnivore': false,
+    'Ketogenic': false,
+    'Paleo': false,
+    'Low-Carb': false,
+    'Low-Fat': false,
     'Gluten-Free': false,
+    'Dairy-Free': false,
+    'Kosher': false,
+    'Halal': false,
   };
 
   @override
