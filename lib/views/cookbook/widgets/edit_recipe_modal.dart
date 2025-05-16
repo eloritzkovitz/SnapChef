@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/recipe.dart';
+import '../../../theme/colors.dart';
 
 class EditRecipeModal extends StatefulWidget {
   final Recipe recipeObj;
@@ -190,7 +191,7 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
             );
             Navigator.pop(context);
           },
-          child: const Text('Save', style: TextStyle(color: Colors.blue)),
+          child: const Text('Save', style: TextStyle(color: primaryColor)),
         ),
       ],
     );
