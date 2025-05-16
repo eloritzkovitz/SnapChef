@@ -138,6 +138,33 @@ class AuthService {
     }
   }
 
+  // Update user preferences
+  Future<void> updateUserPreferences({    
+    required List<String> allergies,
+    required Map<String, bool> dietaryPreferences,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final accessToken = prefs.getString('accessToken');
+
+    final url = Uri.parse('$baseUrl/api/users/user/$userId/preferences');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'allergies': allergies,
+        'dietaryPreferences': dietaryPreferences,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update preferences: ${response.body}');
+    }
+  }
+
   // Delete user account
   Future<void> deleteAccount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -213,7 +240,7 @@ class AuthService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);      
+      final data = jsonDecode(response.body);
       await _saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
     } else {
       // Clear tokens if refresh fails

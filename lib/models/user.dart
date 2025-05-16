@@ -1,11 +1,15 @@
+import 'preferences.dart';
+
 class User {
   final String firstName;
   final String lastName;
   final String email;
   final String? password;
   final String? profilePicture;
+  final String? joinDate;
   final String fridgeId;
   final String cookbookId;
+  final Preferences? preferences;
 
   User({
     required this.firstName,
@@ -13,8 +17,10 @@ class User {
     required this.email,
     this.password,
     this.profilePicture,
+    this.joinDate,
     required this.fridgeId,
     required this.cookbookId,
+    this.preferences,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -23,8 +29,12 @@ class User {
       lastName: json['lastName'] ?? 'User',
       email: json['email'] ?? 'No Email',      
       profilePicture: json['profilePicture']?.isNotEmpty == true ? json['profilePicture'] : null,
+      joinDate: json['joinDate'] ?? 'No date available',
       fridgeId: json['fridgeId'] ?? 'No Fridge ID',
       cookbookId: json['cookbookId'] ?? 'No Cookbook ID',
+      preferences: json['preferences'] != null
+          ? Preferences.fromJson(json['preferences'])
+          : null,
     );
   }
 
@@ -34,8 +44,10 @@ class User {
     String? lastName,
     String? password,
     String? profilePicture,
+    String? joinDate,
     String? fridgeId,
     String? cookbookId,
+    Preferences? preferences,
   }) {
     return User(
       firstName: firstName ?? this.firstName,
@@ -43,8 +55,10 @@ class User {
       email: email,
       password: password ?? this.password,
       profilePicture: profilePicture ?? this.profilePicture,
+      joinDate: joinDate ?? this.joinDate,
       fridgeId: fridgeId ?? this.fridgeId,
       cookbookId: cookbookId ?? this.cookbookId,
+      preferences: preferences ?? this.preferences,
     );
   }
 

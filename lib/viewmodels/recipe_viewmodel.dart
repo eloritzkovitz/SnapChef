@@ -42,6 +42,7 @@ class RecipeViewModel extends ChangeNotifier {
     String? difficulty,
     int? cookingTime,
     int? prepTime,
+    Map<String, dynamic>? preferences,
   }) async {
     isLoading = true;
     recipe = '';
@@ -61,6 +62,7 @@ class RecipeViewModel extends ChangeNotifier {
         'difficulty': difficulty,
         'cookingTime': cookingTime,
         'prepTime': prepTime,
+        'preferences': preferences,
       };
 
       // Call the backend service to generate the recipe
