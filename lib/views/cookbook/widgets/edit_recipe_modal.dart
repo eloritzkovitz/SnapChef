@@ -32,6 +32,43 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
   late String cuisineType;
   late String difficulty;
 
+  static const List<String> _mealTypes = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Dessert',
+    'Snack',
+    'Drink'
+  ];
+  static const List<String> _cuisines = [
+    'African',
+    'American',
+    'Brazilian',
+    'British',
+    'Caribbean',
+    'Chinese',
+    'Ethiopian',
+    'Filipino',
+    'French',
+    'German',
+    'Greek',
+    'Indian',
+    'Indonesian',
+    'Italian',
+    'Japanese',
+    'Korean',
+    'Levantine',
+    'Mexican',
+    'Moroccan',
+    'Persian',
+    'Russian',
+    'Spanish',
+    'Thai',
+    'Turkish',
+    'Vietnamese'
+  ];
+  static const List<String> _difficulties = ['Easy', 'Medium', 'Hard'];
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +92,20 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure dropdowns always have the current value
+    final mealTypeItems = [
+      ..._mealTypes,
+      if (!_mealTypes.contains(mealType)) mealType,
+    ];
+    final cuisineTypeItems = [
+      ..._cuisines,
+      if (!_cuisines.contains(cuisineType)) cuisineType,
+    ];
+    final difficultyItems = [
+      ..._difficulties,
+      if (!_difficulties.contains(difficulty)) difficulty,
+    ];
+
     return AlertDialog(
       title: const Text('Edit Recipe'),
       content: SingleChildScrollView(
@@ -74,14 +125,7 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
             DropdownButtonFormField<String>(
               value: mealType,
               decoration: const InputDecoration(labelText: 'Meal Type'),
-              items: [
-                'Breakfast',
-                'Lunch',
-                'Dinner',
-                'Dessert',
-                'Snack',
-                'Drink'
-              ]
+              items: mealTypeItems
                   .map((type) => DropdownMenuItem(
                         value: type,
                         child: Text(type),
@@ -93,33 +137,7 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
             DropdownButtonFormField<String>(
               value: cuisineType,
               decoration: const InputDecoration(labelText: 'Cuisine'),
-              items: [
-                'African',
-                'American',
-                'Brazilian',
-                'British',
-                'Caribbean',
-                'Chinese',
-                'Ethiopian',
-                'Filipino',
-                'French',
-                'German',
-                'Greek',
-                'Indian',
-                'Indonesian',
-                'Italian',
-                'Japanese',
-                'Korean',
-                'Levantine',
-                'Mexican',
-                'Moroccan',
-                'Persian',
-                'Russian',
-                'Spanish',
-                'Thai',
-                'Turkish',
-                'Vietnamese'
-              ]
+              items: cuisineTypeItems
                   .map((cuisine) => DropdownMenuItem(
                         value: cuisine,
                         child: Text(cuisine),
@@ -131,7 +149,7 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
             DropdownButtonFormField<String>(
               value: difficulty,
               decoration: const InputDecoration(labelText: 'Difficulty'),
-              items: ['Easy', 'Medium', 'Hard']
+              items: difficultyItems
                   .map((diff) => DropdownMenuItem(
                         value: diff,
                         child: Text(diff),
