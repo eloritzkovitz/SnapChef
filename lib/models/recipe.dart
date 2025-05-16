@@ -7,8 +7,8 @@ class Recipe {
   final String mealType;
   final String cuisineType;
   final String difficulty;
-  final int cookingTime;
   final int prepTime;
+  final int cookingTime;  
   final List<Ingredient> ingredients;
   final List<String> instructions;
   final String? imageURL;
@@ -21,8 +21,8 @@ class Recipe {
     required this.mealType,
     required this.cuisineType,
     required this.difficulty,
-    required this.cookingTime,
     required this.prepTime,
+    required this.cookingTime,    
     required this.ingredients,
     required this.instructions,
     this.imageURL,
@@ -38,8 +38,8 @@ class Recipe {
       mealType: json['mealType'],
       cuisineType: json['cuisineType'],
       difficulty: json['difficulty'],
-      cookingTime: json['cookingTime'],
       prepTime: json['prepTime'],
+      cookingTime: json['cookingTime'],      
       ingredients: (json['ingredients'] as List<dynamic>)
           .map((ingredient) => Ingredient.fromJson(ingredient))
           .toList(),
@@ -57,9 +57,9 @@ class Recipe {
       'description': description,
       'mealType': mealType,
       'cuisineType': cuisineType,
-      'difficulty': difficulty,
-      'cookingTime': cookingTime,
+      'difficulty': difficulty,      
       'prepTime': prepTime,
+      'cookingTime': cookingTime,
       'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
       'instructions': instructions,
       'imageURL': imageURL,

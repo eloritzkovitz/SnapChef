@@ -30,8 +30,8 @@ class ViewRecipeScreen extends StatelessWidget {
           required String mealType,
           required String cuisineType,
           required String difficulty,
-          required int cookingTime,
           required int prepTime,
+          required int cookingTime,          
         }) async {
           final success = await cookbookViewModel.updateRecipe(
             cookbookId: cookbookId,
@@ -41,8 +41,8 @@ class ViewRecipeScreen extends StatelessWidget {
             mealType: mealType,
             cuisineType: cuisineType,
             difficulty: difficulty,
-            cookingTime: cookingTime,
             prepTime: prepTime,
+            cookingTime: cookingTime,           
             ingredients: recipe.ingredients,
             instructions: recipe.instructions,
             imageURL: recipe.imageURL,

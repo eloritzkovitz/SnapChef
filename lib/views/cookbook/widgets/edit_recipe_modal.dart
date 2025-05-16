@@ -10,8 +10,8 @@ class EditRecipeModal extends StatefulWidget {
     required String mealType,
     required String cuisineType,
     required String difficulty,
-    required int cookingTime,
     required int prepTime,
+    required int cookingTime,    
   }) onSave;
 
   const EditRecipeModal({
@@ -27,8 +27,8 @@ class EditRecipeModal extends StatefulWidget {
 class _EditRecipeModalState extends State<EditRecipeModal> {
   late TextEditingController titleController;
   late TextEditingController descriptionController;
-  late TextEditingController cookingTimeController;
   late TextEditingController prepTimeController;
+  late TextEditingController cookingTimeController;  
   late String mealType;
   late String cuisineType;
   late String difficulty;
@@ -75,8 +75,8 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
     super.initState();
     titleController = TextEditingController(text: widget.recipeObj.title);
     descriptionController = TextEditingController(text: widget.recipeObj.description);
-    cookingTimeController = TextEditingController(text: widget.recipeObj.cookingTime.toString());
     prepTimeController = TextEditingController(text: widget.recipeObj.prepTime.toString());
+    cookingTimeController = TextEditingController(text: widget.recipeObj.cookingTime.toString());    
     mealType = widget.recipeObj.mealType;
     cuisineType = widget.recipeObj.cuisineType;
     difficulty = widget.recipeObj.difficulty;
@@ -86,8 +86,8 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
   void dispose() {
     titleController.dispose();
     descriptionController.dispose();
-    cookingTimeController.dispose();
     prepTimeController.dispose();
+    cookingTimeController.dispose();    
     super.dispose();
   }
 
@@ -160,16 +160,16 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
             ),
             const SizedBox(height: 8),
             TextField(
-              controller: cookingTimeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Cooking Time (min)'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
               controller: prepTimeController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Preparation Time (min)'),
-            ),
+            ),           
+            const SizedBox(height: 8),
+             TextField(
+              controller: cookingTimeController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Cooking Time (min)'),
+            ),            
           ],
         ),
       ),
@@ -186,8 +186,8 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
               mealType: mealType,
               cuisineType: cuisineType,
               difficulty: difficulty,
-              cookingTime: int.tryParse(cookingTimeController.text) ?? widget.recipeObj.cookingTime,
               prepTime: int.tryParse(prepTimeController.text) ?? widget.recipeObj.prepTime,
+              cookingTime: int.tryParse(cookingTimeController.text) ?? widget.recipeObj.cookingTime,              
             );
             Navigator.pop(context);
           },
