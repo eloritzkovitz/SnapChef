@@ -1,3 +1,5 @@
+import 'preferences.dart';
+
 class User {
   final String firstName;
   final String lastName;
@@ -6,6 +8,7 @@ class User {
   final String? profilePicture;
   final String fridgeId;
   final String cookbookId;
+  final Preferences? preferences;
 
   User({
     required this.firstName,
@@ -15,6 +18,7 @@ class User {
     this.profilePicture,
     required this.fridgeId,
     required this.cookbookId,
+    this.preferences,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,9 @@ class User {
       profilePicture: json['profilePicture']?.isNotEmpty == true ? json['profilePicture'] : null,
       fridgeId: json['fridgeId'] ?? 'No Fridge ID',
       cookbookId: json['cookbookId'] ?? 'No Cookbook ID',
+      preferences: json['preferences'] != null
+          ? Preferences.fromJson(json['preferences'])
+          : null,
     );
   }
 
@@ -36,6 +43,7 @@ class User {
     String? profilePicture,
     String? fridgeId,
     String? cookbookId,
+    Preferences? preferences,
   }) {
     return User(
       firstName: firstName ?? this.firstName,
@@ -45,6 +53,7 @@ class User {
       profilePicture: profilePicture ?? this.profilePicture,
       fridgeId: fridgeId ?? this.fridgeId,
       cookbookId: cookbookId ?? this.cookbookId,
+      preferences: preferences ?? this.preferences,
     );
   }
 

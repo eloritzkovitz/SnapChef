@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
+import '../models/preferences.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -164,25 +165,32 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> updateUserPreferences({
+    required List<String> allergies,
+    required Map<String, bool> dietaryPreferences,
+  }) async {
+    if (_user == null) throw Exception('User not loaded');
+    await _authService.updateUserPreferences(
+      allergies: allergies,
+      dietaryPreferences: dietaryPreferences,
+    );
+
+    // Update the local user object with new preferences
+    _user = _user!.copyWith(
+      preferences: Preferences(
+        allergies: allergies,
+        dietaryPreferences: dietaryPreferences,
+      ),
+    );
+    notifyListeners();
+  }
+
   // Refresh Tokens
   Future<void> refreshTokens() async {
     try {
       await _authService.refreshTokens();
     } catch (e) {
       throw Exception('Failed to refresh tokens: $e');
-    }
-  }
-
-  // Update User Preferences
-  Future<void> updateUserPreferences({
-    required String allergies,
-    required Map<String, bool> dietaryPreferences,
-  }) async {
-    // Update the user's preferences in the backend
-    try {
-      notifyListeners();
-    } catch (e) {
-      rethrow;
     }
   }
 
