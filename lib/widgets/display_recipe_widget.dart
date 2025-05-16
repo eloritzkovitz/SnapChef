@@ -1,19 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
 import '../../widgets/tts_widget.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../theme/colors.dart';
 
-class DisplayRecipeWidget extends StatelessWidget {
+class DisplayRecipeWidget extends StatefulWidget {
   final String? recipeString;
   final Recipe? recipeObject;
   final String? imageUrl;
+  final String? cookbookId;
 
   const DisplayRecipeWidget({
     super.key,
     this.recipeString,
     this.recipeObject,
     this.imageUrl,
+    this.cookbookId,
   });
+
+  @override
+  State<DisplayRecipeWidget> createState() => _DisplayRecipeWidgetState();
+}
+
+class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
+  late double? _localRating;
+
+  @override
+  void initState() {
+    super.initState();
+    _localRating = widget.recipeObject?.rating;
+  }
 
   // Strip markdown formatting from the recipe text
   String stripMarkdown(String markdownText) {
@@ -29,10 +48,10 @@ class DisplayRecipeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine which recipe string to use
+    final recipeObject = widget.recipeObject;
     final String recipe = recipeObject != null
-        ? (recipeObject!.instructions.join('\n'))
-        : (recipeString ?? '');
+        ? (recipeObject.instructions.join('\n'))
+        : (widget.recipeString ?? '');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -44,12 +63,12 @@ class DisplayRecipeWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (imageUrl != null && imageUrl!.isNotEmpty)
+                if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        imageUrl!,
+                        widget.imageUrl!,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (context, error, stackTrace) {
@@ -61,6 +80,61 @@ class DisplayRecipeWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (recipeObject != null) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RatingBar.builder(
+                        initialRating: _localRating ?? 0,
+                        minRating: 0,
+                        direction: Axis.horizontal,
+                        allowHalfRating: true,
+                        itemCount: 5,
+                        itemSize: 32.0,
+                        itemPadding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        itemBuilder: (context, _) => const Icon(
+                          Icons.star,
+                          color: primaryColor,
+                        ),
+                        updateOnDrag: true,
+                        onRatingUpdate: (newRating) async {
+                          setState(() {
+                            _localRating = newRating;
+                          });
+                          if (widget.cookbookId != null) {
+                            await Provider.of<CookbookViewModel>(context, listen: false)
+                                .updateRecipe(
+                              cookbookId: widget.cookbookId!,
+                              recipeId: recipeObject.id,
+                              title: recipeObject.title,
+                              description: recipeObject.description,
+                              mealType: recipeObject.mealType,
+                              cuisineType: recipeObject.cuisineType,
+                              difficulty: recipeObject.difficulty,
+                              cookingTime: recipeObject.cookingTime,
+                              prepTime: recipeObject.prepTime,
+                              ingredients: recipeObject.ingredients,
+                              instructions: recipeObject.instructions,
+                              imageURL: recipeObject.imageURL,
+                              rating: newRating,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Rating updated!')),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _localRating != null
+                            ? _localRating!.toStringAsFixed(1)
+                            : 'No rating',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 20),
                 if (recipe.isNotEmpty)
                   MarkdownBody(

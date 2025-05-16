@@ -157,6 +157,7 @@ class ViewRecipeScreen extends StatelessWidget {
         child: DisplayRecipeWidget(
           recipeObject: recipe,
           imageUrl: recipe.imageURL ?? '',
+          cookbookId: cookbookId,
         ),
       ),
     );
