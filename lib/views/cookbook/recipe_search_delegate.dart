@@ -54,11 +54,8 @@ class RecipeSearchDelegate extends SearchDelegate {
               context,
               MaterialPageRoute(
                 builder: (context) => ViewRecipeScreen(
-                  recipeId: recipe.id,
+                  recipe: recipe,
                   cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
-                  recipe: recipe.instructions.join('\n'),
-                  imageUrl: recipe.imageURL ?? '',
-                  usedIngredients: recipe.ingredients,
                 ),
               ),
             );
@@ -94,11 +91,8 @@ class RecipeSearchDelegate extends SearchDelegate {
               context,
               MaterialPageRoute(
                 builder: (context) => ViewRecipeScreen(
-                  recipeId: recipe.id,
+                  recipe: recipe,
                   cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
-                  recipe: recipe.instructions.join('\n'),
-                  imageUrl: recipe.imageURL ?? '',
-                  usedIngredients: recipe.ingredients,
                 ),
               ),
             );

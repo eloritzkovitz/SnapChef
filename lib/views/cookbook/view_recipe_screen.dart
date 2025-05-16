@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/ingredient.dart';
+import '../../models/recipe.dart';
 import '../../widgets/display_recipe_widget.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 
 class ViewRecipeScreen extends StatelessWidget {
-  final String recipeId;
+  final Recipe recipe;
   final String cookbookId;
-  final String recipe;
-  final String imageUrl;
-  final List<Ingredient> usedIngredients;
 
   const ViewRecipeScreen({
     super.key,
-    required this.recipeId,
-    required this.cookbookId,
     required this.recipe,
-    required this.imageUrl,
-    required this.usedIngredients,
+    required this.cookbookId,
   });
 
+  // Delete a recipe from the cookbook
   Future<void> _deleteRecipe(BuildContext context) async {
     final cookbookViewModel =
         Provider.of<CookbookViewModel>(context, listen: false);
 
-    final bool success = await cookbookViewModel.deleteRecipe(cookbookId, recipeId);
+    final bool success = await cookbookViewModel.deleteRecipe(cookbookId, recipe.id);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,6 +33,7 @@ class ViewRecipeScreen extends StatelessWidget {
     }
   }
 
+  // Show a confirmation dialog before deleting the recipe
   Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -98,8 +94,8 @@ class ViewRecipeScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: DisplayRecipeWidget(
-          recipe: recipe,
-          imageUrl: imageUrl,
+          recipeObject: recipe,
+          imageUrl: recipe.imageURL ?? '',
         ),
       ),
     );

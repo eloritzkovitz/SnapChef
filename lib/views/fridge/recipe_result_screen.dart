@@ -53,7 +53,7 @@ class RecipeResultScreen extends StatelessWidget {
           children: [
             Expanded(
               child: DisplayRecipeWidget(
-                recipe: recipe,
+                recipeString: recipe,
                 imageUrl: imageUrl,
               ),
             ),

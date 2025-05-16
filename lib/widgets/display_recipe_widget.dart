@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../models/recipe.dart';
 import '../../widgets/tts_widget.dart';
 
 class DisplayRecipeWidget extends StatelessWidget {
-  final String recipe;
-  final String imageUrl;
+  final String? recipeString;
+  final Recipe? recipeObject;
+  final String? imageUrl;
 
   const DisplayRecipeWidget({
     super.key,
-    required this.recipe,
-    required this.imageUrl,
+    this.recipeString,
+    this.recipeObject,
+    this.imageUrl,
   });
 
   // Strip markdown formatting from the recipe text
@@ -26,6 +29,11 @@ class DisplayRecipeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine which recipe string to use
+    final String recipe = recipeObject != null
+        ? (recipeObject!.instructions.join('\n'))
+        : (recipeString ?? '');
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -36,12 +44,12 @@ class DisplayRecipeWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (imageUrl.isNotEmpty)
+                if (imageUrl != null && imageUrl!.isNotEmpty)
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        imageUrl,
+                        imageUrl!,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (context, error, stackTrace) {
