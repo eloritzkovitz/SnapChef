@@ -7,6 +7,9 @@ import '../../models/ingredient.dart';
 import '../../models/preferences.dart';
 import '../../theme/colors.dart';
 import 'recipe_result_screen.dart';
+import 'widgets/ingredient_chip_list.dart';
+import 'widgets/ingredient_selection_modal.dart';
+import 'widgets/recipe_options_section.dart';
 
 class GenerateRecipeScreen extends StatefulWidget {
   const GenerateRecipeScreen({super.key});
@@ -23,45 +26,6 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
   String? _selectedMealType;
   String? _selectedCuisine;
   String? _selectedDifficulty;
-
-  final List<String> _mealTypes = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Dessert',
-    'Snack',
-    'Drink'
-  ];
-
-  final List<String> _cuisines = [
-    'African',
-    'American',
-    'Brazilian',
-    'British',
-    'Caribbean',
-    'Chinese',
-    'Ethiopian',
-    'Filipino',
-    'French',
-    'German',
-    'Greek',
-    'Indian',
-    'Indonesian',
-    'Italian',
-    'Japanese',
-    'Korean',
-    'Levantine',
-    'Mexican',
-    'Moroccan',    
-    'Persian',
-    'Russian',
-    'Spanish',
-    'Thai',
-    'Turkish',
-    'Vietnamese',
-  ];
-
-  final List<String> _difficulties = ['Easy', 'Medium', 'Hard'];
 
   List<Ingredient> _filteredIngredients = [];
 
@@ -93,7 +57,6 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     });
   }
 
-  /// Clears the ingredient list and settings
   void _resetFields() {
     setState(() {
       _selectedMealType = null;
@@ -111,108 +74,11 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
   }
 
   void _showIngredientSelectionPopup(BuildContext context) {
-    final fridgeViewModel =
-        Provider.of<FridgeViewModel>(context, listen: false);
-    final recipeViewModel =
-        Provider.of<RecipeViewModel>(context, listen: false);
-
-    setState(() {
-      _filteredIngredients = fridgeViewModel.ingredients;
-    });
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16.0,
-                right: 16.0,
-                top: 16.0,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Search Bar and Close Button
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                _filterIngredients(value);
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Search Ingredients',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          color: Colors.black,
-                          onPressed: () {
-                            Navigator.pop(context); // Close the popup
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Ingredient List
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: ListView.builder(
-                        itemCount: _filteredIngredients.length,
-                        itemBuilder: (context, index) {
-                          final ingredient = _filteredIngredients[index];
-                          final isSelected =
-                              recipeViewModel.isIngredientSelected(ingredient);
-
-                          return ListTile(
-                            title: Text(ingredient.name),
-                            subtitle: Text('Quantity: ${ingredient.count}'),
-                            trailing: Checkbox(
-                              value: isSelected,
-                              activeColor: Theme.of(context).primaryColor,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  if (value == true) {
-                                    recipeViewModel.addIngredient(ingredient);
-                                  } else {
-                                    recipeViewModel
-                                        .removeIngredient(ingredient);
-                                  }
-                                });
-                              },
-                            ),
-                            onTap: () {
-                              setState(() {
-                                if (!isSelected) {
-                                  recipeViewModel.addIngredient(ingredient);
-                                } else {
-                                  recipeViewModel.removeIngredient(ingredient);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
+        return const IngredientSelectionModal();
       },
     );
   }
@@ -223,14 +89,13 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     final recipeViewModel = Provider.of<RecipeViewModel>(context);
     final fridgeViewModel = Provider.of<FridgeViewModel>(context);
 
-    // Always provide a valid preferences object
     final preferences = authViewModel.user?.preferences ??
         Preferences(allergies: [], dietaryPreferences: {});
 
     return WillPopScope(
       onWillPop: () async {
-        _resetFields(); // Clear fields when navigating back
-        return true; // Allow the navigation to proceed
+        _resetFields();
+        return true;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -251,12 +116,20 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Dropdowns and Input Fields for Recipe Options
-                        _buildOptionsSection(),
-
+                        RecipeOptionsSection(
+                          selectedMealType: _selectedMealType,
+                          selectedCuisine: _selectedCuisine,
+                          selectedDifficulty: _selectedDifficulty,
+                          cookingTimeController: _cookingTimeController,
+                          prepTimeController: _prepTimeController,
+                          onMealTypeChanged: (val) =>
+                              setState(() => _selectedMealType = val),
+                          onCuisineChanged: (val) =>
+                              setState(() => _selectedCuisine = val),
+                          onDifficultyChanged: (val) =>
+                              setState(() => _selectedDifficulty = val),
+                        ),
                         const SizedBox(height: 16),
-
-                        // Add Ingredients Button
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -264,7 +137,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                             icon: const Icon(Icons.add, color: Colors.white),
                             label: const Text(
                               'Add Ingredients',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             onPressed: fridgeViewModel.ingredients.isEmpty
                                 ? null
@@ -278,41 +152,18 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Selected Ingredients
-                        if (recipeViewModel.selectedIngredients.isNotEmpty)
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Wrap(
-                              spacing: 8.0,
-                              runSpacing: 8.0,
-                              children: recipeViewModel.selectedIngredients.map((ingredient) {
-                                return Chip(
-                                  label: Text(
-                                    ingredient.name,
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: primarySwatch[200],
-                                  side: BorderSide(color: primarySwatch[200]!),
-                                  deleteIcon: const Icon(Icons.close, color: Colors.white),
-                                  onDeleted: () {
-                                    recipeViewModel.removeIngredient(ingredient);
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                          ),
-
+                        IngredientChipList(
+                          ingredients: recipeViewModel.selectedIngredients,
+                          onRemove: (ingredient) =>
+                              recipeViewModel.removeIngredient(ingredient),
+                        ),
                         if (recipeViewModel.selectedIngredients.isNotEmpty)
                           const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
-
-                // Generate Recipe Button at the bottom
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -321,12 +172,12 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                             recipeViewModel.selectedIngredients.isEmpty
                         ? null
                         : () async {
-                            // Generate the recipe through the view model
                             await recipeViewModel.generateRecipe(
                               mealType: _selectedMealType,
                               cuisine: _selectedCuisine,
                               difficulty: _selectedDifficulty,
-                              cookingTime: _cookingTimeController.text.isNotEmpty
+                              cookingTime: _cookingTimeController
+                                      .text.isNotEmpty
                                   ? int.tryParse(_cookingTimeController.text)
                                   : null,
                               prepTime: _prepTimeController.text.isNotEmpty
@@ -335,7 +186,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                               preferences: preferences.toJson(),
                             );
                             if (recipeViewModel.recipe.isNotEmpty) {
-                              _resetFields(); // Clear fields after saving
+                              _resetFields();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -352,7 +203,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                             ? int.tryParse(
                                                 _cookingTimeController.text)
                                             : null,
-                                    prepTime: _prepTimeController.text.isNotEmpty
+                                    prepTime: _prepTimeController
+                                            .text.isNotEmpty
                                         ? int.tryParse(_prepTimeController.text)
                                         : null,
                                   ),
@@ -372,7 +224,13 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           )
-                        : const Text('Generate'),
+                        : const Text(
+                            'Generate',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -380,97 +238,6 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildOptionsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Meal Type Dropdown
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Meal Type',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedMealType,
-          items: _mealTypes
-              .map((type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedMealType = value;
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-
-        // Cuisine Dropdown
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Cuisine',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedCuisine,
-          items: _cuisines
-              .map((cuisine) => DropdownMenuItem(
-                    value: cuisine,
-                    child: Text(cuisine),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedCuisine = value;
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-
-        // Difficulty Dropdown
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Difficulty',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedDifficulty,
-          items: _difficulties
-              .map((difficulty) => DropdownMenuItem(
-                    value: difficulty,
-                    child: Text(difficulty),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedDifficulty = value;
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-
-        // Cooking Time Input
-        TextFormField(
-          controller: _cookingTimeController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Cooking Time (minutes)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Preparation Time Input
-        TextFormField(
-          controller: _prepTimeController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Preparation Time (minutes)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
     );
   }
 }
