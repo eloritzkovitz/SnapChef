@@ -13,6 +13,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _squishAnimation;
+  late Animation<double> _wiggleAnimation;
 
   @override
   void initState() {
@@ -35,6 +36,30 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
       TweenSequenceItem(
         tween: Tween<double>(begin: 0.7, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 50,
+      ),
+    ]).animate(_controller);
+
+    // Wiggle: rotate left and right, then settle
+    _wiggleAnimation = TweenSequence([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: -0.15).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -0.15, end: 0.15).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.15, end: -0.1).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -0.1, end: 0.05).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.05, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 20,
       ),
     ]).animate(_controller);
 
@@ -73,10 +98,13 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
             child: AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
-                return Transform.scale(
-                  scaleY: _squishAnimation.value,
-                  scaleX: 1.0,
-                  child: child,
+                return Transform.rotate(
+                  angle: _wiggleAnimation.value,
+                  child: Transform.scale(
+                    scaleY: _squishAnimation.value,
+                    scaleX: 1.0,
+                    child: child,
+                  ),
                 );
               },
               child: Image.asset(
