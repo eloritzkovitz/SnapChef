@@ -31,7 +31,8 @@ class IngredientCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Ingredient Image
-            ingredient.imageURL.isNotEmpty
+            (ingredient.imageURL.isNotEmpty &&
+                    ingredient.imageURL.startsWith('http'))
                 ? Image.network(
                     ingredient.imageURL,
                     height: 60,
