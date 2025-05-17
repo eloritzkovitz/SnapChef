@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../models/user.dart';
 import '../models/preferences.dart';
 import '../utils/ui_util.dart';
 
 class UserViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();  
+  final UserService _userService = UserService();
 
   bool _isLoading = false;
   bool isLoggingOut = false;
@@ -21,14 +23,14 @@ class UserViewModel extends ChangeNotifier {
   // Fetch User Profile
   Future<void> fetchUserProfile() async {
     try {
-      final userProfile = await _authService.getUserProfile();
+      final userProfile = await _userService.getUserProfile();
       _user = userProfile;
       notifyListeners();
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
           await refreshTokens();
-          final userProfile = await _authService.getUserProfile();
+          final userProfile = await _userService.getUserProfile();
           _user = userProfile;
           notifyListeners();
         } catch (refreshError) {
@@ -54,7 +56,7 @@ class UserViewModel extends ChangeNotifier {
     _setLoading(true);
     try {
       // Call the AuthService to update the user profile
-      final updatedData = await _authService.updateUserProfile(
+      final updatedData = await _userService.updateUserProfile(
         firstName,
         lastName,
         password ?? '',
@@ -91,7 +93,7 @@ class UserViewModel extends ChangeNotifier {
     required Map<String, bool> dietaryPreferences,
   }) async {
     if (_user == null) throw Exception('User not loaded');
-    await _authService.updateUserPreferences(
+    await _userService.updateUserPreferences(
       allergies: allergies,
       dietaryPreferences: dietaryPreferences,
     );
@@ -119,7 +121,7 @@ class UserViewModel extends ChangeNotifier {
   Future<void> deleteAccount(BuildContext context) async {
     _setLoading(true);
     try {
-      await _authService.deleteAccount();
+      await _userService.deleteAccount();
       _user = null; // Clear the user data on account deletion
       notifyListeners(); // Notify listeners to update the UI
       Navigator.pushReplacementNamed(context, '/login');

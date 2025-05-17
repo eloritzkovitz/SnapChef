@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/models/user.dart';
 import '../utils/token_util.dart';
 
-class AuthService {
+class UserService {
   final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
 
   // Get user profile
