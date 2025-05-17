@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
 import '../../widgets/display_recipe_widget.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import './widgets/edit_recipe_modal.dart';
 
 class ViewRecipeScreen extends StatelessWidget {
   final Recipe recipe;
@@ -14,23 +15,51 @@ class ViewRecipeScreen extends StatelessWidget {
     required this.cookbookId,
   });
 
-  // Delete a recipe from the cookbook
-  Future<void> _deleteRecipe(BuildContext context) async {
+  // Show the edit recipe modal
+  Future<void> _showEditRecipeDialog(BuildContext context) async {
     final cookbookViewModel =
         Provider.of<CookbookViewModel>(context, listen: false);
 
-    final bool success = await cookbookViewModel.deleteRecipe(cookbookId, recipe.id);
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe deleted successfully')),
-      );
-      Navigator.pop(context); // Go back to the previous screen
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete recipe')),
-      );
-    }
+    await showDialog(
+      context: context,
+      builder: (context) => EditRecipeModal(
+        recipeObj: recipe,
+        onSave: ({
+          required String title,
+          required String description,
+          required String mealType,
+          required String cuisineType,
+          required String difficulty,
+          required int prepTime,
+          required int cookingTime,          
+        }) async {
+          final success = await cookbookViewModel.updateRecipe(
+            cookbookId: cookbookId,
+            recipeId: recipe.id,
+            title: title,
+            description: description,
+            mealType: mealType,
+            cuisineType: cuisineType,
+            difficulty: difficulty,
+            prepTime: prepTime,
+            cookingTime: cookingTime,           
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+            imageURL: recipe.imageURL,
+            rating: recipe.rating,
+          );
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Recipe updated successfully')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to update recipe')),
+            );
+          }
+        },
+      ),
+    );
   }
 
   // Show a confirmation dialog before deleting the recipe
@@ -58,6 +87,25 @@ class ViewRecipeScreen extends StatelessWidget {
     }
   }
 
+  // Delete a recipe from the cookbook
+  Future<void> _deleteRecipe(BuildContext context) async {
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
+
+    final bool success = await cookbookViewModel.deleteRecipe(cookbookId, recipe.id);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe deleted successfully')),
+      );
+      Navigator.pop(context); // Go back to the previous screen
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete recipe')),
+      );
+    }
+  }  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,11 +120,24 @@ class ViewRecipeScreen extends StatelessWidget {
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
+              if (value == 'edit') {
+                _showEditRecipeDialog(context);
+              }
               if (value == 'delete') {
                 _showDeleteConfirmationDialog(context);
               }
             },
             itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: const [
+                    Icon(Icons.edit, color: Colors.black),
+                    SizedBox(width: 8),
+                    Text('Edit Recipe'),
+                  ],
+                ),
+              ),
               PopupMenuItem(
                 value: 'delete',
                 child: Row(
@@ -96,6 +157,7 @@ class ViewRecipeScreen extends StatelessWidget {
         child: DisplayRecipeWidget(
           recipeObject: recipe,
           imageUrl: recipe.imageURL ?? '',
+          cookbookId: cookbookId,
         ),
       ),
     );

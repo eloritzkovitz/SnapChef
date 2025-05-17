@@ -4,8 +4,8 @@ class RecipeOptionsSection extends StatelessWidget {
   final String? selectedMealType;
   final String? selectedCuisine;
   final String? selectedDifficulty;
-  final TextEditingController cookingTimeController;
   final TextEditingController prepTimeController;
+  final TextEditingController cookingTimeController;  
   final void Function(String?) onMealTypeChanged;
   final void Function(String?) onCuisineChanged;
   final void Function(String?) onDifficultyChanged;
@@ -15,8 +15,8 @@ class RecipeOptionsSection extends StatelessWidget {
     required this.selectedMealType,
     required this.selectedCuisine,
     required this.selectedDifficulty,
-    required this.cookingTimeController,
     required this.prepTimeController,
+    required this.cookingTimeController,    
     required this.onMealTypeChanged,
     required this.onCuisineChanged,
     required this.onDifficultyChanged,
@@ -112,15 +112,6 @@ class RecipeOptionsSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
-          controller: cookingTimeController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Cooking Time (minutes)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
           controller: prepTimeController,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
@@ -128,6 +119,15 @@ class RecipeOptionsSection extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
         ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: cookingTimeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Cooking Time (minutes)',
+            border: OutlineInputBorder(),
+          ),
+        ),     
       ],
     );
   }

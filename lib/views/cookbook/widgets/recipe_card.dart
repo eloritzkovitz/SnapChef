@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../view_recipe_screen.dart';
 import '../../../models/recipe.dart';
 import '../../../theme/colors.dart';
@@ -43,24 +44,13 @@ class RecipeCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            Row(
-              children: List.generate(
-                5,
-                (index) {
-                  if (index < rating.floor()) {
-                    // Full star
-                    return const Icon(Icons.star, size: 20, color: primaryColor);
-                  } else if (index < rating && rating - index >= 0.5) {
-                    // Half star
-                    return const Icon(Icons.star_half,
-                        size: 20, color: primaryColor);
-                  } else {
-                    // Empty star
-                    return const Icon(Icons.star_border,
-                        size: 20, color: Colors.grey);
-                  }
-                },
-              ),
+            RatingBarIndicator(
+              rating: rating,
+              itemBuilder: (context, _) => const Icon(Icons.star, color: primaryColor),
+              itemCount: 5,
+              itemSize: 20.0,
+              unratedColor: Colors.grey,
+              direction: Axis.horizontal,
             ),
           ],
         ),
@@ -94,19 +84,19 @@ class RecipeCard extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.timer, size: 16, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  '${recipe.cookingTime}m',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(width: 8),
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(
                   '${recipe.prepTime}m',
                   style: const TextStyle(color: Colors.grey),
                 ),
+                const SizedBox(width: 8),
+                const Icon(Icons.timer, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  '${recipe.cookingTime}m',
+                  style: const TextStyle(color: Colors.grey),
+                ),                                
               ],
             ),
           ],

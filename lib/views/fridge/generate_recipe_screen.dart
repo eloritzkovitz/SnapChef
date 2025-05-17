@@ -19,8 +19,8 @@ class GenerateRecipeScreen extends StatefulWidget {
 }
 
 class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
-  final TextEditingController _cookingTimeController = TextEditingController();
   final TextEditingController _prepTimeController = TextEditingController();
+  final TextEditingController _cookingTimeController = TextEditingController();  
   final TextEditingController _searchController = TextEditingController();
 
   String? _selectedMealType;
@@ -39,8 +39,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
 
   @override
   void dispose() {
-    _cookingTimeController.dispose();
     _prepTimeController.dispose();
+    _cookingTimeController.dispose();    
     _searchController.dispose();
     super.dispose();
   }
@@ -62,8 +62,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
       _selectedMealType = null;
       _selectedCuisine = null;
       _selectedDifficulty = null;
-      _cookingTimeController.clear();
       _prepTimeController.clear();
+      _cookingTimeController.clear();      
       _searchController.clear();
       _filteredIngredients.clear();
 
@@ -120,8 +120,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                           selectedMealType: _selectedMealType,
                           selectedCuisine: _selectedCuisine,
                           selectedDifficulty: _selectedDifficulty,
-                          cookingTimeController: _cookingTimeController,
                           prepTimeController: _prepTimeController,
+                          cookingTimeController: _cookingTimeController,                          
                           onMealTypeChanged: (val) =>
                               setState(() => _selectedMealType = val),
                           onCuisineChanged: (val) =>
@@ -176,13 +176,13 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                               mealType: _selectedMealType,
                               cuisine: _selectedCuisine,
                               difficulty: _selectedDifficulty,
-                              cookingTime: _cookingTimeController
-                                      .text.isNotEmpty
-                                  ? int.tryParse(_cookingTimeController.text)
-                                  : null,
                               prepTime: _prepTimeController.text.isNotEmpty
                                   ? int.tryParse(_prepTimeController.text)
                                   : null,
+                              cookingTime: _cookingTimeController
+                                      .text.isNotEmpty
+                                  ? int.tryParse(_cookingTimeController.text)
+                                  : null,                              
                               preferences: preferences.toJson(),
                             );
                             if (recipeViewModel.recipe.isNotEmpty) {
@@ -198,15 +198,15 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                     mealType: _selectedMealType,
                                     cuisineType: _selectedCuisine,
                                     difficulty: _selectedDifficulty,
-                                    cookingTime:
-                                        _cookingTimeController.text.isNotEmpty
-                                            ? int.tryParse(
-                                                _cookingTimeController.text)
-                                            : null,
                                     prepTime: _prepTimeController
                                             .text.isNotEmpty
                                         ? int.tryParse(_prepTimeController.text)
                                         : null,
+                                    cookingTime:
+                                        _cookingTimeController.text.isNotEmpty
+                                            ? int.tryParse(
+                                                _cookingTimeController.text)
+                                            : null,                                    
                                   ),
                                 ),
                               );
