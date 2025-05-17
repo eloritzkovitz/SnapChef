@@ -13,7 +13,8 @@ class RecognitionResultsWidget extends StatefulWidget {
   });
 
   @override
-  State<RecognitionResultsWidget> createState() => _RecognitionResultsWidgetState();
+  State<RecognitionResultsWidget> createState() =>
+      _RecognitionResultsWidgetState();
 }
 
 class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
@@ -22,87 +23,191 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
   @override
   void initState() {
     super.initState();
-    // Clone the original map so we can modify it locally
     localIngredients = Map.from(widget.groupedIngredients);
   }
 
   @override
   Widget build(BuildContext context) {
-    final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+    final fridgeViewModel =
+        Provider.of<FridgeViewModel>(context, listen: false);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Recognized Ingredients',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          if (localIngredients.isEmpty)
-            const Text(
-              'All ingredients have been processed.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ...localIngredients.values.map((ingredient) {
-            final name = ingredient['name'];
-            final category = ingredient['category'];
-            final id = ingredient['id'];
-            final quantity = ingredient['quantity'];
-
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: ListTile(
-                title: Text('$name x $quantity'),
-                subtitle: Text('Category: $category'),
-                trailing: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxPopupHeight = constraints.maxHeight * 0.9;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: maxPopupHeight,
+                minWidth: 300,
+                maxWidth: 500,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () async {
-                        final success = await fridgeViewModel.addIngredientToFridge(
-                          widget.fridgeId,
-                          id,
-                          name,
-                          category,
-                          quantity,
-                        );
-                        if (success) {
-                          setState(() {
-                            localIngredients.remove(name);
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$name added to fridge successfully')),
-                          );
-                          if (localIngredients.isEmpty) {
-                            Navigator.pop(context);
-                          }
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to add $name to fridge')),
-                          );
-                        }
-                      },
-                      child: const Text('Add to Fridge'),
+                    const Text(
+                      'Recognized Ingredients',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          localIngredients.remove(name);
-                        });
-                        if (localIngredients.isEmpty) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text('Discard'),
-                    ),
+                    const SizedBox(height: 16),
+                    if (localIngredients.isEmpty)
+                      const Text(
+                        'All ingredients have been processed.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    if (localIngredients.isNotEmpty)
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: localIngredients.length,
+                          itemBuilder: (context, index) {
+                            final ingredient =
+                                localIngredients.values.elementAt(index);
+                            final name = ingredient['name'];
+                            final category = ingredient['category'];
+                            final id = ingredient['id'];
+                            final quantity = ingredient['quantity'];
+                            final imageUrl = ingredient['imageUrl'];
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0, vertical: 4.0),
+                                child: Row(
+                                  children: [                                    
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: imageUrl != null &&
+                                              imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              imageUrl,
+                                              width: 50,
+                                              height: 50,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                            )
+                                          : const Icon(
+                                              Icons.image_not_supported,
+                                              size: 50,
+                                              color: Colors.grey,
+                                            ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text('$name',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w500)),
+                                          Text('Category: $category',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.red),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (ingredient['quantity'] > 1) {
+                                            ingredient['quantity'] -= 1;
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    Text(
+                                      '$quantity',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline,
+                                          color: Colors.green),
+                                      onPressed: () {
+                                        setState(() {
+                                          ingredient['quantity'] += 1;
+                                        });
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.check_circle,
+                                          color: Colors.blue),
+                                      tooltip: 'Add to Fridge',
+                                      onPressed: () async {
+                                        final success = await fridgeViewModel
+                                            .addIngredientToFridge(
+                                          widget.fridgeId,
+                                          id,
+                                          name,
+                                          category,
+                                          ingredient['quantity'],
+                                        );
+                                        if (success) {
+                                          setState(() {
+                                            localIngredients.remove(name);
+                                          });
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    '$name added to fridge successfully')),
+                                          );
+                                          if (localIngredients.isEmpty) {
+                                            Navigator.pop(context);
+                                          }
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    'Failed to add $name to fridge')),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.grey),
+                                      tooltip: 'Discard',
+                                      onPressed: () {
+                                        setState(() {
+                                          localIngredients.remove(name);
+                                        });
+                                        if (localIngredients.isEmpty) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                   ],
                 ),
               ),
-            );
-          }),
-        ],
+            ),
+          );
+        },
       ),
     );
   }
