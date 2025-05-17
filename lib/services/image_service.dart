@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -108,11 +107,32 @@ class ImageService {
   }
 
   // Process image using the specified endpoint
-  Future<List<dynamic>> processImage(File image, String endpoint) async {
-    // Prepare the HTTP request
+  Future<List<dynamic>> processImage(File image, String endpoint,
+      {String? barcode}) async {
     String? serverIp = dotenv.env['SERVER_IP'];
-    final mimeType = lookupMimeType(image.path);
 
+    // If endpoint is barcode and barcode is provided, send only the barcode (no file)
+    if (endpoint == 'barcode' && barcode != null) {
+      var uri = Uri.parse('$serverIp/api/ingredients/recognize/barcode');
+      var response = await http.post(
+        uri,
+        body: {'barcode': barcode},
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse is List) {
+          return jsonResponse;
+        } else {
+          return [];
+        }
+      } else {
+        throw Exception('Failed to recognize barcode: ${response.statusCode}');
+      }
+    }
+
+    // Otherwise, send the image as before
+    final mimeType = lookupMimeType(image.path);
     if (mimeType == null || !mimeType.startsWith('image/')) {
       throw Exception('Invalid file type. Only images are allowed.');
     }
@@ -128,21 +148,15 @@ class ImageService {
         contentType: MediaType.parse(mimeType),
       ));
 
-    // Send the request and handle response
     var response = await request.send();
     var responseBody = await response.stream.bytesToString();
-    log('Response status: ${response.statusCode}');
-    log('Response body: $responseBody');
 
     if (response.statusCode == 200) {
-      // Parse the JSON response
       var jsonResponse = jsonDecode(responseBody);
-
-      // Check if the response contains an array of ingredients
       if (jsonResponse is List) {
-        return jsonResponse; // Return the list of recognized ingredients
+        return jsonResponse;
       } else {
-        return []; // Return an empty list if no ingredients are recognized
+        return [];
       }
     } else {
       throw Exception('Failed to upload image: ${response.statusCode}');

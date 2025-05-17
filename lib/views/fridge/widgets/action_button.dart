@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import '../../../services/image_service.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import 'recognition_results.dart';
@@ -22,7 +24,32 @@ class ActionButton extends StatelessWidget {
       );
 
       try {
-        final recognizedIngredients = await _imageService.processImage(image, endpoint);
+        //final recognizedIngredients = await _imageService.processImage(image, endpoint);
+
+        List<dynamic> recognizedIngredients = [];
+        if (endpoint == 'barcode') {
+          // 1. Use ML Kit to scan barcode from the image
+          final barcode = await scanBarcodeWithMLKit(image);
+          if (barcode != null && barcode.isNotEmpty) {
+            // 2. Optionally use a dummy image if your backend requires an image
+            //    Otherwise, you can use the original image
+            recognizedIngredients = await _imageService.processImage(
+              image, // or dummyImage if needed
+              endpoint,
+              barcode: barcode,
+            );
+          } else {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No barcode found in the image.')),
+            );
+            return;
+          }
+        } else {
+          recognizedIngredients =
+              await _imageService.processImage(image, endpoint);
+        }
+
         Navigator.of(context).pop(); // Close loading
 
         if (recognizedIngredients.isNotEmpty) {
@@ -37,13 +64,29 @@ class ActionButton extends StatelessWidget {
     }
   }
 
-  void _showRecognitionResults(BuildContext context, List<dynamic> ingredients) {
+  // Use ML Kit to scan barcode from the image
+  Future<String?> scanBarcodeWithMLKit(File imageFile) async {
+    final inputImage = InputImage.fromFile(imageFile);
+    final barcodeScanner = BarcodeScanner();
+    final barcodes = await barcodeScanner.processImage(inputImage);
+    await barcodeScanner.close();
+
+    if (barcodes.isNotEmpty) {
+      return barcodes.first.rawValue; // or .displayValue
+    }
+    return null;
+  }
+
+  // Show recognition results
+  void _showRecognitionResults(
+      BuildContext context, List<dynamic> ingredients) {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final fridgeId = authViewModel.fridgeId;
 
     if (fridgeId == null || fridgeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fridge ID is missing. Please log in again.')),
+        const SnackBar(
+            content: Text('Fridge ID is missing. Please log in again.')),
       );
       return;
     }
@@ -73,12 +116,14 @@ class ActionButton extends StatelessWidget {
     );
   }
 
+  // Show no ingredients popup
   void _showNoIngredientsPopup(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('No Ingredients Recognized'),
-        content: const Text('No ingredients were recognized in the uploaded image.'),
+        content:
+            const Text('No ingredients were recognized in the uploaded image.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -107,7 +152,8 @@ class ActionButton extends StatelessWidget {
           label: 'Generate Recipe',
           labelStyle: const TextStyle(fontSize: 12),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => GenerateRecipeScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => GenerateRecipeScreen()));
           },
         ),
         SpeedDialChild(
