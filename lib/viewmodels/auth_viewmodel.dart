@@ -10,7 +10,43 @@ class AuthViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool isLoggingOut = false;  
 
-  bool get isLoading => _isLoading;   
+  bool get isLoading => _isLoading;
+
+  // Google Sign-In
+  Future<void> googleSignIn(
+    BuildContext context,
+    Future<void> Function() fetchUserProfile,
+  ) async {
+    _setLoading(true);
+    try {
+      // Start the Google Sign-In process
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        // Retrieve the idToken
+        final idToken = googleAuth.idToken;
+
+        if (idToken != null) {
+          // Send the idToken to your backend for authentication
+          await _authService.googleSignIn(idToken);
+
+          // Fetch the user profile after successful sign-in using UserViewModel
+          await fetchUserProfile();
+
+          // Navigate to the main screen
+          Navigator.pushReplacementNamed(context, '/main');
+        } else {
+          throw Exception('Failed to retrieve Google ID token');
+        }
+      }
+    } catch (e) {
+      UIUtil.showError(context, 'Google Sign-In failed: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }   
 
   // Login
   Future<void> login(
@@ -59,51 +95,6 @@ class AuthViewModel extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }
-
-  // Google Sign-In
-  Future<void> googleSignIn(
-    BuildContext context,
-    Future<void> Function() fetchUserProfile,
-  ) async {
-    _setLoading(true);
-    try {
-      // Start the Google Sign-In process
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-
-        // Retrieve the idToken
-        final idToken = googleAuth.idToken;
-
-        if (idToken != null) {
-          // Send the idToken to your backend for authentication
-          await _authService.googleSignIn(idToken);
-
-          // Fetch the user profile after successful sign-in using UserViewModel
-          await fetchUserProfile();
-
-          // Navigate to the main screen
-          Navigator.pushReplacementNamed(context, '/main');
-        } else {
-          throw Exception('Failed to retrieve Google ID token');
-        }
-      }
-    } catch (e) {
-      UIUtil.showError(context, 'Google Sign-In failed: $e');
-    } finally {
-      _setLoading(false);
-    }
-  }  
-
-  // Refresh Tokens
-  Future<void> refreshTokens() async {
-    try {
-      await _authService.refreshTokens();
-    } catch (e) {
-      throw Exception('Failed to refresh tokens: $e');
-    }
   }  
 
   // Logout
@@ -116,6 +107,15 @@ class AuthViewModel extends ChangeNotifier {
       UIUtil.showError(context, e.toString());
     }
   }
+  
+  // Refresh Tokens
+  Future<void> refreshTokens() async {
+    try {
+      await _authService.refreshTokens();
+    } catch (e) {
+      throw Exception('Failed to refresh tokens: $e');
+    }
+  }  
 
   // Set the loading state
   void _setLoading(bool value) {
