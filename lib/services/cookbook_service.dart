@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'auth_service.dart';
+import '../utils/token_util.dart';
 
 class CookbookService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
-  final AuthService _authService = AuthService();
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
 
   // Fetch all recipes in the cookbook
   Future<List<dynamic>> fetchCookbookRecipes(String cookbookId) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.get(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId'),
       headers: {
@@ -40,7 +39,7 @@ class CookbookService {
   // Add a new recipe to the cookbook
   Future<bool> addRecipeToCookbook(
       Map<String, dynamic> recipeData, String cookbookId) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.post(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes'),
       headers: {
@@ -61,7 +60,7 @@ class CookbookService {
   // Update a recipe in the cookbook
   Future<bool> updateCookbookRecipe(String cookbookId, String recipeId,
       Map<String, dynamic> updatedData) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.put(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId'),
       headers: {
@@ -81,7 +80,7 @@ class CookbookService {
 
   // Delete a recipe from the cookbook
   Future<bool> deleteCookbookRecipe(String cookbookId, String recipeId) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.delete(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId'),
       headers: {

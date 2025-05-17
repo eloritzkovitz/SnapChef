@@ -9,62 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import '../utils/token_util.dart';
 
 class AuthService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
-
-  // Login
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/login'),
-      body: jsonEncode({'email': email, 'password': password}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
-      return data;
-    } else {
-      throw Exception('Login failed');
-    }
-  }
-
-  // Signup
-  Future<Map<String, dynamic>> signup(
-      String firstName, String lastName, String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/register'),
-      body: jsonEncode({
-        'firstName': firstName,
-        'lastName': lastName,
-        'email': email,
-        'password': password,
-      }),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Signup failed');
-    }
-  }
-
-  // Google Sign-In
-  Future<Map<String, dynamic>> googleSignIn(String idToken) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/google'),
-      body: jsonEncode({'idToken': idToken}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
-      return data;
-    } else {
-      throw Exception('Google Sign-In failed');
-    }
-  }
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
 
   // Get user profile
   Future<User> getUserProfile() async {
@@ -186,48 +131,6 @@ class AuthService {
       await prefs.clear(); // Clear tokens and user data
     } else {
       throw Exception('Failed to delete account: ${response.body}');
-    }
-  }
-
-  // Logout
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString('refreshToken');
-
-    if (refreshToken != null) {
-      await http.post(
-        Uri.parse('$baseUrl/api/users/logout'),
-        body: jsonEncode({'refreshToken': refreshToken}),
-        headers: {'Content-Type': 'application/json'},
-      );
-    }
-
-    await prefs.clear();
-  }  
-
-  // Refresh tokens
-  Future<void> refreshTokens() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString('refreshToken');
-
-    if (refreshToken == null) {
-      throw Exception('No refresh token found');
-    }
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/refresh'),
-      body: jsonEncode({'refreshToken': refreshToken}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
-    } else {
-      // Clear tokens if refresh fails
-      await prefs.remove('accessToken');
-      await prefs.remove('refreshToken');
-      throw Exception('Failed to refresh tokens: ${response.body}');
     }
   }
 }

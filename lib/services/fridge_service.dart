@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'auth_service.dart';
+import '../utils/token_util.dart';
 
 class FridgeService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
-  final AuthService _authService = AuthService();
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
 
   // Fetch all fridges for the user
   Future<List<dynamic>> fetchFridgeItems(String fridgeId) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.get(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items'),
       headers: {
@@ -27,7 +26,7 @@ class FridgeService {
 
   // Add a new fridge item
   Future<bool> addFridgeItem(String fridgeId, Map<String, dynamic> itemData) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.post(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items'),
       headers: {
@@ -46,7 +45,7 @@ class FridgeService {
   
   // Update a fridge item
   Future<bool> updateFridgeItem(String fridgeId, String itemId, int newCount) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.put(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items/$itemId'),
       headers: {
@@ -65,7 +64,7 @@ class FridgeService {
 
   // Delete a fridge item
   Future<bool> deleteFridgeItem(String fridgeId, String itemId) async {
-    final token = await _authService.getAccessToken();
+    final token = await TokenUtil.getAccessToken();
     final response = await http.delete(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items/$itemId'),
       headers: {
