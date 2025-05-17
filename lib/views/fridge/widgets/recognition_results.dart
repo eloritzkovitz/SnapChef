@@ -157,6 +157,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                           id,
                                           name,
                                           category,
+                                          imageUrl,
                                           ingredient['quantity'],
                                         );
                                         if (success) {

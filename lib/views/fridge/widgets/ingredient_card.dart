@@ -31,12 +31,25 @@ class IngredientCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Ingredient Image
-            Image.asset(
-              'assets/images/placeholder_image.png',
-              height: 60,
-              width: 60,
-              fit: BoxFit.cover,
-            ),
+            ingredient.imageURL.isNotEmpty
+                ? Image.network(
+                    ingredient.imageURL,
+                    height: 60,
+                    width: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/images/placeholder_image.png',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    'assets/images/placeholder_image.png',
+                    height: 60,
+                    width: 60,
+                    fit: BoxFit.cover,
+                  ),
             const SizedBox(height: 8.0),
             // Ingredient Name
             Text(

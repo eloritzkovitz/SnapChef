@@ -184,6 +184,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                       ingredient['id'],
                       ingredient['name'],
                       ingredient['category'],
+                      ingredient['imageURL'],
                       quantity,
                     );
 

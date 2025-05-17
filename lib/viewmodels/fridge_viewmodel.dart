@@ -131,7 +131,7 @@ class FridgeViewModel extends ChangeNotifier {
 
   // Add ingredient to fridge (local and backend)
   Future<bool> addIngredientToFridge(String fridgeId, String id, String name,
-      String category, int quantity) async {
+      String category, String? imageURL, int quantity) async {
     try {
       // Check if the ingredient already exists in the fridge
       final existingIngredientIndex =
@@ -160,7 +160,7 @@ class FridgeViewModel extends ChangeNotifier {
           'id': id,
           'name': name,
           'category': category,
-          'imageURL': '',
+          'imageURL': imageURL ?? '',
           'quantity': quantity,
         };
 
