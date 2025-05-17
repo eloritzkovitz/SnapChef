@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
+import '../../theme/colors.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -14,8 +16,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-
-    final primaryColor = Theme.of(context).primaryColor;
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);    
 
     return Scaffold(
       body: Padding(
@@ -96,6 +97,7 @@ class LoginScreen extends StatelessWidget {
                               emailController.text,
                               passwordController.text,
                               context,
+                              userViewModel.fetchUserProfile,
                             );
                           }
                         },
@@ -120,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                   Buttons.Google,
                   text: "Sign in with Google",
                   onPressed: () async {
-                    await authViewModel.googleSignIn(context);
+                    await authViewModel.googleSignIn(context, userViewModel.fetchUserProfile);
                   },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

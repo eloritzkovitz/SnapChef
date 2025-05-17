@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import 'recipe_search_delegate.dart';
 import './widgets/recipe_card.dart';
@@ -18,12 +18,12 @@ class _CookbookScreenState extends State<CookbookScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
       final cookbookViewModel =
           Provider.of<CookbookViewModel>(context, listen: false);
 
       // Ensure the cookbookId is not null
-      final cookbookId = authViewModel.cookbookId;
+      final cookbookId = userViewModel.cookbookId;
       if (cookbookId != null && cookbookId.isNotEmpty) {
         cookbookViewModel.fetchCookbookRecipes(cookbookId);
       }
@@ -80,7 +80,7 @@ class _CookbookScreenState extends State<CookbookScreen> {
                     MaterialPageRoute(
                       builder: (context) => ViewRecipeScreen(
                         recipe: recipe,
-                        cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                        cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
                       ),
                     ),
                   );

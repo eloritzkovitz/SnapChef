@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
 
 class EditPreferencesScreen extends StatefulWidget {
@@ -74,8 +74,8 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     _newAllergyController = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-      final user = authViewModel.user;
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final user = userViewModel.user;
 
       setState(() {
         _allergies = List<String>.from(user?.preferences?.allergies ?? []);
@@ -103,7 +103,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context);
+    final userViewModel = Provider.of<UserViewModel>(context);
 
     // Show loading indicator if data not loaded yet
     if (_loading) {
@@ -255,7 +255,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                             for (final entry in _dietaryPreferences.entries)
                               dietaryKeyMap[entry.key]!: entry.value
                           };
-                          await authViewModel.updateUserPreferences(
+                          await userViewModel.updateUserPreferences(
                             allergies: _allergies,
                             dietaryPreferences: backendDietaryPreferences,
                           );

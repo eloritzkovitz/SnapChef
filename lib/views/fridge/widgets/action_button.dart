@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import '../../../services/image_service.dart';
-import '../../../viewmodels/auth_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 import 'recognition_results.dart';
 import '../generate_recipe_screen.dart';
 import '../../../theme/colors.dart';
@@ -80,8 +80,8 @@ class ActionButton extends StatelessWidget {
   // Show recognition results
   void _showRecognitionResults(
       BuildContext context, List<dynamic> ingredients) {
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    final fridgeId = authViewModel.fridgeId;
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final fridgeId = userViewModel.fridgeId;
 
     if (fridgeId == null || fridgeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

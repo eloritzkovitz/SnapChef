@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:provider/provider.dart';
 import '../view_recipe_screen.dart';
 import '../../../models/recipe.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 import '../../../theme/colors.dart';
-import 'package:provider/provider.dart';
-import '../../../viewmodels/auth_viewmodel.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
@@ -108,7 +108,7 @@ class RecipeCard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => ViewRecipeScreen(
                     recipe: recipe,
-                    cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                    cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
                   ),
                 ),
               );
