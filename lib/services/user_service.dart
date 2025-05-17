@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/models/user.dart';
-import 'package:mime/mime.dart';
-import 'package:http_parser/http_parser.dart';
 import '../utils/token_util.dart';
 
 class AuthService {
@@ -16,8 +16,8 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final url = userId != null
-        ? Uri.parse('$baseUrl/api/users/user/$userId')
-        : Uri.parse('$baseUrl/api/users/user');
+        ? Uri.parse('$baseUrl/api/users/$userId')
+        : Uri.parse('$baseUrl/api/users');
 
     final response = await http.get(
       url,
@@ -50,7 +50,7 @@ class AuthService {
       throw Exception('User ID not found in SharedPreferences');
     }
 
-    final url = Uri.parse('$baseUrl/api/users/user/$userId');
+    final url = Uri.parse('$baseUrl/api/users/$userId');
 
     final request = http.MultipartRequest('PUT', url)
       ..headers.addAll({
@@ -93,7 +93,7 @@ class AuthService {
     final userId = prefs.getString('userId');
     final accessToken = prefs.getString('accessToken');
 
-    final url = Uri.parse('$baseUrl/api/users/user/$userId/preferences');
+    final url = Uri.parse('$baseUrl/api/users/$userId/preferences');
     final response = await http.put(
       url,
       headers: {
@@ -121,7 +121,7 @@ class AuthService {
     }
 
     final response = await http.delete(
-      Uri.parse('$baseUrl/api/users/user/$userId'),
+      Uri.parse('$baseUrl/api/users/$userId'),
       headers: {
         'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
       },
