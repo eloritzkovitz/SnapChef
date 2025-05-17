@@ -1,40 +1,36 @@
-import 'dart:io';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/auth_service.dart';
-import '../models/user.dart';
-import '../models/preferences.dart';
+import '../../utils/ui_util.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   bool _isLoading = false;
-  bool isLoggingOut = false;
-  User? _user;
+  bool isLoggingOut = false;  
 
-  bool get isLoading => _isLoading;
-  User? get user => _user;
-
-  String? get fridgeId => _user?.fridgeId;
-  String? get cookbookId => _user?.cookbookId;
+  bool get isLoading => _isLoading;   
 
   // Login
   Future<void> login(
-      String email, String password, BuildContext context) async {
+      String email,
+      String password,
+      BuildContext context,
+      Future<void> Function() fetchUserProfile,
+  ) async {
     _setLoading(true);
     try {
       // Call the AuthService login method
       await _authService.login(email, password);
 
-      // Fetch the user profile after login
+      // Fetch the user profile after login using UserViewModel
       await fetchUserProfile();
 
       // If login is successful, navigate to the main screen
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      _showError(context, e.toString());
+      UIUtil.showError(context, e.toString());
     } finally {
       _setLoading(false);
     }
@@ -59,14 +55,17 @@ class AuthViewModel extends ChangeNotifier {
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       // Show error message
-      _showError(context, e.toString());
+      UIUtil.showError(context, e.toString());
     } finally {
       _setLoading(false);
     }
   }
 
   // Google Sign-In
-  Future<void> googleSignIn(BuildContext context) async {
+  Future<void> googleSignIn(
+    BuildContext context,
+    Future<void> Function() fetchUserProfile,
+  ) async {
     _setLoading(true);
     try {
       // Start the Google Sign-In process
@@ -82,7 +81,7 @@ class AuthViewModel extends ChangeNotifier {
           // Send the idToken to your backend for authentication
           await _authService.googleSignIn(idToken);
 
-          // Fetch the user profile after successful sign-in
+          // Fetch the user profile after successful sign-in using UserViewModel
           await fetchUserProfile();
 
           // Navigate to the main screen
@@ -92,98 +91,11 @@ class AuthViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      _showError(context, 'Google Sign-In failed: $e');
+      UIUtil.showError(context, 'Google Sign-In failed: $e');
     } finally {
       _setLoading(false);
     }
-  }
-
-  // Fetch User Profile
-  Future<void> fetchUserProfile() async {
-    try {
-      final userProfile = await _authService.getUserProfile();
-      _user = userProfile;
-      notifyListeners();
-    } catch (e) {
-      if (e.toString().contains('401')) {
-        try {
-          await refreshTokens();
-          final userProfile = await _authService.getUserProfile();
-          _user = userProfile;
-          notifyListeners();
-        } catch (refreshError) {
-          _user = null;
-          notifyListeners();
-          rethrow;
-        }
-      } else {
-        _user = null;
-        notifyListeners();
-        rethrow;
-      }
-    }
-  }
-
-  // Update User Profile
-  Future<void> updateUserProfile({
-    required String firstName,
-    required String lastName,
-    String? password,
-    File? profilePicture,
-  }) async {
-    _setLoading(true);
-    try {
-      // Call the AuthService to update the user profile
-      final updatedData = await _authService.updateUserProfile(
-        firstName,
-        lastName,
-        password ?? '',
-        profilePicture,
-      );
-
-      // Extract the new profile picture relative path from the response
-      final newProfilePicture = updatedData['profilePicture'];
-
-      // Update the local user object
-      if (_user != null) {
-        _user = _user!.copyWith(
-          firstName: firstName,
-          lastName: lastName,
-          password: password ??
-              _user!.password, // Keep the current password if not updated
-          profilePicture: profilePicture != null
-              ? newProfilePicture ?? _user!.profilePicture
-              : _user!.profilePicture, // Update profile picture if provided
-        );
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error updating profile: $e');
-      throw Exception('Failed to update profile');
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<void> updateUserPreferences({
-    required List<String> allergies,
-    required Map<String, bool> dietaryPreferences,
-  }) async {
-    if (_user == null) throw Exception('User not loaded');
-    await _authService.updateUserPreferences(
-      allergies: allergies,
-      dietaryPreferences: dietaryPreferences,
-    );
-
-    // Update the local user object with new preferences
-    _user = _user!.copyWith(
-      preferences: Preferences(
-        allergies: allergies,
-        dietaryPreferences: dietaryPreferences,
-      ),
-    );
-    notifyListeners();
-  }
+  }  
 
   // Refresh Tokens
   Future<void> refreshTokens() async {
@@ -192,32 +104,16 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Failed to refresh tokens: $e');
     }
-  }
-
-  // Delete User Account
-  Future<void> deleteAccount(BuildContext context) async {
-    _setLoading(true);
-    try {
-      await _authService.deleteAccount();
-      _user = null; // Clear the user data on account deletion
-      notifyListeners(); // Notify listeners to update the UI
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
-      _showError(context, e.toString());
-    } finally {
-      _setLoading(false);
-    }
-  }
+  }  
 
   // Logout
   Future<void> logout(BuildContext context) async {
     try {
-      await _authService.logout();
-      _user = null; // Clear the user data on logout
+      await _authService.logout();     
       notifyListeners();
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
-      _showError(context, e.toString());
+      UIUtil.showError(context, e.toString());
     }
   }
 
@@ -231,18 +127,5 @@ class AuthViewModel extends ChangeNotifier {
   void setLoggingOut(bool value) {
     isLoggingOut = value;
     notifyListeners();
-  }
-
-  void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  String getFullImageUrl(String? imagePath) {
-    if (imagePath == null || imagePath.isEmpty) {
-      return ''; // Return an empty string or a default image URL if the path is null
-    }
-    final serverIp = dotenv.env['SERVER_IP'] ?? 'http://192.168.1.230:3000';
-    return '$serverIp$imagePath';
-  }
+  }  
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
 import 'widgets/settings_menu.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../utils/image_util.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,8 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     // Fetch the user profile when the screen is initialized
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    authViewModel.fetchUserProfile();
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    userViewModel.fetchUserProfile();
   }
 
   // Open the side menu with a sliding animation
@@ -61,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context);
+    final userViewModel = Provider.of<UserViewModel>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: authViewModel.isLoading
+      body: userViewModel.isLoading
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -91,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             )
-          : authViewModel.user == null
+          : userViewModel.user == null
               ? const Center(
                   child: Text(
                     'Failed to load profile data',
@@ -112,11 +113,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             CircleAvatar(
                               radius: 80,
-                              backgroundImage: authViewModel
+                              backgroundImage: userViewModel
                                           .user?.profilePicture !=
                                       null
-                                  ? NetworkImage(authViewModel.getFullImageUrl(
-                                          authViewModel.user!.profilePicture!))
+                                  ? NetworkImage(ImageUtil.getFullImageUrl(
+                                          userViewModel.user!.profilePicture!))
                                       as ImageProvider
                                   : const AssetImage(
                                           'assets/images/default_profile.png')
@@ -128,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         // User Full Name
                         Text(
-                          authViewModel.user?.fullName ?? 'Unknown User',
+                          userViewModel.user?.fullName ?? 'Unknown User',
                           style: const TextStyle(
                               fontSize: 28, fontWeight: FontWeight.bold),
                         ),
@@ -147,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  authViewModel.user?.email ?? 'No Email',
+                                  userViewModel.user?.email ?? 'No Email',
                                   style: const TextStyle(
                                       fontSize: 18, color: Colors.grey),
                                 ),
@@ -163,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  _formatJoinDate(authViewModel.user?.joinDate),
+                                  _formatJoinDate(userViewModel.user?.joinDate),
                                   style: const TextStyle(
                                       fontSize: 18, color: Colors.grey),
                                 ),

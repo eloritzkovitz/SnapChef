@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../services/ingredient_service.dart';
 import './fridge_list_view.dart';
@@ -21,12 +21,12 @@ class _FridgeScreenState extends State<FridgeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    final fridgeId = authViewModel.fridgeId;
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final fridgeId = userViewModel.fridgeId;
     final ingredientService = IngredientService();
 
     // Check if the user is null
-    if (authViewModel.user == null) {
+    if (userViewModel.user == null) {
       return const Scaffold(
         body: Center(
           child: Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
@@ -69,7 +69,7 @@ class RecipeResultScreen extends StatelessWidget {
         Provider.of<CookbookViewModel>(context, listen: false);
 
     // Get the cookbook ID dynamically from the user object
-    final user = Provider.of<AuthViewModel>(context, listen: false);
+    final user = Provider.of<UserViewModel>(context, listen: false);
     final String cookbookId = user.cookbookId ?? '';
 
     // Create a Recipe object to save

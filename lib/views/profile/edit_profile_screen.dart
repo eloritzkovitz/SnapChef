@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../utils/image_util.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,13 +26,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     
       // Initialize controllers with current user data
     _firstNameController =
-        TextEditingController(text: authViewModel.user?.firstName ?? '');
+        TextEditingController(text: userViewModel.user?.firstName ?? '');
     _lastNameController =
-        TextEditingController(text: authViewModel.user?.lastName ?? '');
+        TextEditingController(text: userViewModel.user?.lastName ?? '');
     _passwordController = TextEditingController(text: placeholder);
 
     // Initialize the focus node for the password field
@@ -69,7 +70,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context);
+    final userViewModel = Provider.of<UserViewModel>(context);
     final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
@@ -94,9 +95,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       radius: 50,
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
-                          : authViewModel.user?.profilePicture != null
-                              ? NetworkImage(authViewModel.getFullImageUrl(
-                                      authViewModel.user!.profilePicture!))
+                          : userViewModel.user?.profilePicture != null
+                              ? NetworkImage(ImageUtil.getFullImageUrl(
+                                      userViewModel.user!.profilePicture!))
                                   as ImageProvider
                               : const AssetImage(
                                   'assets/images/default_profile.png'),
@@ -246,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : null; // Keep the current password if unchanged
 
                           // Update the user profile
-                          await authViewModel.updateUserProfile(
+                          await userViewModel.updateUserProfile(
                             firstName: _firstNameController.text,
                             lastName: _lastNameController.text,
                             password: password, // Pass the new password or null
@@ -318,7 +319,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         );
 
                         try {
-                          await authViewModel.deleteAccount(context);
+                          await userViewModel.deleteAccount(context);
                           Navigator.pop(context); // Close the loading indicator
                           Navigator.pushReplacementNamed(
                               context, '/login'); // Redirect to login screen

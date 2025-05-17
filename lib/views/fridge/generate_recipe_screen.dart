@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../models/ingredient.dart';
@@ -85,11 +85,11 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context);
+    final userViewModel = Provider.of<UserViewModel>(context);
     final recipeViewModel = Provider.of<RecipeViewModel>(context);
     final fridgeViewModel = Provider.of<FridgeViewModel>(context);
 
-    final preferences = authViewModel.user?.preferences ??
+    final preferences = userViewModel.user?.preferences ??
         Preferences(allergies: [], dietaryPreferences: {});
 
     return WillPopScope(

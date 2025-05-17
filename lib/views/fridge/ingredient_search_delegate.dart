@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/ingredient_service.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 
 class IngredientSearchDelegate extends SearchDelegate {
@@ -173,11 +173,10 @@ class IngredientSearchDelegate extends SearchDelegate {
             TextButton(
               onPressed: () async {
                 final quantity = int.tryParse(quantityController.text);
-                if (quantity != null && quantity > 0) {
-                  // Use the FridgeViewModel to add the ingredient to the fridge
-                  final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+                if (quantity != null && quantity > 0) {                  
+                  final userViewModel = Provider.of<UserViewModel>(context, listen: false);
                   final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
-                  final fridgeId = authViewModel.fridgeId; // Get the fridge ID from the view model
+                  final fridgeId = userViewModel.fridgeId;
 
                   if (fridgeId != null && fridgeId.isNotEmpty) {
                     final success = await fridgeViewModel.addIngredientToFridge(

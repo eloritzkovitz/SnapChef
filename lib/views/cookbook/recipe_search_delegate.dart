@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
-import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import 'view_recipe_screen.dart';
 import './widgets/recipe_card.dart';
 
@@ -55,7 +55,7 @@ class RecipeSearchDelegate extends SearchDelegate {
               MaterialPageRoute(
                 builder: (context) => ViewRecipeScreen(
                   recipe: recipe,
-                  cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                  cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
                 ),
               ),
             );
@@ -92,7 +92,7 @@ class RecipeSearchDelegate extends SearchDelegate {
               MaterialPageRoute(
                 builder: (context) => ViewRecipeScreen(
                   recipe: recipe,
-                  cookbookId: Provider.of<AuthViewModel>(context, listen: false).cookbookId ?? '',
+                  cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
                 ),
               ),
             );

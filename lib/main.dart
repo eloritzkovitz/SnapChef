@@ -11,6 +11,7 @@ import 'theme/colors.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
 import 'viewmodels/recipe_viewmodel.dart';
 import 'viewmodels/cookbook_viewmodel.dart';
@@ -56,19 +57,20 @@ Future<void> main() async {
 
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
+  final userViewModel = UserViewModel();
 
   bool isLoggedIn = false;
 
   // Handle token validation and user profile fetching
   if (accessToken != null && refreshToken != null) {
     try {
-      await authViewModel.fetchUserProfile();
-      isLoggedIn = authViewModel.user != null;
+      await userViewModel.fetchUserProfile();
+      isLoggedIn = userViewModel.user != null;
     } catch (e) {
       try {
         await authViewModel.refreshTokens();
-        await authViewModel.fetchUserProfile();
-        isLoggedIn = authViewModel.user != null;
+        await userViewModel.fetchUserProfile();
+        isLoggedIn = userViewModel.user != null;
       } catch (e) {
         isLoggedIn = false;
       }
@@ -94,6 +96,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => authViewModel),
+        ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => CookbookViewModel()),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/main_viewmodel.dart';
 import '../viewmodels/fridge_viewmodel.dart';
 import '../viewmodels/cookbook_viewmodel.dart';
-import '../viewmodels/auth_viewmodel.dart';
+import '../viewmodels/user_viewmodel.dart';
 import '../views/home/home_screen.dart';
 import '../views/fridge/fridge_screen.dart';
 import '../views/cookbook/cookbook_screen.dart';
@@ -28,10 +28,10 @@ class _MainScreenState extends State<MainScreen> {
     // Initialize fridge ingredients
     if (!_hasInitializedFridge) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final authViewModel = context.read<AuthViewModel>();
+        final userViewModel = context.read<UserViewModel>();
         final fridgeViewModel = context.read<FridgeViewModel>();
 
-        final fridgeId = authViewModel.fridgeId;
+        final fridgeId = userViewModel.fridgeId;
         if (fridgeId != null) {
           fridgeViewModel.fetchFridgeIngredients(fridgeId);
         }
@@ -43,7 +43,7 @@ class _MainScreenState extends State<MainScreen> {
     // Initialize cookbook recipes
     if (!_hasInitializedCookbook) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final authViewModel = context.read<AuthViewModel>();
+        final authViewModel = context.read<UserViewModel>();
         final cookbookViewModel = context.read<CookbookViewModel>();
 
         final cookbookId = authViewModel.cookbookId;
