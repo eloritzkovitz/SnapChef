@@ -78,8 +78,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8.0, vertical: 4.0),
                                 child: Row(
-                                  children: [
-                                    // Small, square image or placeholder
+                                  children: [                                    
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: imageUrl != null &&
