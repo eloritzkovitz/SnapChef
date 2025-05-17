@@ -29,7 +29,7 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
-          await refreshTokens();
+          await _authService.refreshTokens();
           final userProfile = await _userService.getUserProfile();
           _user = userProfile;
           notifyListeners();
@@ -106,16 +106,7 @@ class UserViewModel extends ChangeNotifier {
       ),
     );
     notifyListeners();
-  }
-
-  // Refresh Tokens
-  Future<void> refreshTokens() async {
-    try {
-      await _authService.refreshTokens();
-    } catch (e) {
-      throw Exception('Failed to refresh tokens: $e');
-    }
-  }
+  }  
 
   // Delete User Account
   Future<void> deleteAccount(BuildContext context) async {
