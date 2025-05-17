@@ -17,6 +17,7 @@ import 'viewmodels/cookbook_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
+import 'views/animated_splash_screen.dart';
 
 // Initialize Flutter Local Notifications
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -32,10 +33,11 @@ Future<void> main() async {
   await Firebase.initializeApp();
 
   // Request notification permissions
-  await FirebaseMessagingUtil.requestNotificationPermissions(); 
+  await FirebaseMessagingUtil.requestNotificationPermissions();
 
   // Set up Firebase Messaging background handler
-  FirebaseMessaging.onBackgroundMessage(FirebaseMessagingUtil.firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(
+      FirebaseMessagingUtil.firebaseMessagingBackgroundHandler);
 
   // Load environment variables
   try {
@@ -51,7 +53,7 @@ Future<void> main() async {
   // Retrieve the access and refresh tokens from SharedPreferences
   final accessToken = prefs.getString('accessToken');
   final refreshToken = prefs.getString('refreshToken');
-  
+
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
 
@@ -59,31 +61,32 @@ Future<void> main() async {
 
   // Handle token validation and user profile fetching
   if (accessToken != null && refreshToken != null) {
-    try {      
+    try {
       await authViewModel.fetchUserProfile();
       isLoggedIn = authViewModel.user != null;
-    } catch (e) {      
-      try {        
-        await authViewModel.refreshTokens();        
-        await authViewModel.fetchUserProfile(); 
+    } catch (e) {
+      try {
+        await authViewModel.refreshTokens();
+        await authViewModel.fetchUserProfile();
         isLoggedIn = authViewModel.user != null;
-      } catch (e) {        
+      } catch (e) {
         isLoggedIn = false;
       }
     }
-  } else {   
+  } else {
     isLoggedIn = false;
   }
 
   // Run the app with the login status and auth view model
   runApp(MyApp(isLoggedIn: isLoggedIn, authViewModel: authViewModel));
-}  
+}
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final AuthViewModel authViewModel;
 
-  const MyApp({required this.isLoggedIn, required this.authViewModel, super.key});
+  const MyApp(
+      {required this.isLoggedIn, required this.authViewModel, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +118,7 @@ class MyApp extends StatelessWidget {
             showSelectedLabels: false,
           ),
         ),
-        initialRoute: isLoggedIn ? '/main' : '/login',
+        home: AnimatedSplashScreen(isLoggedIn: isLoggedIn),
         routes: {
           '/login': (context) => LoginScreen(),
           '/signup': (context) => SignupScreen(),
