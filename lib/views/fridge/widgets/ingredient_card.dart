@@ -51,54 +51,60 @@ class IngredientCard extends StatelessWidget {
                     width: 60,
                     fit: BoxFit.cover,
                   ),
-            const SizedBox(height: 8.0),
             // Ingredient Name
             Text(
               ingredient.name,
               style: const TextStyle(
-                fontSize: 18.0,
+                fontSize: 16.0,
                 fontWeight: FontWeight.bold,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8.0),
-            // Quantity Controls
+            Text(
+              ingredient.category,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            // Quantity Controls Row
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Decrease Quantity Button
                 IconButton(
                   onPressed: onDecrease,
                   icon: const Icon(Icons.remove_circle),
                   color: Colors.red,
+                  iconSize: 24,
+                  tooltip: 'Decrease quantity',
                 ),
-                // Quantity Display
                 Text(
                   '${ingredient.count}',
-                  style: const TextStyle(fontSize: 18.0),
+                  style: const TextStyle(fontSize: 16.0),
                 ),
-                // Increase Quantity Button
                 IconButton(
                   onPressed: onIncrease,
                   icon: const Icon(Icons.add_circle),
                   color: Colors.green,
+                  iconSize: 24,
+                  tooltip: 'Increase quantity',
                 ),
               ],
             ),
-            const SizedBox(),
-            // Action Buttons (Delete and Expiry Alert)
+            // Action Buttons Row
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Delete Button
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.grey),
                   onPressed: onDelete,
+                  iconSize: 24,
+                  tooltip: 'Delete ingredient',
                 ),
-                const SizedBox(),
-                // Expiry Alert Button
                 IconButton(
                   icon: const Icon(Icons.alarm_add, color: Colors.blue),
                   onPressed: onSetExpiryAlert,
+                  iconSize: 24,
+                  tooltip: 'Set expiry alert',
                 ),
               ],
             ),
