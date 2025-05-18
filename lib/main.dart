@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'services/notification_service.dart';
 import 'theme/colors.dart';
 import 'utils/firebase_messaging_util.dart';
@@ -46,66 +45,16 @@ Future<void> main() async {
     log("Environment variables loaded successfully.");
   } catch (e) {
     log("Error loading .env file: $e");
-  }
-
-  // Get SharedPreferences instance
-  final prefs = await SharedPreferences.getInstance();
-
-  // Retrieve the access and refresh tokens from SharedPreferences
-  final accessToken = prefs.getString('accessToken');
-  final refreshToken = prefs.getString('refreshToken');
+  }  
 
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
   final fridgeViewModel = FridgeViewModel();
-  final cookbookViewModel = CookbookViewModel();
-
-  bool isLoggedIn = false;
-
-  // Handle token validation and user profile fetching
-  if (accessToken != null && refreshToken != null) {
-    try {
-      await userViewModel.fetchUserProfile();
-      isLoggedIn = userViewModel.user != null;
-
-      // Fetch fridge and cookbook data if user is loaded
-      if (isLoggedIn) {
-        final fridgeId = userViewModel.fridgeId;
-        final cookbookId = userViewModel.cookbookId;
-        if (fridgeId != null) {
-          await fridgeViewModel.fetchFridgeIngredients(fridgeId);
-        }
-        if (cookbookId != null) {
-          await cookbookViewModel.fetchCookbookRecipes(cookbookId);
-        }
-      }
-    } catch (e) {
-      try {
-        await authViewModel.refreshTokens();
-        await userViewModel.fetchUserProfile();
-        isLoggedIn = userViewModel.user != null;
-        if (isLoggedIn) {
-          final fridgeId = userViewModel.fridgeId;
-          final cookbookId = userViewModel.cookbookId;
-          if (fridgeId != null) {
-            await fridgeViewModel.fetchFridgeIngredients(fridgeId);
-          }
-          if (cookbookId != null) {
-            await cookbookViewModel.fetchCookbookRecipes(cookbookId);
-          }
-        }
-      } catch (e) {
-        isLoggedIn = false;
-      }
-    }
-  } else {
-    isLoggedIn = false;
-  }
+  final cookbookViewModel = CookbookViewModel();  
 
   // Run the app with the login status and viewmodels
-  runApp(MyApp(
-    isLoggedIn: isLoggedIn,
+  runApp(MyApp(    
     authViewModel: authViewModel,
     userViewModel: userViewModel,
     fridgeViewModel: fridgeViewModel,
@@ -113,15 +62,13 @@ Future<void> main() async {
   ));
 }
 
-class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
+class MyApp extends StatelessWidget {  
   final AuthViewModel authViewModel;
   final UserViewModel userViewModel;
   final FridgeViewModel fridgeViewModel;
   final CookbookViewModel cookbookViewModel;
 
-  const MyApp({
-    required this.isLoggedIn,
+  const MyApp({    
     required this.authViewModel,
     required this.userViewModel,
     required this.fridgeViewModel,
@@ -160,7 +107,7 @@ class MyApp extends StatelessWidget {
             showSelectedLabels: false,
           ),
         ),
-        home: AnimatedSplashScreen(isLoggedIn: isLoggedIn),
+        home: AnimatedSplashScreen(),
         routes: {
           '/login': (context) => LoginScreen(),
           '/signup': (context) => SignupScreen(),
