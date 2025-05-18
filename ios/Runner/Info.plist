@@ -45,5 +45,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SnapChef needs access to your camera to scan ingredients and take photos of your recipes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SnapChef needs access to your photo library to save and upload recipe photos.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>SnapChef uses notifications to alert you about ingredient expiry dates.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
