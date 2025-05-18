@@ -33,7 +33,7 @@ class FridgeListView extends StatelessWidget {
                       ingredient.imageURL,
                       width: 50,
                       height: 50,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => SizedBox(
                         width: 50,
                         height: 50,

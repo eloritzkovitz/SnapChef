@@ -87,7 +87,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                               imageUrl,
                                               width: 50,
                                               height: 50,
-                                              fit: BoxFit.cover,
+                                              fit: BoxFit.contain,
                                               errorBuilder: (context, error,
                                                       stackTrace) =>
                                                   const Icon(

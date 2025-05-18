@@ -67,7 +67,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                   ingredient['imageURL'],
                   width: 40,
                   height: 40,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => SizedBox(
                     width: 40,
                     height: 40,
@@ -155,7 +155,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                   ingredient['imageURL'],
                   width: 40,
                   height: 40,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => SizedBox(
                     width: 40,
                     height: 40,

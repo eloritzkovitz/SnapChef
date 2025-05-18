@@ -37,19 +37,19 @@ class IngredientCard extends StatelessWidget {
                     ingredient.imageURL,
                     height: 60,
                     width: 60,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Image.asset(
                       'assets/images/placeholder_image.png',
                       height: 60,
                       width: 60,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                     ),
                   )
                 : Image.asset(
                     'assets/images/placeholder_image.png',
                     height: 60,
                     width: 60,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                   ),
             // Ingredient Name
             Text(
