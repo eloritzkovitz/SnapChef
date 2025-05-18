@@ -172,7 +172,7 @@ class FridgeViewModel extends ChangeNotifier {
               id: id,
               name: name,
               category: category,
-              imageURL: '',
+              imageURL: imageURL ?? '',
               count: quantity,
             ),
           );

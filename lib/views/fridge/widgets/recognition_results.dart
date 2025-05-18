@@ -70,7 +70,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                             final category = ingredient['category'];
                             final id = ingredient['id'];
                             final quantity = ingredient['quantity'];
-                            final imageUrl = ingredient['imageUrl'];
+                            final imageUrl = ingredient['imageURL'];
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8.0),
