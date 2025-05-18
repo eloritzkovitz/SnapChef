@@ -58,6 +58,8 @@ Future<void> main() async {
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
+  final fridgeViewModel = FridgeViewModel();
+  final cookbookViewModel = CookbookViewModel();
 
   bool isLoggedIn = false;
 
@@ -66,11 +68,33 @@ Future<void> main() async {
     try {
       await userViewModel.fetchUserProfile();
       isLoggedIn = userViewModel.user != null;
+
+      // Fetch fridge and cookbook data if user is loaded
+      if (isLoggedIn) {
+        final fridgeId = userViewModel.fridgeId;
+        final cookbookId = userViewModel.cookbookId;
+        if (fridgeId != null) {
+          await fridgeViewModel.fetchFridgeIngredients(fridgeId);
+        }
+        if (cookbookId != null) {
+          await cookbookViewModel.fetchCookbookRecipes(cookbookId);
+        }
+      }
     } catch (e) {
       try {
         await authViewModel.refreshTokens();
         await userViewModel.fetchUserProfile();
         isLoggedIn = userViewModel.user != null;
+        if (isLoggedIn) {
+          final fridgeId = userViewModel.fridgeId;
+          final cookbookId = userViewModel.cookbookId;
+          if (fridgeId != null) {
+            await fridgeViewModel.fetchFridgeIngredients(fridgeId);
+          }
+          if (cookbookId != null) {
+            await cookbookViewModel.fetchCookbookRecipes(cookbookId);
+          }
+        }
       } catch (e) {
         isLoggedIn = false;
       }
@@ -79,16 +103,31 @@ Future<void> main() async {
     isLoggedIn = false;
   }
 
-  // Run the app with the login status and auth view model
-  runApp(MyApp(isLoggedIn: isLoggedIn, authViewModel: authViewModel));
+  // Run the app with the login status and viewmodels
+  runApp(MyApp(
+    isLoggedIn: isLoggedIn,
+    authViewModel: authViewModel,
+    userViewModel: userViewModel,
+    fridgeViewModel: fridgeViewModel,
+    cookbookViewModel: cookbookViewModel,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final AuthViewModel authViewModel;
+  final UserViewModel userViewModel;
+  final FridgeViewModel fridgeViewModel;
+  final CookbookViewModel cookbookViewModel;
 
-  const MyApp(
-      {required this.isLoggedIn, required this.authViewModel, super.key});
+  const MyApp({
+    required this.isLoggedIn,
+    required this.authViewModel,
+    required this.userViewModel,
+    required this.fridgeViewModel,
+    required this.cookbookViewModel,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,10 +135,10 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => authViewModel),
-        ChangeNotifierProvider(create: (_) => UserViewModel()),
-        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
+        ChangeNotifierProvider(create: (_) => userViewModel),
+        ChangeNotifierProvider(create: (_) => fridgeViewModel),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
+        ChangeNotifierProvider(create: (_) => cookbookViewModel),
       ],
       child: MaterialApp(
         theme: ThemeData(
