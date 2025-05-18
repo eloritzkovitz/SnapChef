@@ -70,7 +70,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                             final category = ingredient['category'];
                             final id = ingredient['id'];
                             final quantity = ingredient['quantity'];
-                            final imageUrl = ingredient['imageUrl'];
+                            final imageUrl = ingredient['imageURL'];
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -87,7 +87,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                               imageUrl,
                                               width: 50,
                                               height: 50,
-                                              fit: BoxFit.cover,
+                                              fit: BoxFit.contain,
                                               errorBuilder: (context, error,
                                                       stackTrace) =>
                                                   const Icon(
@@ -157,6 +157,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                           id,
                                           name,
                                           category,
+                                          imageUrl,
                                           ingredient['quantity'],
                                         );
                                         if (success) {

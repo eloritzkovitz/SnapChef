@@ -24,15 +24,11 @@ class ActionButton extends StatelessWidget {
       );
 
       try {
-        //final recognizedIngredients = await _imageService.processImage(image, endpoint);
-
         List<dynamic> recognizedIngredients = [];
         if (endpoint == 'barcode') {
           // 1. Use ML Kit to scan barcode from the image
           final barcode = await scanBarcodeWithMLKit(image);
-          if (barcode != null && barcode.isNotEmpty) {
-            // 2. Optionally use a dummy image if your backend requires an image
-            //    Otherwise, you can use the original image
+          if (barcode != null && barcode.isNotEmpty) {            
             recognizedIngredients = await _imageService.processImage(
               image, // or dummyImage if needed
               endpoint,
@@ -72,7 +68,7 @@ class ActionButton extends StatelessWidget {
     await barcodeScanner.close();
 
     if (barcodes.isNotEmpty) {
-      return barcodes.first.rawValue; // or .displayValue
+      return barcodes.first.rawValue;
     }
     return null;
   }
@@ -101,6 +97,7 @@ class ActionButton extends StatelessWidget {
           'name': name,
           'category': ingredient['category'],
           'id': ingredient['id'],
+          'imageURL': ingredient['imageURL'] ?? '',
           'quantity': 1,
         };
       }

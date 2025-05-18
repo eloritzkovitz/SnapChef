@@ -20,6 +20,19 @@ class _FridgeScreenState extends State<FridgeScreen> {
   bool isListView = false; // State variable to toggle between views
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+      final fridgeId = userViewModel.fridgeId;
+      if (fridgeId != null) {
+        fridgeViewModel.fetchFridgeIngredients(fridgeId);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     final fridgeId = userViewModel.fridgeId;

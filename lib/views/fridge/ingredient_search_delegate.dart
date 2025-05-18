@@ -61,6 +61,24 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredResults[index];
         return ListTile(
+          leading: (ingredient['imageURL'] != null &&
+                  ingredient['imageURL'].toString().isNotEmpty)
+              ? Image.network(
+                  ingredient['imageURL'],
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.image_not_supported, size: 32),
+                  ),
+                )
+              : SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.image_not_supported, size: 32),
+                ),
           title: Text(ingredient['name']),
           subtitle: Text('Category: ${ingredient['category']}'),
           trailing: IconButton(
@@ -70,7 +88,8 @@ class IngredientSearchDelegate extends SearchDelegate {
             },
           ),
           onTap: () {
-            close(context, ingredient); // Close the search and return the selected ingredient
+            close(context,
+                ingredient); // Close the search and return the selected ingredient
           },
         );
       },
@@ -130,6 +149,24 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredSuggestions[index];
         return ListTile(
+          leading: (ingredient['imageURL'] != null &&
+                  ingredient['imageURL'].toString().isNotEmpty)
+              ? Image.network(
+                  ingredient['imageURL'],
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.image_not_supported, size: 32),
+                  ),
+                )
+              : SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.image_not_supported, size: 32),
+                ),
           title: Text(ingredient['name']),
           subtitle: Text('Category: ${ingredient['category']}'),
           trailing: IconButton(
@@ -139,8 +176,8 @@ class IngredientSearchDelegate extends SearchDelegate {
             },
           ),
           onTap: () {
-            query = ingredient['name']; // Update the search query
-            showResults(context); // Show the filtered results
+            query = ingredient['name'];
+            showResults(context);
           },
         );
       },
@@ -173,9 +210,11 @@ class IngredientSearchDelegate extends SearchDelegate {
             TextButton(
               onPressed: () async {
                 final quantity = int.tryParse(quantityController.text);
-                if (quantity != null && quantity > 0) {                  
-                  final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-                  final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+                if (quantity != null && quantity > 0) {
+                  final userViewModel =
+                      Provider.of<UserViewModel>(context, listen: false);
+                  final fridgeViewModel =
+                      Provider.of<FridgeViewModel>(context, listen: false);
                   final fridgeId = userViewModel.fridgeId;
 
                   if (fridgeId != null && fridgeId.isNotEmpty) {
@@ -184,27 +223,35 @@ class IngredientSearchDelegate extends SearchDelegate {
                       ingredient['id'],
                       ingredient['name'],
                       ingredient['category'],
+                      ingredient['imageURL'],
                       quantity,
                     );
 
                     if (success) {
                       Navigator.pop(context); // Close the dialog
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${ingredient['name']} added to fridge')),
+                        SnackBar(
+                            content:
+                                Text('${ingredient['name']} added to fridge')),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to add ingredient to fridge')),
+                        const SnackBar(
+                            content:
+                                Text('Failed to add ingredient to fridge')),
                       );
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fridge ID is missing. Please log in again.')),
+                      const SnackBar(
+                          content: Text(
+                              'Fridge ID is missing. Please log in again.')),
                     );
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a valid quantity')),
+                    const SnackBar(
+                        content: Text('Please enter a valid quantity')),
                   );
                 }
               },
