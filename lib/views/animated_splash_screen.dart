@@ -14,22 +14,37 @@ class AnimatedSplashScreen extends StatefulWidget {
 }
 
 class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _squishAnimation;
   late Animation<double> _wiggleAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Enable immersive mode for full screen (behind system bars)
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Set navigation bar to orange for splash
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Color(0xFFF47851),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
 
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+
+    // Fade controller for fade out effect
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController);
 
     // Vertical squish: normal -> squished -> normal
     _squishAnimation = TweenSequence([
@@ -74,12 +89,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
       ),
     ]).animate(_controller);
 
-    _controller.forward();
-    _loadAndNavigate();
+    _runSplashSequence();
   }
 
-  // Load user data and navigate to the appropriate screen
-  Future<void> _loadAndNavigate() async {
+  Future<void> _runSplashSequence() async {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     final fridgeViewModel =
         Provider.of<FridgeViewModel>(context, listen: false);
@@ -92,8 +105,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
     bool isLoggedIn = false;
 
-    // Start both the animation and the data loading
+    // Start the main animation
     final animationFuture = _controller.forward().then((_) => true);
+
+    // Start data loading
     final dataFuture = () async {
       if (accessToken != null && refreshToken != null) {
         try {
@@ -119,14 +134,16 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
       return true;
     }();
 
-    // Wait for both to complete, and enforce a minimum duration if you want
+    // Wait for both animation and data loading (and a minimum duration)
     await Future.wait([
       animationFuture,
       dataFuture,
-      Future.delayed(const Duration(seconds: 2)), // Minimum splash duration
+      Future.delayed(const Duration(seconds: 2)),
     ]);
 
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Fade out after animation and data loading
+    await _fadeController.forward();
+
     Navigator.of(context).pushReplacementNamed(
       isLoggedIn ? '/main' : '/login',
     );
@@ -135,8 +152,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
   @override
   void dispose() {
     _controller.dispose();
-    // Restore system UI just in case
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -145,35 +161,31 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF47851),
       resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              color: const Color(0xFFF47851),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          color: const Color(0xFFF47851),
+          alignment: Alignment.center,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Transform.rotate(
+                angle: _wiggleAnimation.value,
+                child: Transform.scale(
+                  scaleY: _squishAnimation.value,
+                  scaleX: 1.0,
+                  child: child,
+                ),
+              );
+            },
+            child: Image.asset(
+              'assets/images/splash_icon.png',
+              width: 300,
+              height: 300,
+              fit: BoxFit.contain,
             ),
           ),
-          Center(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _wiggleAnimation.value,
-                  child: Transform.scale(
-                    scaleY: _squishAnimation.value,
-                    scaleX: 1.0,
-                    child: child,
-                  ),
-                );
-              },
-              child: Image.asset(
-                'assets/images/splash_icon.png',
-                width: 300,
-                height: 300,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

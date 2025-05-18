@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/main_viewmodel.dart';
 import '../viewmodels/fridge_viewmodel.dart';
@@ -20,6 +21,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   bool _hasInitializedFridge = false;
   bool _hasInitializedCookbook = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set navigation bar to white for the rest of the app
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -70,30 +83,29 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-  body: screens[viewModel.selectedIndex],
-  bottomNavigationBar: Container(
-    decoration: BoxDecoration(
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 2,
-          
+      body: screens[viewModel.selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 2,
+            ),
+          ],
         ),
-      ],
-    ),
-    child: BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Fridge'),
-        BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Cookbook'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
-      ],
-      currentIndex: viewModel.selectedIndex,
-      onTap: viewModel.onItemTapped,
-      iconSize: 30,
-    ),
-  ),
-);
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Fridge'),
+            BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Cookbook'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
+          ],
+          currentIndex: viewModel.selectedIndex,
+          onTap: viewModel.onItemTapped,
+          iconSize: 30,
+        ),
+      ),
+    );
   }
 }
