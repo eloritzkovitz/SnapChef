@@ -15,22 +15,6 @@ class CookbookScreen extends StatefulWidget {
 
 class _CookbookScreenState extends State<CookbookScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      final cookbookViewModel =
-          Provider.of<CookbookViewModel>(context, listen: false);
-
-      // Ensure the cookbookId is not null
-      final cookbookId = userViewModel.cookbookId;
-      if (cookbookId != null && cookbookId.isNotEmpty) {
-        cookbookViewModel.fetchCookbookRecipes(cookbookId);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
