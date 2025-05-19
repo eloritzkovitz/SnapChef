@@ -8,7 +8,8 @@ class IngredientSelectionModal extends StatefulWidget {
   const IngredientSelectionModal({super.key});
 
   @override
-  State<IngredientSelectionModal> createState() => _IngredientSelectionModalState();
+  State<IngredientSelectionModal> createState() =>
+      _IngredientSelectionModalState();
 }
 
 class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
@@ -19,7 +20,8 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+    final fridgeViewModel =
+        Provider.of<FridgeViewModel>(context, listen: false);
     _filteredIngredients = List.from(fridgeViewModel.ingredients);
     _searchController.addListener(_filterIngredients);
   }
@@ -31,7 +33,8 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
   }
 
   void _filterIngredients() {
-    final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+    final fridgeViewModel =
+        Provider.of<FridgeViewModel>(context, listen: false);
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredIngredients = fridgeViewModel.ingredients
@@ -81,7 +84,7 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
             const SizedBox(height: 16),
             // Ingredient List
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
+              height: MediaQuery.of(context).size.height * 0.5,             
               child: ListView.builder(
                 itemCount: _filteredIngredients.length,
                 itemBuilder: (context, index) {
@@ -90,6 +93,33 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
                       recipeViewModel.isIngredientSelected(ingredient);
 
                   return ListTile(
+                    leading: (ingredient.imageURL.isNotEmpty)
+                        ? Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white,                              
+                              borderRadius: BorderRadius.circular(
+                                  8),
+                              image: DecorationImage(
+                                image: NetworkImage(ingredient.imageURL),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
                     title: Text(ingredient.name),
                     subtitle: Text('Quantity: ${ingredient.count}'),
                     trailing: Checkbox(

@@ -76,6 +76,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
   void _showIngredientSelectionPopup(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (BuildContext context) {
         return const IngredientSelectionModal();
