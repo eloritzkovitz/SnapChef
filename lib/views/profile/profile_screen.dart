@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'widgets/friends_list.dart';
 import 'widgets/settings_menu.dart';
-import '../../viewmodels/user_viewmodel.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/friend_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Fetch the user profile when the screen is initialized
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     userViewModel.fetchUserProfile();
+    // Fetch friends when the screen is initialized
+    final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
+    friendViewModel.fetchFriends();
   }
 
   // Open the side menu with a sliding animation
@@ -31,6 +36,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
         return const SettingsMenu();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset(0.0, 0.0);
+        const curve = Curves.easeInOut;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
+
+  // Open the friends list with a sliding animation
+  void _openFriendsList(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Header with Close Button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Friends',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Expanded(child: FriendsList()),
+                ],
+              ),
+            ),
+          ),
+        );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(1.0, 0.0);
@@ -63,6 +146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context);
+    final friendViewModel = Provider.of<FriendViewModel>(context);
+
+    final int friendCount = friendViewModel.friends.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -172,6 +258,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+
+                        // Friends count button
+                        Center(
+                          child: GestureDetector(
+                            onTap: () => _openFriendsList(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.group,
+                                      color: Colors.black, size: 24),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '$friendCount Friend${friendCount == 1 ? '' : 's'}',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
+                                  ),
+                                  const Icon(Icons.chevron_right,
+                                      color: Colors.black54, size: 24),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        // ... (rest of your profile content)
                       ],
                     ),
                   ),
