@@ -20,6 +20,9 @@ import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
 import 'views/animated_splash_screen.dart';
 
+// RouteObserver for navigation events
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 // Initialize Flutter Local Notifications
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -113,6 +116,7 @@ class MyApp extends StatelessWidget {
             showSelectedLabels: false,
           ),
         ),
+        navigatorObservers: [routeObserver],
         home: AnimatedSplashScreen(),
         routes: {
           '/login': (context) => LoginScreen(),
