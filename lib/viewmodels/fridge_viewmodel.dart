@@ -252,7 +252,7 @@ class FridgeViewModel extends ChangeNotifier {
   // Decrease ingredient count
   void decreaseCount(int index, String fridgeId) async {
     final ingredient = _ingredients[index];
-    if (ingredient.count > 0) {
+    if (ingredient.count > 1) {
       final newCount = ingredient.count - 1;
 
       final success = await updateItem(fridgeId, ingredient.id, newCount);
