@@ -7,13 +7,25 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:snapchef/main.dart';
+import 'package:snapchef/viewmodels/auth_viewmodel.dart';
+import 'package:snapchef/viewmodels/cookbook_viewmodel.dart';
+import 'package:snapchef/viewmodels/fridge_viewmodel.dart';
+import 'package:snapchef/viewmodels/friend_viewmodel.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MyApp(
+        authViewModel: AuthViewModel(),
+        userViewModel: UserViewModel(),
+        fridgeViewModel: FridgeViewModel(),
+        cookbookViewModel: CookbookViewModel(),
+        friendViewModel: FriendViewModel(),
+      ),
+    );
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

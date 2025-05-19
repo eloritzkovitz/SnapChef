@@ -217,7 +217,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                           ingredient['imageURL'],
                           width: 80,
                           height: 80,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.image_not_supported,
                             size: 48,
