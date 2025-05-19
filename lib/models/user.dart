@@ -1,4 +1,5 @@
 import 'preferences.dart';
+import 'friend.dart';
 
 class User {
   final String firstName;
@@ -10,6 +11,7 @@ class User {
   final String fridgeId;
   final String cookbookId;
   final Preferences? preferences;
+  final List<Friend> friends;
 
   User({
     required this.firstName,
@@ -21,6 +23,7 @@ class User {
     required this.fridgeId,
     required this.cookbookId,
     this.preferences,
+    this.friends = const [],
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -35,6 +38,8 @@ class User {
       preferences: json['preferences'] != null
           ? Preferences.fromJson(json['preferences'])
           : null,
+      friends: (json['friends'] as List<dynamic>?)
+              ?.map((friend) => Friend.fromJson(friend)).toList() ?? [],
     );
   }
 
@@ -48,6 +53,7 @@ class User {
     String? fridgeId,
     String? cookbookId,
     Preferences? preferences,
+    List<Friend>? friends,
   }) {
     return User(
       firstName: firstName ?? this.firstName,
@@ -59,8 +65,10 @@ class User {
       fridgeId: fridgeId ?? this.fridgeId,
       cookbookId: cookbookId ?? this.cookbookId,
       preferences: preferences ?? this.preferences,
+      friends: friends ?? this.friends,
     );
   }
-
+  
+  // Concatenate first and last name
   String get fullName => '$firstName $lastName';
 }
