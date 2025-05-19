@@ -237,6 +237,7 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Increase ingredient count
   void increaseCount(int filteredIndex, String fridgeId) async {
     final ingredient = filteredIngredients[filteredIndex];
     final newCount = ingredient.count + 1;
@@ -254,7 +255,7 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
-// Decrease ingredient count
+  // Decrease ingredient count
   void decreaseCount(int filteredIndex, String fridgeId) async {
     final ingredient = filteredIngredients[filteredIndex];
     if (ingredient.count > 1) {
