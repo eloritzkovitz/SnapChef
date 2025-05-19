@@ -14,10 +14,14 @@ import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
 import 'viewmodels/recipe_viewmodel.dart';
 import 'viewmodels/cookbook_viewmodel.dart';
+import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
 import 'views/animated_splash_screen.dart';
+
+// RouteObserver for navigation events
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 // Initialize Flutter Local Notifications
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -51,7 +55,8 @@ Future<void> main() async {
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
   final fridgeViewModel = FridgeViewModel();
-  final cookbookViewModel = CookbookViewModel();  
+  final cookbookViewModel = CookbookViewModel();
+  final friendViewModel = FriendViewModel(); 
 
   // Run the app with the login status and viewmodels
   runApp(MyApp(    
@@ -59,6 +64,7 @@ Future<void> main() async {
     userViewModel: userViewModel,
     fridgeViewModel: fridgeViewModel,
     cookbookViewModel: cookbookViewModel,
+    friendViewModel: friendViewModel,
   ));
 }
 
@@ -67,12 +73,14 @@ class MyApp extends StatelessWidget {
   final UserViewModel userViewModel;
   final FridgeViewModel fridgeViewModel;
   final CookbookViewModel cookbookViewModel;
+  final FriendViewModel friendViewModel;
 
   const MyApp({    
     required this.authViewModel,
     required this.userViewModel,
     required this.fridgeViewModel,
     required this.cookbookViewModel,
+    required this.friendViewModel,
     super.key,
   });
 
@@ -86,6 +94,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => fridgeViewModel),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
+        ChangeNotifierProvider(create: (_) => friendViewModel),
       ],
       child: MaterialApp(
         theme: ThemeData(
@@ -107,6 +116,7 @@ class MyApp extends StatelessWidget {
             showSelectedLabels: false,
           ),
         ),
+        navigatorObservers: [routeObserver],
         home: AnimatedSplashScreen(),
         routes: {
           '/login': (context) => LoginScreen(),

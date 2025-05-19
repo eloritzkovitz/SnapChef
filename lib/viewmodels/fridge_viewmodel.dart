@@ -18,7 +18,7 @@ class FridgeViewModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);  
+  List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
 
   // Fetch ingredients from the user's fridge
   Future<void> fetchFridgeIngredients(String fridgeId) async {
@@ -36,7 +36,8 @@ class FridgeViewModel extends ChangeNotifier {
               id: item['id'],
               name: item['name'],
               category: item['category'],
-              imageURL: item['imageURL'] ?? 'assets/images/placeholder_image.png',
+              imageURL:
+                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
               count: item['quantity'],
             );
           }).toList(),
@@ -219,8 +220,7 @@ class FridgeViewModel extends ChangeNotifier {
   // Delete ingredient from fridge (local and backend)
   Future<bool> deleteItem(String fridgeId, String itemId) async {
     try {
-      final success =
-          await _fridgeService.deleteFridgeItem(fridgeId, itemId);
+      final success = await _fridgeService.deleteFridgeItem(fridgeId, itemId);
       if (success) {
         _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
         _applyFiltersAndSorting();
@@ -238,26 +238,38 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   // Increase ingredient count
-  void increaseCount(int index, String fridgeId) async {
-    final ingredient = _ingredients[index];
+  void increaseCount(int filteredIndex, String fridgeId) async {
+    final ingredient = filteredIngredients[filteredIndex];
     final newCount = ingredient.count + 1;
 
     final success = await updateItem(fridgeId, ingredient.id, newCount);
     if (success) {
-      ingredient.count = newCount;
+      // Find and update in the main list
+      final mainIndex =
+          _ingredients.indexWhere((ing) => ing.id == ingredient.id);
+      if (mainIndex != -1) {
+        _ingredients[mainIndex].count = newCount;
+      }
+      _applyFiltersAndSorting();
       notifyListeners();
     }
   }
 
   // Decrease ingredient count
-  void decreaseCount(int index, String fridgeId) async {
-    final ingredient = _ingredients[index];
-    if (ingredient.count > 0) {
+  void decreaseCount(int filteredIndex, String fridgeId) async {
+    final ingredient = filteredIngredients[filteredIndex];
+    if (ingredient.count > 1) {
       final newCount = ingredient.count - 1;
 
       final success = await updateItem(fridgeId, ingredient.id, newCount);
       if (success) {
-        ingredient.count = newCount;
+        // Find and update in the main list
+        final mainIndex =
+            _ingredients.indexWhere((ing) => ing.id == ingredient.id);
+        if (mainIndex != -1) {
+          _ingredients[mainIndex].count = newCount;
+        }
+        _applyFiltersAndSorting();
         notifyListeners();
       }
     }

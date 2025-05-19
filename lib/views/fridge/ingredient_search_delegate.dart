@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
+import '../../theme/colors.dart';
 
 class IngredientSearchDelegate extends SearchDelegate {
   final IngredientService ingredientService;
@@ -88,8 +89,7 @@ class IngredientSearchDelegate extends SearchDelegate {
             },
           ),
           onTap: () {
-            close(context,
-                ingredient); // Close the search and return the selected ingredient
+            _showAddToFridgeDialog(context, ingredient);
           },
         );
       },
@@ -184,80 +184,174 @@ class IngredientSearchDelegate extends SearchDelegate {
     );
   }
 
+  // Show dialog to add ingredient to fridge
   void _showAddToFridgeDialog(BuildContext context, dynamic ingredient) {
-    final TextEditingController quantityController = TextEditingController();
+    int quantity = 1;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Add ${ingredient['name']} to Fridge'),
-          content: TextField(
-            controller: quantityController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Quantity',
-              hintText: 'Enter quantity',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final quantity = int.tryParse(quantityController.text);
-                if (quantity != null && quantity > 0) {
-                  final userViewModel =
-                      Provider.of<UserViewModel>(context, listen: false);
-                  final fridgeViewModel =
-                      Provider.of<FridgeViewModel>(context, listen: false);
-                  final fridgeId = userViewModel.fridgeId;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              backgroundColor: Colors.white,
+              title: Text(
+                'Add ${ingredient['name']} to Fridge',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (ingredient['imageURL'] != null &&
+                      ingredient['imageURL'].toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          ingredient['imageURL'],
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.image_not_supported,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    ),
+                  Text(
+                    ingredient['category'] ?? '',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Quantity',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.remove_circle, color: primaryColor),
+                        onPressed: quantity > 1
+                            ? () => setState(() => quantity--)
+                            : null,
+                      ),
+                      Container(
+                        width: 48,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: primaryColor, width: 1.5),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[50],
+                        ),
+                        child: Text(
+                          '$quantity',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add_circle, color: primaryColor),
+                        onPressed: () => setState(() => quantity++),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: Text('Cancel', style: TextStyle(color: primaryColor)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final userViewModel =
+                        Provider.of<UserViewModel>(context, listen: false);
+                    final fridgeViewModel =
+                        Provider.of<FridgeViewModel>(context, listen: false);
+                    final fridgeId = userViewModel.fridgeId;
 
-                  if (fridgeId != null && fridgeId.isNotEmpty) {
-                    final success = await fridgeViewModel.addIngredientToFridge(
-                      fridgeId,
-                      ingredient['id'],
-                      ingredient['name'],
-                      ingredient['category'],
-                      ingredient['imageURL'],
-                      quantity,
-                    );
-
-                    if (success) {
-                      Navigator.pop(context); // Close the dialog
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('${ingredient['name']} added to fridge')),
+                    if (fridgeId != null && fridgeId.isNotEmpty) {
+                      final success =
+                          await fridgeViewModel.addIngredientToFridge(
+                        fridgeId,
+                        ingredient['id'],
+                        ingredient['name'],
+                        ingredient['category'],
+                        ingredient['imageURL'],
+                        quantity,
                       );
+
+                      if (success) {
+                        Navigator.pop(context); // Close the dialog
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  '${ingredient['name']} added to fridge')),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                                  Text('Failed to add ingredient to fridge')),
+                        );
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content:
-                                Text('Failed to add ingredient to fridge')),
+                            content: Text(
+                                'Fridge ID is missing. Please log in again.')),
                       );
                     }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Fridge ID is missing. Please log in again.')),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Please enter a valid quantity')),
-                  );
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

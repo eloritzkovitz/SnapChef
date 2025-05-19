@@ -106,6 +106,7 @@ class CookbookViewModel extends ChangeNotifier {
           ),
         );
         _applyFilters();
+        notifyListeners();
       }
       return success;
     } catch (e) {

@@ -5,6 +5,7 @@ import '../../viewmodels/cookbook_viewmodel.dart';
 import 'recipe_search_delegate.dart';
 import './widgets/recipe_card.dart';
 import 'view_recipe_screen.dart';
+import '../../main.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -13,7 +14,40 @@ class CookbookScreen extends StatefulWidget {
   State<CookbookScreen> createState() => _CookbookScreenState();
 }
 
-class _CookbookScreenState extends State<CookbookScreen> {
+class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+    // Initial fetch
+    _fetchRecipes();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    // Called when returning to this screen
+    _fetchRecipes();
+  }
+
+  void _fetchRecipes() {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final cookbookViewModel = Provider.of<CookbookViewModel>(context, listen: false);
+    final cookbookId = userViewModel.cookbookId;
+    if (cookbookId != null && cookbookId.isNotEmpty && cookbookId != 'No Cookbook ID') {
+      cookbookViewModel.fetchCookbookRecipes(cookbookId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
