@@ -5,7 +5,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import '../models/expiry_notification.dart';
+import '../models/notifications/app_notification.dart';
+import '../models/notifications/ingredient_reminder.dart';
 import '../theme/colors.dart';
 
 class NotificationService {
@@ -40,9 +41,9 @@ class NotificationService {
   NotificationDetails notificationDetails() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
-        'expiry_alerts_channel',
-        'Expiry Alerts',
-        channelDescription: 'Notifications for ingredient expiry alerts',
+        'ingredient_alerts_channel',
+        'Ingredient Alerts',
+        channelDescription: 'Notifications for ingredient reminders',
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
@@ -57,57 +58,66 @@ class NotificationService {
   }
 
   // Retrieve stored notifications from local storage
-  Future<List<ExpiryNotification>> _getStoredNotifications() async {
+  Future<List<AppNotification>> _getStoredNotifications() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? jsonList = prefs.getStringList('scheduled_notifications');
+    final List<String>? jsonList = prefs.getStringList('app_notifications');
     if (jsonList == null) return [];
-    return jsonList.map((json) => ExpiryNotification.fromJson(jsonDecode(json))).toList();
+    return jsonList.map((json) {
+      final map = jsonDecode(json);
+      switch (map['runtimeType']) {
+        case 'IngredientReminder':
+          return IngredientReminder.fromJson(map);
+        // Add more cases for future notification types
+        default:
+          throw Exception('Unknown notification type: ${map['runtimeType']}');
+      }
+    }).toList();
   }
 
   // Save notifications to local storage
-  Future<void> _saveStoredNotifications(List<ExpiryNotification> notifications) async {
+  Future<void> _saveStoredNotifications(List<AppNotification> notifications) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String> jsonList = notifications.map((n) => jsonEncode(n.toJson())).toList();
-    await prefs.setStringList('scheduled_notifications', jsonList);
+    final List<String> jsonList = notifications.map((n) {
+      final map = n.toJson();
+      map['runtimeType'] = n.runtimeType.toString();
+      return jsonEncode(map);
+    }).toList();
+    await prefs.setStringList('app_notifications', jsonList);
   }
 
   // Generate a unique notification ID
-  Future<int> _generateUniqueNotificationId(List<ExpiryNotification> existingNotifications) async {
+  int _generateUniqueNotificationIdFromList(List<AppNotification> existingNotifications) {
     if (existingNotifications.isEmpty) return 1;
     final ids = existingNotifications.map((n) => n.id).toList();
     return ids.reduce((a, b) => a > b ? a : b) + 1;
   }
-  
-  // Schedule a notification for an ingredient's expiry date
-  Future<void> scheduleExpiryNotification(String ingredientName, DateTime expiryDateTime) async {
-    try {
-      final List<ExpiryNotification> notifications = await _getStoredNotifications();
 
-      final tz.TZDateTime scheduledTime = tz.TZDateTime.from(expiryDateTime, tz.local);
-      if (scheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
+  Future<int> generateUniqueNotificationId() async {
+    final existingNotifications = await _getStoredNotifications();
+    return _generateUniqueNotificationIdFromList(existingNotifications);
+  }
+
+  // Schedule a notification (generic)
+  Future<void> scheduleNotification(AppNotification notification, {String? customTitle}) async {
+    try {
+      final List<AppNotification> notifications = await _getStoredNotifications();
+
+      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(notification.scheduledTime, tz.local);
+      if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
         debugPrint('Scheduled time is in the past. Skipping.');
         return;
       }
 
-      final int id = await _generateUniqueNotificationId(notifications);
-
       await notificationsPlugin.zonedSchedule(
-        id,
-        "Expiry Alert",
-        "$ingredientName is about to expire! Make sure to use it!",
-        scheduledTime,
+        notification.id,
+        customTitle ?? notification.title,
+        notification.body,
+        tzScheduledTime,
         notificationDetails(),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
 
-      final newNotification = ExpiryNotification(
-        id: id,
-        ingredientName: ingredientName,
-        body: "$ingredientName is about to expire! Make sure to use it!",
-        scheduledTime: expiryDateTime,
-      );
-
-      notifications.add(newNotification);
+      notifications.add(notification);
       await _saveStoredNotifications(notifications);
     } catch (e) {
       debugPrint('Error scheduling notification: $e');
@@ -115,9 +125,9 @@ class NotificationService {
   }
 
   // Edit an existing notification
-  Future<void> editNotification(int id, ExpiryNotification updatedNotification) async {
+  Future<void> editNotification(int id, AppNotification updatedNotification) async {
     try {
-      List<ExpiryNotification> notifications = await _getStoredNotifications();
+      List<AppNotification> notifications = await _getStoredNotifications();
       final int index = notifications.indexWhere((n) => n.id == id);
 
       if (index == -1) {
@@ -127,13 +137,13 @@ class NotificationService {
 
       await notificationsPlugin.cancel(id);
 
-      final tz.TZDateTime scheduledTime = tz.TZDateTime.from(updatedNotification.scheduledTime, tz.local);
+      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(updatedNotification.scheduledTime, tz.local);
 
       await notificationsPlugin.zonedSchedule(
         updatedNotification.id,
-        "Expiry Alert",
-        "${updatedNotification.ingredientName} is about to expire! Make sure to use it!",
-        scheduledTime,
+        updatedNotification.title,
+        updatedNotification.body,
+        tzScheduledTime,
         notificationDetails(),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
@@ -148,7 +158,7 @@ class NotificationService {
   // Remove a notification by ID
   Future<void> removeNotification(int id) async {
     try {
-      List<ExpiryNotification> notifications = await _getStoredNotifications();
+      List<AppNotification> notifications = await _getStoredNotifications();
       notifications.removeWhere((n) => n.id == id);
 
       await notificationsPlugin.cancel(id);
@@ -158,15 +168,19 @@ class NotificationService {
     }
   }
 
-  // Retrieve all scheduled notifications
-  Future<List<ExpiryNotification>> getScheduledNotifications() async {
-    List<ExpiryNotification> notifications = await _getStoredNotifications();
-    // Clean up expired notifications
+  // Retrieve all scheduled notifications (optionally filter by type)
+  Future<List<AppNotification>> getScheduledNotifications({Type? type}) async {
+    List<AppNotification> notifications = await _getStoredNotifications();
+    // Clean up past notifications
     final currentTime = tz.TZDateTime.now(tz.local);
-    notifications.removeWhere((notification) => notification.scheduledTime.isBefore(currentTime));
+    notifications.removeWhere((n) => n.scheduledTime.isBefore(currentTime));
 
     // Save the updated list
     await _saveStoredNotifications(notifications);
+
+    if (type != null) {
+      notifications = notifications.where((n) => n.runtimeType == type).toList();
+    }
     return notifications;
   }
 }

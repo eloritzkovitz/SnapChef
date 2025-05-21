@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:snapchef/models/expiry_notification.dart';
+import 'package:snapchef/models/notifications/app_notification.dart';
+import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import 'package:snapchef/theme/colors.dart';
 
 class UpcomingAlertsScreen extends StatelessWidget {
   const UpcomingAlertsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final filterType = ValueNotifier<ReminderType?>(null);
+
     return ChangeNotifierProvider(
       create: (_) => NotificationsViewModel(),
       child: Scaffold(
@@ -25,38 +29,152 @@ class UpcomingAlertsScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (viewModel.notifications.isEmpty) {
-              return const Center(
-                child: Text('No upcoming alerts.'),
-              );
-            }
+            return ValueListenableBuilder<ReminderType?>(
+              valueListenable: filterType,
+              builder: (context, selectedType, _) {
+                // Filter notifications based on dropdown
+                final filtered = selectedType == null
+                    ? viewModel.notifications
+                    : viewModel.notifications
+                        .where((n) =>
+                            n is IngredientReminder && n.type == selectedType)
+                        .toList();
 
-            return ListView.builder(
-              itemCount: viewModel.notifications.length,
-              itemBuilder: (context, index) {
-                final notification = viewModel.notifications[index];
-                return ListTile(
-                  title: Text('Expiry alert for ${notification.ingredientName}'),
-                  subtitle: Text(
-                    'Scheduled for: ${DateFormat.yMMMd().add_jm().format(notification.scheduledTime.toLocal())}',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _editNotification(context, notification, viewModel);
-                        },
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          const Text('Show:'),
+                          const SizedBox(width: 8),
+                          DropdownButton<ReminderType?>(
+                            value: selectedType,
+                            items: const [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text('All'),
+                              ),
+                              DropdownMenuItem(
+                                value: ReminderType.expiry,
+                                child: Text('Expiry'),
+                              ),
+                              DropdownMenuItem(
+                                value: ReminderType.grocery,
+                                child: Text('Grocery'),
+                              ),
+                            ],
+                            onChanged: (type) => filterType.value = type,
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          _confirmDelete(context, notification.id, viewModel);
-                        },
+                    ),
+                    if (filtered.isEmpty)
+                      const Expanded(
+                        child: Center(
+                          child: Text('No upcoming alerts.'),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final notification = filtered[index];
+                            final isExpiry =
+                                notification is IngredientReminder &&
+                                    notification.type == ReminderType.expiry;
+                            final isGrocery =
+                                notification is IngredientReminder &&
+                                    notification.type == ReminderType.grocery;
+
+                            return ListTile(
+                              title: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 12.0),
+                                    child: isExpiry
+                                        ? const Icon(Icons.hourglass_bottom,
+                                            color: Colors.orange, size: 32)
+                                        : const Icon(Icons.shopping_cart,
+                                            color: Colors.green, size: 32),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            notification is IngredientReminder
+                                                ? notification.ingredientName
+                                                : notification.title,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        if (isExpiry)
+                                          const Padding(
+                                            padding: EdgeInsets.only(left: 8.0),
+                                            child: Chip(
+                                              label: Text('Expiry',
+                                                  style: TextStyle(
+                                                      color: Colors.white)),
+                                              backgroundColor: primaryColor,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                          ),
+                                        if (isGrocery)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 8.0),
+                                            child: Chip(
+                                              label: const Text('Grocery',
+                                                  style: TextStyle(
+                                                      color: Colors.white)),
+                                              backgroundColor:
+                                                  primarySwatch[200],
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Text(
+                                'Scheduled for: ${DateFormat.yMMMd().add_jm().format(notification.scheduledTime.toLocal())}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              isThreeLine: true,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      _editNotification(
+                                          context, notification, viewModel);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      _confirmDelete(
+                                          context, notification.id, viewModel);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ],
-                  ),
+                  ],
                 );
               },
             );
@@ -66,14 +184,16 @@ class UpcomingAlertsScreen extends StatelessWidget {
     );
   }
 
-  void _editNotification(BuildContext context, ExpiryNotification notification,
+  void _editNotification(BuildContext context, AppNotification notification,
       NotificationsViewModel viewModel) {
     final TextEditingController ingredientNameController =
-        TextEditingController(text: notification.ingredientName);
+        TextEditingController(text: notification.title);
     final TextEditingController dateController = TextEditingController(
         text: DateFormat('yyyy-MM-dd').format(notification.scheduledTime));
     final TextEditingController timeController = TextEditingController(
         text: DateFormat('HH:mm').format(notification.scheduledTime));
+    final TextEditingController bodyController =
+        TextEditingController(text: notification.body);
 
     showDialog(
       context: context,
@@ -133,11 +253,15 @@ class UpcomingAlertsScreen extends StatelessWidget {
                     minute,
                   );
 
-                  final updatedNotification = ExpiryNotification(
+                  final updatedNotification = IngredientReminder(
                     id: notification.id,
                     ingredientName: ingredientNameController.text.trim(),
-                    body: notification.body,
+                    title: ingredientNameController.text.trim(),
+                    body: bodyController.text.trim(),
                     scheduledTime: newScheduledTime,
+                    type: notification is IngredientReminder
+                        ? notification.type
+                        : ReminderType.expiry,
                   );
 
                   await viewModel.editNotification(
