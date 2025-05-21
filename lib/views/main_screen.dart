@@ -47,6 +47,7 @@ class _MainScreenState extends State<MainScreen> {
         final fridgeId = userViewModel.fridgeId;
         if (fridgeId != null) {
           fridgeViewModel.fetchFridgeIngredients(fridgeId);
+          fridgeViewModel.fetchGroceries(fridgeId);
         }
       });
 

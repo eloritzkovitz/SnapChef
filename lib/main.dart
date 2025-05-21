@@ -14,6 +14,7 @@ import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
 import 'viewmodels/recipe_viewmodel.dart';
 import 'viewmodels/cookbook_viewmodel.dart';
+import 'viewmodels/notifications_viewmodel.dart';
 import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
@@ -95,6 +96,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
         ChangeNotifierProvider(create: (_) => friendViewModel),
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
       ],
       child: MaterialApp(
         theme: ThemeData(

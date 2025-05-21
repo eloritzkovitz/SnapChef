@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
-import '../../services/ingredient_service.dart';
+import 'groceries_list.dart';
+import 'widgets/ingredient_reminder_dialog.dart';
 import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
-import './widgets/expiry_alert.dart';
+import '../../models/notifications/ingredient_reminder.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/fridge_viewmodel.dart';
+import '../../services/ingredient_service.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -17,7 +19,129 @@ class FridgeScreen extends StatefulWidget {
 }
 
 class _FridgeScreenState extends State<FridgeScreen> {
-  bool isListView = false; // State variable to toggle between views  
+  bool isListView = false; // State variable to toggle between views
+
+  void _openGroceriesList(BuildContext rootContext) {
+    showGeneralDialog(
+      context: rootContext,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,              
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // AppBar-style header with filter/sort/search
+                  AppBar(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    automaticallyImplyLeading: false,
+                    title: const Text(
+                      'Groceries',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    actions: [
+                      // Filtering Dropdown
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          Provider.of<FridgeViewModel>(context, listen: false)
+                              .filterGroceriesByCategory(
+                                  value == 'All' ? null : value);
+                        },
+                        itemBuilder: (context) {
+                          final categories = Provider.of<FridgeViewModel>(
+                                  context,
+                                  listen: false)
+                              .getGroceryCategories();
+                          return [
+                            const PopupMenuItem(
+                                value: 'All', child: Text('All Categories')),
+                            ...categories.map((category) => PopupMenuItem(
+                                value: category, child: Text(category))),
+                          ];
+                        },
+                        icon:
+                            const Icon(Icons.filter_list, color: Colors.black),
+                      ),
+                      // Sorting Dropdown
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          Provider.of<FridgeViewModel>(context, listen: false)
+                              .sortGroceries(value);
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                              value: 'Name', child: Text('Sort by Name')),
+                          const PopupMenuItem(
+                              value: 'Quantity',
+                              child: Text('Sort by Quantity')),
+                        ],
+                        icon: const Icon(Icons.sort, color: Colors.black),
+                      ),
+                      // Search Button
+                      IconButton(
+                        icon: const Icon(Icons.search, color: Colors.black),
+                        onPressed: () {
+                          showSearch(
+                            context: context,
+                            delegate: IngredientSearchDelegate(
+                              ingredientService: IngredientService(),
+                            ),
+                          );
+                        },
+                      ),
+                      // Close Button
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                  // The groceries list
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: GroceriesList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset(0.0, 0.0);
+        const curve = Curves.easeInOut;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +211,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               });
             },
           ),
+          // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
@@ -95,6 +220,14 @@ class _FridgeScreenState extends State<FridgeScreen> {
                 delegate: IngredientSearchDelegate(
                     ingredientService: ingredientService),
               );
+            },
+          ),
+          // Grocery List Button
+          IconButton(
+            icon: const Icon(Icons.shopping_cart, color: Colors.black),
+            tooltip: 'Manage Groceries',
+            onPressed: () {
+              _openGroceriesList(context);
             },
           ),
         ],
@@ -172,7 +305,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             ),
             TextButton(
               onPressed: () {
-                viewModel.deleteItem(fridgeId, ingredient.id);
+                viewModel.deleteFridgeItem(fridgeId, ingredient.id);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -192,8 +325,9 @@ class _FridgeScreenState extends State<FridgeScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return ExpiryAlertDialog(
-          ingredientName: ingredient.name,
+        return IngredientReminderDialog(
+          ingredient: ingredient,
+          type: ReminderType.expiry,
           onSetAlert: (DateTime alertDateTime) {
             // Handle the expiry alert logic here
             ScaffoldMessenger.of(context).showSnackBar(

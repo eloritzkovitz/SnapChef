@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/ingredient_service.dart';
+import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
-import '../../theme/colors.dart';
 
 class IngredientSearchDelegate extends SearchDelegate {
   final IngredientService ingredientService;
@@ -184,27 +184,27 @@ class IngredientSearchDelegate extends SearchDelegate {
     );
   }
 
-  // Show dialog to add ingredient to fridge
+  // Show dialog to add ingredient to fridge or groceries
   void _showAddToFridgeDialog(BuildContext context, dynamic ingredient) {
     int quantity = 1;
 
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              backgroundColor: Colors.white,
-              title: Text(
-                'Add ${ingredient['name']} to Fridge',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: Colors.white,
+            title: Text(
+              'Add ${ingredient['name']}',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
               ),
-              content: Column(
+            ),
+            content: SingleChildScrollView(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (ingredient['imageURL'] != null &&
@@ -248,7 +248,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Quantity',
                     style: TextStyle(
                       color: Colors.black,
@@ -292,67 +292,139 @@ class IngredientSearchDelegate extends SearchDelegate {
                   ),
                 ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: Text('Cancel', style: TextStyle(color: primaryColor)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+            ),
+            actions: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Add to Groceries button
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.shopping_cart),
+                      label: const Text('Add to Groceries'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final userViewModel =
+                            Provider.of<UserViewModel>(context, listen: false);
+                        final fridgeViewModel = Provider.of<FridgeViewModel>(
+                            context,
+                            listen: false);
+                        final fridgeId = userViewModel.fridgeId;
+
+                        if (fridgeId != null && fridgeId.isNotEmpty) {
+                          final success = await fridgeViewModel.addGroceryItem(
+                            fridgeId,
+                            ingredient['id'],
+                            ingredient['name'],
+                            ingredient['category'],
+                            ingredient['imageURL'],
+                            quantity,
+                          );
+
+                          if (success) {
+                            Navigator.pop(context); // Close the dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      '${ingredient['name']} added to groceries')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Failed to add ingredient to groceries')),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Fridge ID is missing. Please log in again.')),
+                          );
+                        }
+                      },
                     ),
-                  ),
-                  onPressed: () async {
-                    final userViewModel =
-                        Provider.of<UserViewModel>(context, listen: false);
-                    final fridgeViewModel =
-                        Provider.of<FridgeViewModel>(context, listen: false);
-                    final fridgeId = userViewModel.fridgeId;
+                    const SizedBox(height: 12),
+                    // Add to Fridge button
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.kitchen),
+                      label: const Text('Add to Fridge'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final userViewModel =
+                            Provider.of<UserViewModel>(context, listen: false);
+                        final fridgeViewModel = Provider.of<FridgeViewModel>(
+                            context,
+                            listen: false);
+                        final fridgeId = userViewModel.fridgeId;
 
-                    if (fridgeId != null && fridgeId.isNotEmpty) {
-                      final success =
-                          await fridgeViewModel.addIngredientToFridge(
-                        fridgeId,
-                        ingredient['id'],
-                        ingredient['name'],
-                        ingredient['category'],
-                        ingredient['imageURL'],
-                        quantity,
-                      );
+                        if (fridgeId != null && fridgeId.isNotEmpty) {
+                          final success = await fridgeViewModel.addFridgeItem(
+                            fridgeId,
+                            ingredient['id'],
+                            ingredient['name'],
+                            ingredient['category'],
+                            ingredient['imageURL'],
+                            quantity,
+                          );
 
-                      if (success) {
+                          if (success) {
+                            Navigator.pop(context); // Close the dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      '${ingredient['name']} added to fridge')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Failed to add ingredient to fridge')),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Fridge ID is missing. Please log in again.')),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
                         Navigator.pop(context); // Close the dialog
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  '${ingredient['name']} added to fridge')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Failed to add ingredient to fridge')),
-                        );
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Fridge ID is missing. Please log in again.')),
-                      );
-                    }
-                  },
-                  child: const Text('Add'),
+                      },
+                      child:
+                          Text('Cancel', style: TextStyle(color: primaryColor)),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
-        );
+              ),
+            ],
+          );
+        });
       },
     );
   }
