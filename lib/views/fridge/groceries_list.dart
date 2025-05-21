@@ -62,10 +62,12 @@ class GroceriesList extends StatelessWidget {
                                       child: Icon(Icons.image_not_supported,
                                           size: 32),
                                     ),
-                              title: Text(ingredient.name),
-                              subtitle: Text(
-                                'Category: ${ingredient.category} •  Qty: ${ingredient.count}" : ""}',
+                              title: Text(
+                                ingredient.count > 1
+                                    ? '${ingredient.name} x ${ingredient.count}'
+                                    : ingredient.name,
                               ),
+                              subtitle: Text(ingredient.category),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
