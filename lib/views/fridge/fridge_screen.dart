@@ -74,8 +74,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
                   ),
                   const SizedBox(height: 10),
                   // The groceries list
-                  const Expanded(
-                    child: GroceriesList(groceries: []),
+                  Expanded(
+                    child: GroceriesList(),
                   ),
                 ],
               ),

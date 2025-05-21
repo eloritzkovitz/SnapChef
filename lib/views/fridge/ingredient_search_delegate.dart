@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/ingredient.dart';
 import '../../services/ingredient_service.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -301,6 +300,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Add to Groceries button
                     ElevatedButton.icon(
                       icon: const Icon(Icons.shopping_cart),
                       label: const Text('Add to Groceries'),
@@ -325,13 +325,11 @@ class IngredientSearchDelegate extends SearchDelegate {
                         if (fridgeId != null && fridgeId.isNotEmpty) {
                           final success = await fridgeViewModel.addGroceryItem(
                             fridgeId,
-                            Ingredient(
-                              id: ingredient['id'],
-                              name: ingredient['name'],
-                              category: ingredient['category'],
-                              imageURL: ingredient['imageURL'],
-                              count: quantity,
-                            ),
+                            ingredient['id'],
+                            ingredient['name'],
+                            ingredient['category'],
+                            ingredient['imageURL'],
+                            quantity,
                           );
 
                           if (success) {
@@ -358,6 +356,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                       },
                     ),
                     const SizedBox(height: 12),
+                    // Add to Fridge button
                     ElevatedButton.icon(
                       icon: const Icon(Icons.kitchen),
                       label: const Text('Add to Fridge'),

@@ -277,35 +277,67 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Fetch groceries from the user's fridge
+  Future<void> fetchGroceries(String fridgeId) async {
+    try {
+      final items = await _fridgeService.fetchGroceries(fridgeId);
+      _groceries.clear();
+      _groceries.addAll(items.map((item) => Ingredient(
+            id: item['id'],
+            name: item['name'],
+            category: item['category'],
+            imageURL: item['imageURL'] ?? '',
+            count: item['quantity'] ?? 1,
+          )));
+      notifyListeners();
+    } catch (e) {
+      log('Error fetching groceries: $e');
+    }
+  }
+
   // Add grocery item
-  Future<bool> addGroceryItem(String fridgeId, Ingredient ingredient) async {
+  Future<bool> addGroceryItem(String fridgeId, String id, String name,
+      String category, String? imageURL, int quantity) async {
     try {
       // Check if the grocery already exists
       final existingGroceryIndex =
-          _groceries.indexWhere((grocery) => grocery.id == ingredient.id);
+          _groceries.indexWhere((grocery) => grocery.id == id);
 
       if (existingGroceryIndex != -1) {
-        // Grocery already exists, do nothing or update if needed
-        log('Grocery already exists');
-        return false;
+        // Ingredient exists, increment its quantity
+        final existingIngredient = _ingredients[existingGroceryIndex];
+        final newQuantity = existingIngredient.count + quantity;
+
+        // Update the quantity on the backend using the service
+        final success = await _fridgeService.updateFridgeItem(
+            fridgeId, existingIngredient.id, newQuantity);
+        if (success) {
+          // Update the quantity locally
+          _ingredients[existingGroceryIndex].count = newQuantity;
+          return true;
+        } else {
+          log('Failed to update ingredient quantity');
+          return false;
+        }
       } else {
         // Grocery does not exist, add it as a new grocery
         final itemData = {
-          'id': ingredient.id,
-          'name': ingredient.name,
-          'category': ingredient.category,
-          'imageURL': ingredient.imageURL,          
+          'id': id,
+          'name': name,
+          'category': category,
+          'imageURL': imageURL,
+          'quantity': quantity,
         };
 
         final success = await _fridgeService.addGroceryItem(fridgeId, itemData);
         if (success) {
           _groceries.add(
             Ingredient(
-              id: ingredient.id,
-              name: ingredient.name,
-              category: ingredient.category,
-              imageURL: ingredient.imageURL,
-              count: 1,
+              id: id,
+              name: name,
+              category: category,
+              imageURL: imageURL ?? '',
+              count: quantity,
             ),
           );
           notifyListeners();
@@ -328,7 +360,7 @@ class FridgeViewModel extends ChangeNotifier {
     try {
       final success = await _fridgeService.deleteGroceryItem(fridgeId, itemId);
       if (success) {
-        _groceries.removeWhere((ingredient) => ingredient.id == itemId);        
+        _groceries.removeWhere((ingredient) => ingredient.id == itemId);
         return true;
       } else {
         log('Failed to delete grocery item');
