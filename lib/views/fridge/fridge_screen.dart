@@ -7,7 +7,7 @@ import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
-import './widgets/expiry_alert.dart';
+import 'widgets/ingredient_reminder_dialog.dart';
 import 'groceries_list.dart';
 
 class FridgeScreen extends StatefulWidget {
@@ -324,8 +324,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return ExpiryAlertDialog(
-          ingredientName: ingredient.name,
+        return IngredientReminderDialog(
+          ingredient: ingredient,
           onSetAlert: (DateTime alertDateTime) {
             // Handle the expiry alert logic here
             ScaffoldMessenger.of(context).showSnackBar(
