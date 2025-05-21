@@ -10,6 +10,10 @@ class CookbookViewModel extends ChangeNotifier {
   final CookbookService _cookbookService = CookbookService();
 
   String _filter = '';
+  String? _selectedCategory;
+  String? _selectedCuisine;
+  String? _selectedSortOption;
+
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
@@ -48,7 +52,7 @@ class CookbookViewModel extends ChangeNotifier {
         );
       }
 
-      _applyFilters();
+      _applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching cookbook recipes: $e');
     } finally {
@@ -105,7 +109,7 @@ class CookbookViewModel extends ChangeNotifier {
             rating: rating,
           ),
         );
-        _applyFilters();
+        _applyFiltersAndSorting();
         notifyListeners();
       }
       return success;
@@ -164,7 +168,7 @@ class CookbookViewModel extends ChangeNotifier {
             imageURL: imageURL ?? _recipes[index].imageURL,
             rating: rating,
           );
-          _applyFilters();
+          _applyFiltersAndSorting();
         }
       }
       return success;
@@ -180,7 +184,7 @@ class CookbookViewModel extends ChangeNotifier {
       final success = await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        _applyFilters();
+        _applyFiltersAndSorting();
       }
       return success;
     } catch (e) {
@@ -189,9 +193,59 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Apply filters to recipes
-  void _applyFilters() {
+  // Get a list of all categories
+  List<String> getCategories() {
+    final categories = _recipes.map((recipe) => recipe.mealType).toSet().toList();
+    categories.sort();
+    return categories;
+  }
+
+  // Get a list of all cuisines
+  List<String> getCuisines() {
+    final cuisines = _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
+    cuisines.sort();
+    return cuisines;
+  }
+
+  // Filter recipes by category
+  void filterByCategory(String? category) {
+    _selectedCategory = category;
+    _applyFiltersAndSorting();
+  }
+
+  // Filter recipes by cuisine
+  void filterByCuisine(String? cuisine) {
+    _selectedCuisine = cuisine;
+    _applyFiltersAndSorting();
+  }
+
+  // Sort recipes by selected option
+  void sortRecipes(String sortOption) {
+    _selectedSortOption = sortOption;
+    _applyFiltersAndSorting();
+  }
+
+  // Set a filter for recipe titles
+  void setFilter(String filter) {
+    _filter = filter;
+    _applyFiltersAndSorting();
+  }
+
+  // Apply filters and sorting to the recipes
+  void _applyFiltersAndSorting() {
     filteredRecipes = List.from(_recipes);
+
+    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        return recipe.mealType.toLowerCase() == _selectedCategory!.toLowerCase();
+      }).toList();
+    }
+
+    if (_selectedCuisine != null && _selectedCuisine!.isNotEmpty) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        return recipe.cuisineType.toLowerCase() == _selectedCuisine!.toLowerCase();
+      }).toList();
+    }
 
     if (_filter.isNotEmpty) {
       filteredRecipes = filteredRecipes.where((recipe) {
@@ -199,13 +253,14 @@ class CookbookViewModel extends ChangeNotifier {
       }).toList();
     }
 
+    if (_selectedSortOption == 'Name') {
+      filteredRecipes.sort((a, b) => a.title.compareTo(b.title));
+    } else if (_selectedSortOption == 'Rating') {
+      filteredRecipes.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
+    } else if (_selectedSortOption == 'PrepTime') {
+      filteredRecipes.sort((a, b) => a.prepTime.compareTo(b.prepTime));
+    }
     notifyListeners();
-  }
-
-  // Set a filter for recipes
-  void setFilter(String filter) {
-    _filter = filter;
-    _applyFilters();
   }
 
   // Search recipes by name

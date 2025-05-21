@@ -22,8 +22,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
     if (route is PageRoute) {
       routeObserver.subscribe(this, route);
     }
-    // Initial fetch
-    _fetchRecipes();
+    // Schedule fetch after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRecipes();
+    });
   }
 
   @override
@@ -41,9 +43,12 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
 
   void _fetchRecipes() {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final cookbookViewModel = Provider.of<CookbookViewModel>(context, listen: false);
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
     final cookbookId = userViewModel.cookbookId;
-    if (cookbookId != null && cookbookId.isNotEmpty && cookbookId != 'No Cookbook ID') {
+    if (cookbookId != null &&
+        cookbookId.isNotEmpty &&
+        cookbookId != 'No Cookbook ID') {
       cookbookViewModel.fetchCookbookRecipes(cookbookId);
     }
   }
@@ -58,6 +63,63 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
+          // Filtering Dropdown (by meal type/category)
+          Consumer<CookbookViewModel>(
+            builder: (context, cookbookViewModel, _) {
+              final categories = cookbookViewModel.getCategories();
+              return PopupMenuButton<String>(
+                onSelected: (value) {
+                  cookbookViewModel
+                      .filterByCategory(value == 'All' ? null : value);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                      value: 'All', child: Text('All Categories')),
+                  ...categories.map((category) =>
+                      PopupMenuItem(value: category, child: Text(category))),
+                ],
+                icon: const Icon(Icons.filter_list, color: Colors.black),
+              );
+            },
+          ),
+          // Filtering Dropdown (by cuisine)
+          Consumer<CookbookViewModel>(
+            builder: (context, cookbookViewModel, _) {
+              final cuisines = cookbookViewModel.getCuisines();
+              return PopupMenuButton<String>(
+                onSelected: (value) {
+                  cookbookViewModel
+                      .filterByCuisine(value == 'All' ? null : value);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                      value: 'All', child: Text('All Cuisines')),
+                  ...cuisines.map((cuisine) =>
+                      PopupMenuItem(value: cuisine, child: Text(cuisine))),
+                ],
+                icon: const Icon(Icons.restaurant, color: Colors.black),
+              );
+            },
+          ),
+          // Sorting Dropdown
+          Consumer<CookbookViewModel>(
+            builder: (context, cookbookViewModel, _) {
+              return PopupMenuButton<String>(
+                onSelected: (value) {
+                  cookbookViewModel.sortRecipes(value);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                      value: 'Name', child: Text('Sort by Name')),
+                  const PopupMenuItem(
+                      value: 'Rating', child: Text('Sort by Rating')),
+                  const PopupMenuItem(
+                      value: 'PrepTime', child: Text('Sort by Prep Time')),
+                ],
+                icon: const Icon(Icons.sort, color: Colors.black),
+              );
+            },
+          ),
           // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
@@ -77,7 +139,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (cookbookViewModel.recipes.isEmpty) {
+          if (cookbookViewModel.filteredRecipes.isEmpty) {
             return const Center(
               child: Text(
                 'No recipes in your cookbook.',
@@ -87,9 +149,9 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           }
 
           return ListView.builder(
-            itemCount: cookbookViewModel.recipes.length,
+            itemCount: cookbookViewModel.filteredRecipes.length,
             itemBuilder: (context, index) {
-              final recipe = cookbookViewModel.recipes[index];
+              final recipe = cookbookViewModel.filteredRecipes[index];
               return RecipeCard(
                 recipe: recipe,
                 onTap: () {
@@ -98,7 +160,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                     MaterialPageRoute(
                       builder: (context) => ViewRecipeScreen(
                         recipe: recipe,
-                        cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
+                        cookbookId:
+                            Provider.of<UserViewModel>(context, listen: false)
+                                    .cookbookId ??
+                                '',
                       ),
                     ),
                   );
