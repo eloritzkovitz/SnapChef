@@ -5,6 +5,7 @@ import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
 import 'package:snapchef/theme/colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UpcomingAlertsScreen extends StatelessWidget {
   const UpcomingAlertsScreen({super.key});
@@ -95,11 +96,14 @@ class UpcomingAlertsScreen extends StatelessWidget {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.only(right: 12.0),
-                                    child: isExpiry
-                                        ? const Icon(Icons.schedule,
-                                            color: Colors.orange, size: 32)
-                                        : const Icon(Icons.shopping_cart,
-                                            color: Colors.green, size: 32),
+                                    child: notification is IngredientReminder
+                                        ? FaIcon(
+                                            FontAwesomeIcons.appleAlt,
+                                            color: primaryColor,
+                                            size: 32,
+                                          )
+                                        : const Icon(Icons.notifications,
+                                            color: Colors.grey, size: 32),
                                   ),
                                   Expanded(
                                     child: Row(
@@ -122,7 +126,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                                               label: Text('Expiry',
                                                   style: TextStyle(
                                                       color: Colors.white)),
-                                              backgroundColor: primaryColor,
+                                              backgroundColor: Colors.orange,
                                               visualDensity:
                                                   VisualDensity.compact,
                                             ),
@@ -136,7 +140,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                                                   style: TextStyle(
                                                       color: Colors.white)),
                                               backgroundColor:
-                                                  primarySwatch[200],
+                                                  Colors.deepOrange,
                                               visualDensity:
                                                   VisualDensity.compact,
                                             ),
@@ -186,99 +190,227 @@ class UpcomingAlertsScreen extends StatelessWidget {
 
   void _editNotification(BuildContext context, AppNotification notification,
       NotificationsViewModel viewModel) {
-    final TextEditingController ingredientNameController =
-        TextEditingController(text: notification.title);
-    final TextEditingController dateController = TextEditingController(
-        text: DateFormat('yyyy-MM-dd').format(notification.scheduledTime));
-    final TextEditingController timeController = TextEditingController(
-        text: DateFormat('HH:mm').format(notification.scheduledTime));
-    final TextEditingController bodyController =
-        TextEditingController(text: notification.body);
+    DateTime _selectedDateTime = notification.scheduledTime;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Notification'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: ingredientNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Ingredient Name',
-                  prefixIcon: Icon(Icons.food_bank),
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogBackgroundColor: Colors.white,
+            textTheme: Theme.of(context).textTheme.apply(
+                  bodyColor: Colors.black,
+                  displayColor: Colors.black,
                 ),
-              ),
-              TextField(
-                controller: dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Date (YYYY-MM-DD)',
-                  prefixIcon: Icon(Icons.calendar_today),
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: primaryColor,
+                  onPrimary: Colors.white,
+                  onSurface: Colors.black,
                 ),
-                keyboardType: TextInputType.datetime,
-              ),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Time (HH:mm)',
-                  prefixIcon: Icon(Icons.access_time),
-                ),
-                keyboardType: TextInputType.datetime,
-              ),
-            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  final DateTime newDate = DateFormat('yyyy-MM-dd')
-                      .parse(dateController.text.trim());
-                  final List<String> timeParts =
-                      timeController.text.trim().split(':');
-                  final int hour = int.parse(timeParts[0]);
-                  final int minute = int.parse(timeParts[1]);
-
-                  final DateTime newScheduledTime = DateTime(
-                    newDate.year,
-                    newDate.month,
-                    newDate.day,
-                    hour,
-                    minute,
-                  );
-
-                  final updatedNotification = IngredientReminder(
-                    id: notification.id,
-                    ingredientName: ingredientNameController.text.trim(),
-                    title: ingredientNameController.text.trim(),
-                    body: bodyController.text.trim(),
-                    scheduledTime: newScheduledTime,
-                    type: notification is IngredientReminder
-                        ? notification.type
-                        : ReminderType.expiry,
-                  );
-
-                  await viewModel.editNotification(
-                      notification.id, updatedNotification);
-
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Invalid date or time format.'),
+          child: StatefulBuilder(
+            builder: (context, setState) => AlertDialog(
+              backgroundColor: Colors.white,
+              title: Center(
+                child: Text(
+                  'Edit Reminder',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Ingredient icon (like create dialog)
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      alignment: Alignment.center,
+                      child: FaIcon(
+                        FontAwesomeIcons.appleAlt,
+                        color: primaryColor,
+                        size: 40,
+                      ),
                     ),
-                  );
-                }
-              },
-              child: const Text('Save'),
+                    const SizedBox(height: 12),
+                    Text(
+                      notification is IngredientReminder
+                          ? notification.ingredientName
+                          : notification.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.black, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    // Notification type chip
+                    if (notification is IngredientReminder)
+                      Chip(
+                        label: Text(
+                          notification.type == ReminderType.expiry
+                              ? 'Expiry'
+                              : 'Grocery',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor:
+                            notification.type == ReminderType.expiry
+                                ? Colors.orange
+                                : Colors.deepOrange,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      icon: Icon(Icons.calendar_today, color: primaryColor),
+                      label: Text(
+                        DateFormat('yyyy-MM-dd').format(_selectedDateTime),
+                        style: TextStyle(color: primaryColor),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDateTime,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary: primaryColor,
+                                  onPrimary: Colors.white,
+                                  onSurface: primaryColor,
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: primaryColor,
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedDateTime = DateTime(
+                              picked.year,
+                              picked.month,
+                              picked.day,
+                              _selectedDateTime.hour,
+                              _selectedDateTime.minute,
+                            );
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      icon: Icon(Icons.access_time, color: primaryColor),
+                      label: Text(
+                        DateFormat('HH:mm').format(_selectedDateTime),
+                        style: TextStyle(color: primaryColor),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final TimeOfDay? picked = await showTimePicker(
+                          context: context,
+                          initialTime:
+                              TimeOfDay.fromDateTime(_selectedDateTime),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary: primaryColor,
+                                  onPrimary: Colors.white,
+                                  onSurface: primaryColor,
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: primaryColor,
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                          initialEntryMode: TimePickerEntryMode.input,
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedDateTime = DateTime(
+                              _selectedDateTime.year,
+                              _selectedDateTime.month,
+                              _selectedDateTime.day,
+                              picked.hour,
+                              picked.minute,
+                            );
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    try {
+                      final updatedNotification = IngredientReminder(
+                        id: notification.id,
+                        ingredientName: notification is IngredientReminder
+                            ? notification.ingredientName
+                            : notification.title,
+                        title: notification is IngredientReminder
+                            ? notification.ingredientName
+                            : notification.title,
+                        body: notification.body,
+                        scheduledTime: _selectedDateTime,
+                        type: notification is IngredientReminder
+                            ? notification.type
+                            : ReminderType.expiry,
+                      );
+
+                      await viewModel.editNotification(
+                          notification.id, updatedNotification);
+
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Invalid date or time format.'),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
-import '../../services/ingredient_service.dart';
+import 'groceries_list.dart';
+import 'widgets/ingredient_reminder_dialog.dart';
 import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
-import 'widgets/ingredient_reminder_dialog.dart';
-import 'groceries_list.dart';
+import '../../models/notifications/ingredient_reminder.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/fridge_viewmodel.dart';
+import '../../services/ingredient_service.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -326,6 +327,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
       builder: (context) {
         return IngredientReminderDialog(
           ingredient: ingredient,
+          type: ReminderType.expiry,
           onSetAlert: (DateTime alertDateTime) {
             // Handle the expiry alert logic here
             ScaffoldMessenger.of(context).showSnackBar(

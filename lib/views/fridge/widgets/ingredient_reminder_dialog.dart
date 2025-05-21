@@ -8,10 +8,12 @@ import 'package:snapchef/theme/colors.dart';
 
 class IngredientReminderDialog extends StatefulWidget {
   final Ingredient ingredient;
+  final ReminderType type;
   final Function(DateTime) onSetAlert;
 
   const IngredientReminderDialog({
     required this.ingredient,
+    required this.type,
     required this.onSetAlert,
     super.key,
   });
@@ -87,8 +89,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
           child: child!,
         );
       },
-      initialEntryMode:
-          TimePickerEntryMode.input,
+      initialEntryMode: TimePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
@@ -104,8 +105,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {    
-
+  Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(
         dialogBackgroundColor: Colors.white,
@@ -121,12 +121,16 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
       ),
       child: AlertDialog(
         backgroundColor: Colors.white,
-        title: Text(
-          'Set Expiry Notification',
-          style: Theme.of(context)              
-              .textTheme
-              .titleLarge              
-              ?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Center(
+          child: Text(
+            widget.type == ReminderType.expiry
+                ? 'Set Expiry Reminder'
+                : 'Set Grocery Reminder',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -136,7 +140,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),                  
+                  color: primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
                     image: NetworkImage(
@@ -214,11 +218,14 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                   IngredientReminder(
                     id: newId,
                     ingredientName: widget.ingredient.name,
-                    title: 'Expiry Reminder',
-                    body:
-                        '${widget.ingredient.name} is about to expire! Make sure to use it!',
+                    title: widget.type == ReminderType.expiry
+                        ? 'Expiry Reminder'
+                        : 'Grocery Reminder',
+                    body: widget.type == ReminderType.expiry
+                        ? '${widget.ingredient.name} is about to expire! Make sure to use it!'
+                        : '${widget.ingredient.name} is on your grocery list!',
                     scheduledTime: alertDateTime,
-                    type: ReminderType.expiry,
+                    type: widget.type,
                   ),
                 );
 
@@ -239,7 +246,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                 );
               }
             },
-            child: const Text('Set Notification'),
+            child: const Text('Set Reminder'),
           ),
         ],
       ),
