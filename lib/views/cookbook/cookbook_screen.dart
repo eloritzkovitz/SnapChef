@@ -6,6 +6,7 @@ import 'recipe_search_delegate.dart';
 import './widgets/recipe_card.dart';
 import 'view_recipe_screen.dart';
 import '../../main.dart';
+import './widgets/cookbook_filter_sort_sheet.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -22,8 +23,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
     if (route is PageRoute) {
       routeObserver.subscribe(this, route);
     }
-    // Initial fetch
-    _fetchRecipes();
+    // Schedule fetch after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRecipes();
+    });
   }
 
   @override
@@ -41,9 +44,12 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
 
   void _fetchRecipes() {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final cookbookViewModel = Provider.of<CookbookViewModel>(context, listen: false);
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
     final cookbookId = userViewModel.cookbookId;
-    if (cookbookId != null && cookbookId.isNotEmpty && cookbookId != 'No Cookbook ID') {
+    if (cookbookId != null &&
+        cookbookId.isNotEmpty &&
+        cookbookId != 'No Cookbook ID') {
       cookbookViewModel.fetchCookbookRecipes(cookbookId);
     }
   }
@@ -58,6 +64,18 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.black),
+            tooltip: 'Filter & Sort',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.white,
+                isScrollControlled: true,
+                builder: (context) => CookbookFilterSortSheet(),
+              );
+            },
+          ),
           // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
@@ -77,7 +95,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (cookbookViewModel.recipes.isEmpty) {
+          if (cookbookViewModel.filteredRecipes.isEmpty) {
             return const Center(
               child: Text(
                 'No recipes in your cookbook.',
@@ -87,9 +105,9 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           }
 
           return ListView.builder(
-            itemCount: cookbookViewModel.recipes.length,
+            itemCount: cookbookViewModel.filteredRecipes.length,
             itemBuilder: (context, index) {
-              final recipe = cookbookViewModel.recipes[index];
+              final recipe = cookbookViewModel.filteredRecipes[index];
               return RecipeCard(
                 recipe: recipe,
                 onTap: () {
@@ -98,7 +116,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                     MaterialPageRoute(
                       builder: (context) => ViewRecipeScreen(
                         recipe: recipe,
-                        cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
+                        cookbookId:
+                            Provider.of<UserViewModel>(context, listen: false)
+                                    .cookbookId ??
+                                '',
                       ),
                     ),
                   );

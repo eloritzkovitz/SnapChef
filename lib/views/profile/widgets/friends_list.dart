@@ -22,16 +22,14 @@ class FriendsList extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return ListView.separated(      
       itemCount: friendViewModel.friends.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final friend = friendViewModel.friends[index];
         return Container(
           decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey[100],           
           ),
           child: ListTile(
             leading: CircleAvatar(

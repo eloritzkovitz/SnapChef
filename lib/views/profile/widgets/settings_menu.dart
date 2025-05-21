@@ -17,8 +17,7 @@ class SettingsMenu extends StatelessWidget {
           width: MediaQuery.of(context).size.width,
           height: double.infinity,
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+            color: Colors.white,            
           ),
           child: Column(
             mainAxisSize: MainAxisSize.max,
