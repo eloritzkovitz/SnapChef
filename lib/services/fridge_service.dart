@@ -119,6 +119,26 @@ class FridgeService {
     }
   }
 
+  // Update a grocery item
+  Future<bool> updateGroceryItem(
+      String fridgeId, String itemId, int newCount) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/$itemId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'quantity': newCount}),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Failed to update grocery item: ${response.statusCode}');
+    }
+  }
+
   // Delete a grocery item
   Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
     final token = await TokenUtil.getAccessToken();

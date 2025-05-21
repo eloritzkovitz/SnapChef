@@ -20,9 +20,9 @@ class FridgeScreen extends StatefulWidget {
 class _FridgeScreenState extends State<FridgeScreen> {
   bool isListView = false; // State variable to toggle between views
 
-  void _openGroceriesList(BuildContext context) {
+  void _openGroceriesList(BuildContext rootContext) {
     showGeneralDialog(
-      context: context,
+      context: rootContext,
       barrierDismissible: true,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       barrierColor: Colors.black54,
@@ -36,44 +36,86 @@ class _FridgeScreenState extends State<FridgeScreen> {
               width: MediaQuery.of(context).size.width,
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+                color: Colors.white,              
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  // Header with Close Button
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+                  // AppBar-style header with filter/sort/search
+                  AppBar(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    automaticallyImplyLeading: false,
+                    title: const Text(
+                      'Groceries',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Groceries',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.black),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
-                    ),
+                    actions: [
+                      // Filtering Dropdown
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          Provider.of<FridgeViewModel>(context, listen: false)
+                              .filterGroceriesByCategory(
+                                  value == 'All' ? null : value);
+                        },
+                        itemBuilder: (context) {
+                          final categories = Provider.of<FridgeViewModel>(
+                                  context,
+                                  listen: false)
+                              .getGroceryCategories();
+                          return [
+                            const PopupMenuItem(
+                                value: 'All', child: Text('All Categories')),
+                            ...categories.map((category) => PopupMenuItem(
+                                value: category, child: Text(category))),
+                          ];
+                        },
+                        icon:
+                            const Icon(Icons.filter_list, color: Colors.black),
+                      ),
+                      // Sorting Dropdown
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          Provider.of<FridgeViewModel>(context, listen: false)
+                              .sortGroceries(value);
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                              value: 'Name', child: Text('Sort by Name')),
+                          const PopupMenuItem(
+                              value: 'Quantity',
+                              child: Text('Sort by Quantity')),
+                        ],
+                        icon: const Icon(Icons.sort, color: Colors.black),
+                      ),
+                      // Search Button
+                      IconButton(
+                        icon: const Icon(Icons.search, color: Colors.black),
+                        onPressed: () {
+                          showSearch(
+                            context: context,
+                            delegate: IngredientSearchDelegate(
+                              ingredientService: IngredientService(),
+                            ),
+                          );
+                        },
+                      ),
+                      // Close Button
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
                   // The groceries list
+                  const SizedBox(height: 10),
                   Expanded(
                     child: GroceriesList(),
                   ),
@@ -88,7 +130,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
         const end = Offset(0.0, 0.0);
         const curve = Curves.easeInOut;
 
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
 
         return SlideTransition(
