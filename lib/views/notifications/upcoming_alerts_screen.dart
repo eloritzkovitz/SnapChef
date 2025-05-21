@@ -96,7 +96,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.only(right: 12.0),
                                     child: isExpiry
-                                        ? const Icon(Icons.hourglass_bottom,
+                                        ? const Icon(Icons.schedule,
                                             color: Colors.orange, size: 32)
                                         : const Icon(Icons.shopping_cart,
                                             color: Colors.green, size: 32),

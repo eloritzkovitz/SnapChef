@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/services/notification_service.dart';
@@ -6,12 +7,28 @@ class NotificationsViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
+  Timer? _refreshTimer;
 
   List<AppNotification> get notifications => _notifications;
   bool get isLoading => _isLoading;
 
   NotificationsViewModel() {
     _initialize();
+    _startAutoRefresh();
+  }
+
+  // Start a periodic timer to refresh notifications
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _loadNotifications();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   // Initialize the notification service and load the notifications

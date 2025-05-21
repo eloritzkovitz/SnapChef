@@ -10,7 +10,8 @@ import '../models/notifications/ingredient_reminder.dart';
 import '../theme/colors.dart';
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
 
@@ -23,7 +24,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation(currentTimeZone));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_notification');        
+        AndroidInitializationSettings('@mipmap/ic_notification');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings();
@@ -39,7 +40,7 @@ class NotificationService {
 
   // Define notification details
   NotificationDetails notificationDetails() {
-    return const NotificationDetails(
+    return NotificationDetails(
       android: AndroidNotificationDetails(
         'ingredient_alerts_channel',
         'Ingredient Alerts',
@@ -48,6 +49,11 @@ class NotificationService {
         priority: Priority.high,
         showWhen: true,
         color: primaryColor,
+        groupKey: 'SnapChef',
+        setAsGroupSummary: false,
+      ),
+      iOS: const DarwinNotificationDetails(
+        threadIdentifier: 'SnapChef',
       ),
     );
   }
@@ -75,7 +81,8 @@ class NotificationService {
   }
 
   // Save notifications to local storage
-  Future<void> _saveStoredNotifications(List<AppNotification> notifications) async {
+  Future<void> _saveStoredNotifications(
+      List<AppNotification> notifications) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final List<String> jsonList = notifications.map((n) {
       final map = n.toJson();
@@ -86,7 +93,8 @@ class NotificationService {
   }
 
   // Generate a unique notification ID
-  int _generateUniqueNotificationIdFromList(List<AppNotification> existingNotifications) {
+  int _generateUniqueNotificationIdFromList(
+      List<AppNotification> existingNotifications) {
     if (existingNotifications.isEmpty) return 1;
     final ids = existingNotifications.map((n) => n.id).toList();
     return ids.reduce((a, b) => a > b ? a : b) + 1;
@@ -98,11 +106,14 @@ class NotificationService {
   }
 
   // Schedule a notification (generic)
-  Future<void> scheduleNotification(AppNotification notification, {String? customTitle}) async {
+  Future<void> scheduleNotification(AppNotification notification,
+      {String? customTitle}) async {
     try {
-      final List<AppNotification> notifications = await _getStoredNotifications();
+      final List<AppNotification> notifications =
+          await _getStoredNotifications();
 
-      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(notification.scheduledTime, tz.local);
+      final tz.TZDateTime tzScheduledTime =
+          tz.TZDateTime.from(notification.scheduledTime, tz.local);
       if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
         debugPrint('Scheduled time is in the past. Skipping.');
         return;
@@ -125,7 +136,8 @@ class NotificationService {
   }
 
   // Edit an existing notification
-  Future<void> editNotification(int id, AppNotification updatedNotification) async {
+  Future<void> editNotification(
+      int id, AppNotification updatedNotification) async {
     try {
       List<AppNotification> notifications = await _getStoredNotifications();
       final int index = notifications.indexWhere((n) => n.id == id);
@@ -137,7 +149,8 @@ class NotificationService {
 
       await notificationsPlugin.cancel(id);
 
-      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(updatedNotification.scheduledTime, tz.local);
+      final tz.TZDateTime tzScheduledTime =
+          tz.TZDateTime.from(updatedNotification.scheduledTime, tz.local);
 
       await notificationsPlugin.zonedSchedule(
         updatedNotification.id,
@@ -179,7 +192,8 @@ class NotificationService {
     await _saveStoredNotifications(notifications);
 
     if (type != null) {
-      notifications = notifications.where((n) => n.runtimeType == type).toList();
+      notifications =
+          notifications.where((n) => n.runtimeType == type).toList();
     }
     return notifications;
   }
