@@ -12,7 +12,19 @@ class CookbookViewModel extends ChangeNotifier {
   String _filter = '';
   String? _selectedCategory;
   String? _selectedCuisine;
+  String? _selectedDifficulty;
+  RangeValues? _prepTimeRange;
+  RangeValues? _cookingTimeRange;
+  RangeValues? _ratingRange;
   String? _selectedSortOption;
+
+  String? get selectedCategory => _selectedCategory;
+  String? get selectedCuisine => _selectedCuisine;
+  String? get selectedDifficulty => _selectedDifficulty;
+  RangeValues? get prepTimeRange => _prepTimeRange;
+  RangeValues? get cookingTimeRange => _cookingTimeRange;
+  RangeValues? get ratingRange => _ratingRange;
+  String? get selectedSortOption => _selectedSortOption;
 
   bool _isLoading = false;
 
@@ -40,13 +52,16 @@ class CookbookViewModel extends ChangeNotifier {
               cuisineType: item['cuisineType'],
               difficulty: item['difficulty'],
               prepTime: item['prepTime'],
-              cookingTime: item['cookingTime'],              
+              cookingTime: item['cookingTime'],
               ingredients: (item['ingredients'] as List<dynamic>)
                   .map((ingredient) => Ingredient.fromJson(ingredient))
                   .toList(),
               instructions: List<String>.from(item['instructions']),
-              imageURL: item['imageURL'] ?? 'assets/images/placeholder_image.png',
-              rating: item['rating'] != null ? (item['rating'] as num).toDouble() : null,
+              imageURL:
+                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
+              rating: item['rating'] != null
+                  ? (item['rating'] as num).toDouble()
+                  : null,
             );
           }).toList(),
         );
@@ -70,7 +85,7 @@ class CookbookViewModel extends ChangeNotifier {
     required String cuisineType,
     required String difficulty,
     required int prepTime,
-    required int cookingTime,    
+    required int cookingTime,
     required List<Ingredient> ingredients,
     required List<String> instructions,
     String? imageURL,
@@ -84,14 +99,16 @@ class CookbookViewModel extends ChangeNotifier {
         'cuisineType': cuisineType,
         'difficulty': difficulty,
         'prepTime': prepTime,
-        'cookingTime': cookingTime,        
-        'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
+        'cookingTime': cookingTime,
+        'ingredients':
+            ingredients.map((ingredient) => ingredient.toJson()).toList(),
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
       };
 
-      final success = await _cookbookService.addRecipeToCookbook(recipeData, cookbookId);
+      final success =
+          await _cookbookService.addRecipeToCookbook(recipeData, cookbookId);
       if (success) {
         _recipes.add(
           Recipe(
@@ -102,7 +119,7 @@ class CookbookViewModel extends ChangeNotifier {
             cuisineType: cuisineType,
             difficulty: difficulty,
             prepTime: prepTime,
-            cookingTime: cookingTime,            
+            cookingTime: cookingTime,
             ingredients: ingredients,
             instructions: instructions,
             imageURL: imageURL ?? '',
@@ -129,7 +146,7 @@ class CookbookViewModel extends ChangeNotifier {
     required String cuisineType,
     required String difficulty,
     required int prepTime,
-    required int cookingTime,    
+    required int cookingTime,
     required List<Ingredient> ingredients,
     required List<String> instructions,
     String? imageURL,
@@ -143,14 +160,16 @@ class CookbookViewModel extends ChangeNotifier {
         'cuisineType': cuisineType,
         'difficulty': difficulty,
         'prepTime': prepTime,
-        'cookingTime': cookingTime,        
-        'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
+        'cookingTime': cookingTime,
+        'ingredients':
+            ingredients.map((ingredient) => ingredient.toJson()).toList(),
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
       };
 
-      final success = await _cookbookService.updateCookbookRecipe(cookbookId, recipeId, updatedData);
+      final success = await _cookbookService.updateCookbookRecipe(
+          cookbookId, recipeId, updatedData);
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
@@ -162,7 +181,7 @@ class CookbookViewModel extends ChangeNotifier {
             cuisineType: cuisineType,
             difficulty: difficulty,
             prepTime: prepTime,
-            cookingTime: cookingTime,            
+            cookingTime: cookingTime,
             ingredients: ingredients,
             instructions: instructions,
             imageURL: imageURL ?? _recipes[index].imageURL,
@@ -181,7 +200,8 @@ class CookbookViewModel extends ChangeNotifier {
   // Delete a recipe from the cookbook
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
-      final success = await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
+      final success =
+          await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
         _applyFiltersAndSorting();
@@ -195,17 +215,47 @@ class CookbookViewModel extends ChangeNotifier {
 
   // Get a list of all categories
   List<String> getCategories() {
-    final categories = _recipes.map((recipe) => recipe.mealType).toSet().toList();
+    final categories =
+        _recipes.map((recipe) => recipe.mealType).toSet().toList();
     categories.sort();
     return categories;
   }
 
   // Get a list of all cuisines
   List<String> getCuisines() {
-    final cuisines = _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
+    final cuisines =
+        _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
     cuisines.sort();
     return cuisines;
   }
+
+  // Get a list of all difficulties
+  List<String> getDifficulties() {
+    final difficulties =
+        _recipes.map((recipe) => recipe.difficulty).toSet().toList();
+    difficulties.sort();
+    return difficulties;
+  }
+
+  // Get min/max for prep/cooking time and rating
+  int get minPrepTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.prepTime).reduce((a, b) => a < b ? a : b);
+  int get maxPrepTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.prepTime).reduce((a, b) => a > b ? a : b);
+  int get minCookingTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a < b ? a : b);
+  int get maxCookingTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a > b ? a : b);
+  double get minRating => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a < b ? a : b);
+  double get maxRating => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
 
   // Filter recipes by category
   void filterByCategory(String? category) {
@@ -216,6 +266,30 @@ class CookbookViewModel extends ChangeNotifier {
   // Filter recipes by cuisine
   void filterByCuisine(String? cuisine) {
     _selectedCuisine = cuisine;
+    _applyFiltersAndSorting();
+  }
+
+  // Filter recipes by difficulty
+  void filterByDifficulty(String? difficulty) {
+    _selectedDifficulty = difficulty;
+    _applyFiltersAndSorting();
+  }
+
+  // Filter recipes by prep time range
+  void filterByPrepTime(RangeValues? range) {
+    _prepTimeRange = range;
+    _applyFiltersAndSorting();
+  }
+
+  // Filter recipes by cooking time range
+  void filterByCookingTime(RangeValues? range) {
+    _cookingTimeRange = range;
+    _applyFiltersAndSorting();
+  }
+
+  // Filter recipes by rating range
+  void filterByRating(RangeValues? range) {
+    _ratingRange = range;
     _applyFiltersAndSorting();
   }
 
@@ -237,13 +311,43 @@ class CookbookViewModel extends ChangeNotifier {
 
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
       filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.mealType.toLowerCase() == _selectedCategory!.toLowerCase();
+        return recipe.mealType.toLowerCase() ==
+            _selectedCategory!.toLowerCase();
       }).toList();
     }
 
     if (_selectedCuisine != null && _selectedCuisine!.isNotEmpty) {
       filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.cuisineType.toLowerCase() == _selectedCuisine!.toLowerCase();
+        return recipe.cuisineType.toLowerCase() ==
+            _selectedCuisine!.toLowerCase();
+      }).toList();
+    }
+
+    if (_selectedDifficulty != null && _selectedDifficulty!.isNotEmpty) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        return recipe.difficulty.toLowerCase() ==
+            _selectedDifficulty!.toLowerCase();
+      }).toList();
+    }
+
+    if (_prepTimeRange != null) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        return recipe.prepTime >= _prepTimeRange!.start.toInt() &&
+            recipe.prepTime <= _prepTimeRange!.end.toInt();
+      }).toList();
+    }
+
+    if (_cookingTimeRange != null) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        return recipe.cookingTime >= _cookingTimeRange!.start.toInt() &&
+            recipe.cookingTime <= _cookingTimeRange!.end.toInt();
+      }).toList();
+    }
+
+    if (_ratingRange != null) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        final rating = recipe.rating ?? 0;
+        return rating >= _ratingRange!.start && rating <= _ratingRange!.end;
       }).toList();
     }
 
@@ -259,6 +363,8 @@ class CookbookViewModel extends ChangeNotifier {
       filteredRecipes.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
     } else if (_selectedSortOption == 'PrepTime') {
       filteredRecipes.sort((a, b) => a.prepTime.compareTo(b.prepTime));
+    } else if (_selectedSortOption == 'CookingTime') {
+      filteredRecipes.sort((a, b) => a.cookingTime.compareTo(b.cookingTime));
     }
     notifyListeners();
   }
@@ -266,7 +372,21 @@ class CookbookViewModel extends ChangeNotifier {
   // Search recipes by name
   List<Recipe> searchRecipes(String query) {
     return _recipes
-        .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .where((recipe) =>
+            recipe.title.toLowerCase().contains(query.toLowerCase()))
         .toList();
+  }
+
+  // Reset all filters
+  void clearFilters() {
+    _selectedCategory = null;
+    _selectedCuisine = null;
+    _selectedDifficulty = null;
+    _prepTimeRange = null;
+    _cookingTimeRange = null;
+    _ratingRange = null;
+    _filter = '';
+    _selectedSortOption = null;
+    _applyFiltersAndSorting();
   }
 }

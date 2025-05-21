@@ -6,6 +6,7 @@ import 'recipe_search_delegate.dart';
 import './widgets/recipe_card.dart';
 import 'view_recipe_screen.dart';
 import '../../main.dart';
+import './widgets/cookbook_filter_sort_sheet.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -63,60 +64,15 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          // Filtering Dropdown (by meal type/category)
-          Consumer<CookbookViewModel>(
-            builder: (context, cookbookViewModel, _) {
-              final categories = cookbookViewModel.getCategories();
-              return PopupMenuButton<String>(
-                onSelected: (value) {
-                  cookbookViewModel
-                      .filterByCategory(value == 'All' ? null : value);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                      value: 'All', child: Text('All Categories')),
-                  ...categories.map((category) =>
-                      PopupMenuItem(value: category, child: Text(category))),
-                ],
-                icon: const Icon(Icons.filter_list, color: Colors.black),
-              );
-            },
-          ),
-          // Filtering Dropdown (by cuisine)
-          Consumer<CookbookViewModel>(
-            builder: (context, cookbookViewModel, _) {
-              final cuisines = cookbookViewModel.getCuisines();
-              return PopupMenuButton<String>(
-                onSelected: (value) {
-                  cookbookViewModel
-                      .filterByCuisine(value == 'All' ? null : value);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                      value: 'All', child: Text('All Cuisines')),
-                  ...cuisines.map((cuisine) =>
-                      PopupMenuItem(value: cuisine, child: Text(cuisine))),
-                ],
-                icon: const Icon(Icons.restaurant, color: Colors.black),
-              );
-            },
-          ),
-          // Sorting Dropdown
-          Consumer<CookbookViewModel>(
-            builder: (context, cookbookViewModel, _) {
-              return PopupMenuButton<String>(
-                onSelected: (value) {
-                  cookbookViewModel.sortRecipes(value);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                      value: 'Name', child: Text('Sort by Name')),
-                  const PopupMenuItem(
-                      value: 'Rating', child: Text('Sort by Rating')),
-                  const PopupMenuItem(
-                      value: 'PrepTime', child: Text('Sort by Prep Time')),
-                ],
-                icon: const Icon(Icons.sort, color: Colors.black),
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.black),
+            tooltip: 'Filter & Sort',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.white,
+                isScrollControlled: true,
+                builder: (context) => CookbookFilterSortSheet(),
               );
             },
           ),
