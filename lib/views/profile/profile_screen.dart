@@ -18,12 +18,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch the user profile when the screen is initialized
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    userViewModel.fetchUserProfile();
-    // Fetch friends when the screen is initialized
-    final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
-    friendViewModel.fetchFriends();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Fetch the user profile when the screen is initialized
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      userViewModel.fetchUserProfile();
+      // Fetch friends when the screen is initialized
+      final friendViewModel =
+          Provider.of<FriendViewModel>(context, listen: false);
+      friendViewModel.fetchFriends();
+    });
   }
 
   // Open the side menu with a sliding animation
@@ -71,15 +74,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: MediaQuery.of(context).size.width,
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+                color: Colors.white,                
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   // Header with Close Button
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 26),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
