@@ -261,7 +261,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             ),
             TextButton(
               onPressed: () {
-                viewModel.deleteItem(fridgeId, ingredient.id);
+                viewModel.deleteFridgeItem(fridgeId, ingredient.id);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

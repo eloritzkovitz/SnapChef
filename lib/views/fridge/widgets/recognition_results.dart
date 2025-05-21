@@ -152,7 +152,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                       tooltip: 'Add to Fridge',
                                       onPressed: () async {
                                         final success = await fridgeViewModel
-                                            .addIngredientToFridge(
+                                            .addFridgeItem(
                                           widget.fridgeId,
                                           id,
                                           name,

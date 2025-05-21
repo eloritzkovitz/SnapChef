@@ -17,14 +17,7 @@ class GroceriesList extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Groceries',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
+        children: [          
           Expanded(
             child: groceries.isEmpty
                 ? const Center(

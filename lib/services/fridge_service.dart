@@ -79,4 +79,41 @@ class FridgeService {
       throw Exception('Failed to delete fridge item: ${response.statusCode}');
     }
   }
+
+  // Add a grocery item
+  Future<bool> addGroceryItem(String fridgeId, Map<String, dynamic> itemData) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(itemData),
+    );
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      throw Exception('Failed to add grocery item: ${response.statusCode}');
+    }
+  }
+
+  // Delete a grocery item
+  Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/$itemId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Failed to delete grocery item: ${response.statusCode}');
+    }
+  }
 }

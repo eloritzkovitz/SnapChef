@@ -7,6 +7,7 @@ import '../services/fridge_service.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
+  final List<Ingredient> _groceries = [];
   List<Ingredient> filteredIngredients = [];
   List<dynamic> recognizedIngredients = [];
   final FridgeService _fridgeService = FridgeService();
@@ -17,8 +18,8 @@ class FridgeViewModel extends ChangeNotifier {
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
-
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
+  List<Ingredient> get groceries => List.unmodifiable(_groceries);
 
   // Fetch ingredients from the user's fridge
   Future<void> fetchFridgeIngredients(String fridgeId) async {
@@ -131,7 +132,7 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   // Add ingredient to fridge (local and backend)
-  Future<bool> addIngredientToFridge(String fridgeId, String id, String name,
+  Future<bool> addFridgeItem(String fridgeId, String id, String name,
       String category, String? imageURL, int quantity) async {
     try {
       // Check if the ingredient already exists in the fridge
@@ -193,7 +194,8 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   // Update ingredient count in fridge (local and backend)
-  Future<bool> updateItem(String fridgeId, String itemId, int newCount) async {
+  Future<bool> updateFridgeItem(
+      String fridgeId, String itemId, int newCount) async {
     try {
       final success =
           await _fridgeService.updateFridgeItem(fridgeId, itemId, newCount);
@@ -218,7 +220,7 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   // Delete ingredient from fridge (local and backend)
-  Future<bool> deleteItem(String fridgeId, String itemId) async {
+  Future<bool> deleteFridgeItem(String fridgeId, String itemId) async {
     try {
       final success = await _fridgeService.deleteFridgeItem(fridgeId, itemId);
       if (success) {
@@ -242,7 +244,7 @@ class FridgeViewModel extends ChangeNotifier {
     final ingredient = filteredIngredients[filteredIndex];
     final newCount = ingredient.count + 1;
 
-    final success = await updateItem(fridgeId, ingredient.id, newCount);
+    final success = await updateFridgeItem(fridgeId, ingredient.id, newCount);
     if (success) {
       // Find and update in the main list
       final mainIndex =
@@ -261,7 +263,7 @@ class FridgeViewModel extends ChangeNotifier {
     if (ingredient.count > 1) {
       final newCount = ingredient.count - 1;
 
-      final success = await updateItem(fridgeId, ingredient.id, newCount);
+      final success = await updateFridgeItem(fridgeId, ingredient.id, newCount);
       if (success) {
         // Find and update in the main list
         final mainIndex =
@@ -273,5 +275,84 @@ class FridgeViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  // Add grocery item
+  Future<bool> addGroceryItem(String fridgeId, Ingredient ingredient) async {
+    try {
+      // Check if the grocery already exists
+      final existingGroceryIndex =
+          _groceries.indexWhere((grocery) => grocery.id == ingredient.id);
+
+      if (existingGroceryIndex != -1) {
+        // Grocery already exists, do nothing or update if needed
+        log('Grocery already exists');
+        return false;
+      } else {
+        // Grocery does not exist, add it as a new grocery
+        final itemData = {
+          'id': ingredient.id,
+          'name': ingredient.name,
+          'category': ingredient.category,
+          'imageURL': ingredient.imageURL,          
+        };
+
+        final success = await _fridgeService.addGroceryItem(fridgeId, itemData);
+        if (success) {
+          _groceries.add(
+            Ingredient(
+              id: ingredient.id,
+              name: ingredient.name,
+              category: ingredient.category,
+              imageURL: ingredient.imageURL,
+              count: 1,
+            ),
+          );
+          notifyListeners();
+          return true;
+        } else {
+          log('Failed to add grocery item');
+          return false;
+        }
+      }
+    } catch (e) {
+      log('Error adding grocery item: $e');
+      return false;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // Remove grocery item
+  Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
+    try {
+      final success = await _fridgeService.deleteGroceryItem(fridgeId, itemId);
+      if (success) {
+        _groceries.removeWhere((ingredient) => ingredient.id == itemId);        
+        return true;
+      } else {
+        log('Failed to delete grocery item');
+        return false;
+      }
+    } catch (e) {
+      log('Error deleting frocery item: $e');
+      return false;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // Add grocery item to fridge
+  Future<void> addGroceryToFridge(
+      String fridgeId, Ingredient ingredient) async {
+    await addFridgeItem(
+      fridgeId,
+      ingredient.id,
+      ingredient.name,
+      ingredient.category,
+      ingredient.imageURL,
+      ingredient.count,
+    );
+    deleteGroceryItem(fridgeId, ingredient.id);
   }
 }
