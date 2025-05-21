@@ -8,6 +8,7 @@ import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 import './widgets/expiry_alert.dart';
+import 'groceries_list.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -17,7 +18,86 @@ class FridgeScreen extends StatefulWidget {
 }
 
 class _FridgeScreenState extends State<FridgeScreen> {
-  bool isListView = false; // State variable to toggle between views  
+  bool isListView = false; // State variable to toggle between views
+
+  void _openGroceriesList(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Header with Close Button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Groceries',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // The groceries list
+                  const Expanded(
+                    child: GroceriesList(groceries: []),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset(0.0, 0.0);
+        const curve = Curves.easeInOut;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +167,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               });
             },
           ),
+          // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
@@ -95,6 +176,14 @@ class _FridgeScreenState extends State<FridgeScreen> {
                 delegate: IngredientSearchDelegate(
                     ingredientService: ingredientService),
               );
+            },
+          ),
+          // Grocery List Button
+          IconButton(
+            icon: const Icon(Icons.shopping_cart, color: Colors.black),
+            tooltip: 'Manage Groceries',
+            onPressed: () {
+              _openGroceriesList(context);
             },
           ),
         ],
