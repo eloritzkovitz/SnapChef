@@ -108,7 +108,6 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(
-        dialogBackgroundColor: Colors.white,
         textTheme: Theme.of(context).textTheme.apply(
               bodyColor: Colors.black,
               displayColor: Colors.black,
@@ -117,7 +116,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
               primary: primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
-            ),
+            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
       ),
       child: AlertDialog(
         backgroundColor: Colors.white,

@@ -190,7 +190,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
 
   void _editNotification(BuildContext context, AppNotification notification,
       NotificationsViewModel viewModel) {
-    DateTime _selectedDateTime = notification.scheduledTime;
+    DateTime selectedDateTime = notification.scheduledTime;
 
     showDialog(
       context: context,
@@ -266,7 +266,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                     OutlinedButton.icon(
                       icon: Icon(Icons.calendar_today, color: primaryColor),
                       label: Text(
-                        DateFormat('yyyy-MM-dd').format(_selectedDateTime),
+                        DateFormat('yyyy-MM-dd').format(selectedDateTime),
                         style: TextStyle(color: primaryColor),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -278,7 +278,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                       onPressed: () async {
                         final DateTime? picked = await showDatePicker(
                           context: context,
-                          initialDate: _selectedDateTime,
+                          initialDate: selectedDateTime,
                           firstDate: DateTime.now(),
                           lastDate: DateTime(2100),
                           builder: (context, child) {
@@ -301,12 +301,12 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         );
                         if (picked != null) {
                           setState(() {
-                            _selectedDateTime = DateTime(
+                            selectedDateTime = DateTime(
                               picked.year,
                               picked.month,
                               picked.day,
-                              _selectedDateTime.hour,
-                              _selectedDateTime.minute,
+                              selectedDateTime.hour,
+                              selectedDateTime.minute,
                             );
                           });
                         }
@@ -316,7 +316,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                     OutlinedButton.icon(
                       icon: Icon(Icons.access_time, color: primaryColor),
                       label: Text(
-                        DateFormat('HH:mm').format(_selectedDateTime),
+                        DateFormat('HH:mm').format(selectedDateTime),
                         style: TextStyle(color: primaryColor),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -329,7 +329,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         final TimeOfDay? picked = await showTimePicker(
                           context: context,
                           initialTime:
-                              TimeOfDay.fromDateTime(_selectedDateTime),
+                              TimeOfDay.fromDateTime(selectedDateTime),
                           builder: (context, child) {
                             return Theme(
                               data: Theme.of(context).copyWith(
@@ -351,10 +351,10 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         );
                         if (picked != null) {
                           setState(() {
-                            _selectedDateTime = DateTime(
-                              _selectedDateTime.year,
-                              _selectedDateTime.month,
-                              _selectedDateTime.day,
+                            selectedDateTime = DateTime(
+                              selectedDateTime.year,
+                              selectedDateTime.month,
+                              selectedDateTime.day,
                               picked.hour,
                               picked.minute,
                             );
@@ -388,7 +388,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                             ? notification.ingredientName
                             : notification.title,
                         body: notification.body,
-                        scheduledTime: _selectedDateTime,
+                        scheduledTime: selectedDateTime,
                         type: notification is IngredientReminder
                             ? notification.type
                             : ReminderType.expiry,

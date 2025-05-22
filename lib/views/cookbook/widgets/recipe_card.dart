@@ -11,10 +11,10 @@ class RecipeCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const RecipeCard({
-    Key? key,
+    super.key,
     required this.recipe,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

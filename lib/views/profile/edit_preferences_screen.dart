@@ -230,7 +230,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                     },
                     activeColor: primaryColor,
                   );
-                }).toList(),
+                }),
 
                 const SizedBox(height: 32),
 
