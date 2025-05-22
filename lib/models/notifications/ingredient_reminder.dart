@@ -21,8 +21,9 @@ class IngredientReminder implements AppNotification {
     required this.body,
     required this.scheduledTime,
     required this.type,
-  }); 
+  });
 
+  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'ingredientName': ingredientName,
