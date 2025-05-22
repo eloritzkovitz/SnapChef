@@ -21,7 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Fetch the user profile when the screen is initialized
       final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      userViewModel.fetchUserProfile();
+      userViewModel.fetchUserData();
       // Fetch friends when the screen is initialized
       final friendViewModel =
           Provider.of<FriendViewModel>(context, listen: false);

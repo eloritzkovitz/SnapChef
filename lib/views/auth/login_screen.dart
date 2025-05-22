@@ -97,7 +97,7 @@ class LoginScreen extends StatelessWidget {
                               emailController.text,
                               passwordController.text,
                               context,
-                              userViewModel.fetchUserProfile,
+                              userViewModel.fetchUserData,
                             );
                           }
                         },
@@ -122,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                   Buttons.Google,
                   text: "Sign in with Google",
                   onPressed: () async {
-                    await authViewModel.googleSignIn(context, userViewModel.fetchUserProfile);
+                    await authViewModel.googleSignIn(context, userViewModel.fetchUserData);
                   },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

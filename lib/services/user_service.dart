@@ -9,15 +9,11 @@ import 'package:snapchef/models/user.dart';
 import '../utils/token_util.dart';
 
 class UserService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
 
-  // Get user profile
-  Future<User> getUserProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final url = userId != null
-        ? Uri.parse('$baseUrl/api/users/$userId')
-        : Uri.parse('$baseUrl/api/users');
+  // Get user profile using /me endpoint
+  Future<User> getUserData() async {
+    final url = Uri.parse('$baseUrl/api/users/me');
 
     final response = await http.get(
       url,
@@ -37,20 +33,13 @@ class UserService {
   }
 
   // Update user profile
-  Future<Map<String, dynamic>> updateUserProfile(
+  Future<Map<String, dynamic>> updateUser(
     String firstName,
     String lastName,
     String password,
     File? profilePicture,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in SharedPreferences');
-    }
-
-    final url = Uri.parse('$baseUrl/api/users/$userId');
+    final url = Uri.parse('$baseUrl/api/users/me');
 
     final request = http.MultipartRequest('PUT', url)
       ..headers.addAll({
@@ -85,15 +74,14 @@ class UserService {
   }
 
   // Update user preferences
-  Future<void> updateUserPreferences({    
+  Future<void> updateUserPreferences({
     required List<String> allergies,
     required Map<String, bool> dietaryPreferences,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
     final accessToken = prefs.getString('accessToken');
 
-    final url = Uri.parse('$baseUrl/api/users/$userId/preferences');
+    final url = Uri.parse('$baseUrl/api/users/me/preferences');
     final response = await http.put(
       url,
       headers: {
@@ -112,16 +100,11 @@ class UserService {
   }
 
   // Delete user account
-  Future<void> deleteAccount() async {
+  Future<void> deleteUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in SharedPreferences');
-    }
 
     final response = await http.delete(
-      Uri.parse('$baseUrl/api/users/$userId'),
+      Uri.parse('$baseUrl/api/users/me'),
       headers: {
         'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
       },
@@ -131,6 +114,27 @@ class UserService {
       await prefs.clear(); // Clear tokens and user data
     } else {
       throw Exception('Failed to delete account: ${response.body}');
+    }
+  }
+
+  // Fetch user profile by userId
+  Future<User> getUserProfile(String userId) async {
+    final url = Uri.parse('$baseUrl/api/users/$userId');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return User.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw Exception('401');
+    } else {
+      throw Exception('Failed to fetch user profile: ${response.statusCode}');
     }
   }
 }
