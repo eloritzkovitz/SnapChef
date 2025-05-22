@@ -79,8 +79,7 @@ class UserViewModel extends ChangeNotifier {
         );
         notifyListeners();
       }
-    } catch (e) {
-      print('Error updating profile: $e');
+    } catch (e) {      
       throw Exception('Failed to update profile');
     } finally {
       _setLoading(false);
@@ -140,8 +139,7 @@ class UserViewModel extends ChangeNotifier {
     try {
       final userProfile = await _userService.getUserProfile(userId);
       return userProfile;
-    } catch (e) {
-      print('Error fetching user profile for $userId: $e');
+    } catch (e) {           
       return null;
     }
   }
