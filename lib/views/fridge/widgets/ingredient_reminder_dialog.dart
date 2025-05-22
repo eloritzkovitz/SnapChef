@@ -211,7 +211,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
 
                 final viewModel =
                     Provider.of<NotificationsViewModel>(context, listen: false);
-                final int newId =
+                final String newId =
                     await viewModel.generateUniqueNotificationId();
                 await viewModel.addNotification(
                   IngredientReminder(

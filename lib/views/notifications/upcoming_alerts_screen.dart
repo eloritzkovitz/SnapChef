@@ -416,7 +416,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, int notificationId,
+  void _confirmDelete(BuildContext context, String notificationId,
       NotificationsViewModel viewModel) {
     showDialog(
       context: context,

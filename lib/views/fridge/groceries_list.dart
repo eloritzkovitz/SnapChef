@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
-import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../views/fridge/widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
@@ -89,34 +88,8 @@ class GroceriesList extends StatelessWidget {
                                           IngredientReminderDialog(
                                         ingredient: ingredient,
                                         type: ReminderType.grocery,
-                                        onSetAlert: (dateTime) async {
-                                          final viewModel = Provider.of<
-                                                  NotificationsViewModel>(
-                                              context,
-                                              listen: false);
-                                          final int newId = await viewModel
-                                              .generateUniqueNotificationId();
-                                          await viewModel.addNotification(
-                                            IngredientReminder(
-                                              id: newId,
-                                              type: ReminderType.grocery,
-                                              ingredientName: ingredient.name,
-                                              title: 'Grocery Reminder',
-                                              body:
-                                                  '${ingredient.name} is on your grocery list!',
-                                              scheduledTime: dateTime,                                              
-                                            ),
-                                          );
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Grocery reminder set for ${ingredient.name} at ${dateTime.toLocal()}',
-                                              ),
-                                            ),
-                                          );
-                                          Navigator.pop(context);
-                                        },                                        
+                                        // onSetAlert is now just a placeholder, or you can remove it if not needed
+                                        onSetAlert: (_) {},
                                       ),
                                     );
                                   },

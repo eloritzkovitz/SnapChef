@@ -5,6 +5,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:uuid/uuid.dart';
 import '../models/notifications/app_notification.dart';
 import '../models/notifications/ingredient_reminder.dart';
 import '../theme/colors.dart';
@@ -92,26 +93,21 @@ class NotificationService {
     await prefs.setStringList('app_notifications', jsonList);
   }
 
-  // Generate a unique notification ID
-  int _generateUniqueNotificationIdFromList(
-      List<AppNotification> existingNotifications) {
-    if (existingNotifications.isEmpty) return 1;
-    final ids = existingNotifications.map((n) => n.id).toList();
-    return ids.reduce((a, b) => a > b ? a : b) + 1;
+  // Save notifications to local storage - external access
+  Future<void> saveStoredNotifications(
+      List<AppNotification> notifications) async {
+    await _saveStoredNotifications(notifications);
   }
 
-  Future<int> generateUniqueNotificationId() async {
-    final existingNotifications = await _getStoredNotifications();
-    return _generateUniqueNotificationIdFromList(existingNotifications);
+  // Generate a unique notification ID
+  Future<String> generateUniqueNotificationId() async {
+    return const Uuid().v4();
   }
 
   // Schedule a notification (generic)
   Future<void> scheduleNotification(AppNotification notification,
       {String? customTitle}) async {
     try {
-      final List<AppNotification> notifications =
-          await _getStoredNotifications();
-
       final tz.TZDateTime tzScheduledTime =
           tz.TZDateTime.from(notification.scheduledTime, tz.local);
       if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
@@ -120,7 +116,7 @@ class NotificationService {
       }
 
       await notificationsPlugin.zonedSchedule(
-        notification.id,
+        notification.id.hashCode, // Use hashCode for int id
         customTitle ?? notification.title,
         notification.body,
         tzScheduledTime,
@@ -128,8 +124,8 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
 
-      notifications.add(notification);
-      await _saveStoredNotifications(notifications);
+      // Removed: notifications.add(notification);
+      // Removed: await _saveStoredNotifications(notifications);
     } catch (e) {
       debugPrint('Error scheduling notification: $e');
     }
@@ -137,7 +133,7 @@ class NotificationService {
 
   // Edit an existing notification
   Future<void> editNotification(
-      int id, AppNotification updatedNotification) async {
+      String id, AppNotification updatedNotification) async {
     try {
       List<AppNotification> notifications = await _getStoredNotifications();
       final int index = notifications.indexWhere((n) => n.id == id);
@@ -147,13 +143,13 @@ class NotificationService {
         return;
       }
 
-      await notificationsPlugin.cancel(id);
+      await notificationsPlugin.cancel(id.hashCode);
 
       final tz.TZDateTime tzScheduledTime =
           tz.TZDateTime.from(updatedNotification.scheduledTime, tz.local);
 
       await notificationsPlugin.zonedSchedule(
-        updatedNotification.id,
+        updatedNotification.id.hashCode,
         updatedNotification.title,
         updatedNotification.body,
         tzScheduledTime,
@@ -169,12 +165,12 @@ class NotificationService {
   }
 
   // Remove a notification by ID
-  Future<void> removeNotification(int id) async {
+  Future<void> removeNotification(String id) async {
     try {
       List<AppNotification> notifications = await _getStoredNotifications();
       notifications.removeWhere((n) => n.id == id);
 
-      await notificationsPlugin.cancel(id);
+      await notificationsPlugin.cancel(id.hashCode);
       await _saveStoredNotifications(notifications);
     } catch (e) {
       debugPrint('Error removing notification: $e');
