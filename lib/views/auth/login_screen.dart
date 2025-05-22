@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
@@ -16,7 +17,14 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);    
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);   
+
+    SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  ); 
 
     return Scaffold(
       body: Padding(
