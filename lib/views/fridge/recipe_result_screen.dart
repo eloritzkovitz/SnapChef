@@ -102,6 +102,7 @@ class RecipeResultScreen extends StatelessWidget {
       instructions: newRecipe.instructions,
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
+      raw: newRecipe.instructions.join('\n'),
     );
 
     // Show a confirmation message

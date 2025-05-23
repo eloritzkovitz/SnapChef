@@ -90,6 +90,7 @@ class CookbookViewModel extends ChangeNotifier {
     required List<String> instructions,
     String? imageURL,
     double? rating,
+    String? raw,
   }) async {
     try {
       final recipeData = {
@@ -105,6 +106,7 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
+        'raw': raw,
       };
 
       final success =
