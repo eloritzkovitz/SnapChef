@@ -96,7 +96,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
                           : userViewModel.user?.profilePicture != null
-                              ? NetworkImage(ImageUtil.getFullImageUrl(
+                              ? NetworkImage(ImageUtil().getFullImageUrl(
                                       userViewModel.user!.profilePicture!))
                                   as ImageProvider
                               : const AssetImage(

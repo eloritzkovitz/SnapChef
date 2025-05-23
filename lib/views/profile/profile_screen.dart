@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               backgroundImage: userViewModel
                                           .user?.profilePicture !=
                                       null
-                                  ? NetworkImage(ImageUtil.getFullImageUrl(
+                                  ? NetworkImage(ImageUtil().getFullImageUrl(
                                           userViewModel.user!.profilePicture!))
                                       as ImageProvider
                                   : const AssetImage(

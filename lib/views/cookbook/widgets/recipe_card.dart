@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../view_recipe_screen.dart';
 import '../../../models/recipe.dart';
 import '../../../viewmodels/user_viewmodel.dart';
@@ -16,6 +17,13 @@ class RecipeCard extends StatelessWidget {
     this.onTap,
   });
 
+  String getFullImageUrl(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) return '';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    final serverUrl = dotenv.env['SERVER_IP'] ?? '';
+    return '$serverUrl$imageUrl';
+  }
+
   @override
   Widget build(BuildContext context) {
     final rating = recipe.rating?.toDouble() ?? 0.0;
@@ -26,7 +34,7 @@ class RecipeCard extends StatelessWidget {
       child: ListTile(
         leading: recipe.imageURL != null && recipe.imageURL!.isNotEmpty
             ? Image.network(
-                recipe.imageURL!,
+                getFullImageUrl(recipe.imageURL),
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
