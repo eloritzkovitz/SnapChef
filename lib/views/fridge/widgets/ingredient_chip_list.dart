@@ -15,11 +15,11 @@ class IngredientChipList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (ingredients.isEmpty) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Wrap(
         spacing: 8.0,
-        runSpacing: 8.0,
+        runSpacing: 4.0,
         children: ingredients.map((ingredient) {
           return Chip(
             label: Text(

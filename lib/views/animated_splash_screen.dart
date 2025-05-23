@@ -112,7 +112,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     final dataFuture = () async {
       if (accessToken != null && refreshToken != null) {
         try {
-          await userViewModel.fetchUserProfile();
+          await userViewModel.fetchUserData();
           isLoggedIn = userViewModel.user != null;
 
           if (isLoggedIn) {

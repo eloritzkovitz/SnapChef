@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
+import '../utils/token_util.dart';
 
 class ImageService {
   final ImagePicker _picker = ImagePicker();
@@ -110,12 +111,17 @@ class ImageService {
   Future<List<dynamic>> processImage(File image, String endpoint,
       {String? barcode}) async {
     String? serverIp = dotenv.env['SERVER_IP'];
+    final token = await TokenUtil.getAccessToken();
 
     // If endpoint is barcode and barcode is provided, send only the barcode (no file)
     if (endpoint == 'barcode' && barcode != null) {
-      var uri = Uri.parse('$serverIp/api/ingredients/recognize/barcode');
+      var uri = Uri.parse('$serverIp/api/ingredients/recognition/barcode');
       var response = await http.post(
         uri,
+        headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
         body: {'barcode': barcode},
       );
 
@@ -139,9 +145,9 @@ class ImageService {
 
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('$serverIp/api/ingredients/recognize/$endpoint'),
+      Uri.parse('$serverIp/api/ingredients/recognition/$endpoint'),
     )
-      ..headers['Content-Type'] = mimeType
+      ..headers['Authorization'] = 'Bearer $token'
       ..files.add(await http.MultipartFile.fromPath(
         'file',
         image.path,

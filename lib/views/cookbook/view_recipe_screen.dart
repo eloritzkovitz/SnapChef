@@ -4,6 +4,7 @@ import '../../models/recipe.dart';
 import '../../widgets/display_recipe_widget.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import './widgets/edit_recipe_modal.dart';
+import '../../utils/image_util.dart';
 
 class ViewRecipeScreen extends StatelessWidget {
   final Recipe recipe;
@@ -13,7 +14,7 @@ class ViewRecipeScreen extends StatelessWidget {
     super.key,
     required this.recipe,
     required this.cookbookId,
-  });
+  });  
 
   // Show the edit recipe modal
   Future<void> _showEditRecipeDialog(BuildContext context) async {
@@ -156,7 +157,7 @@ class ViewRecipeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: DisplayRecipeWidget(
           recipeObject: recipe,
-          imageUrl: recipe.imageURL ?? '',
+          imageUrl: ImageUtil().getFullImageUrl(recipe.imageURL),
           cookbookId: cookbookId,
         ),
       ),

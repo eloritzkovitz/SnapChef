@@ -103,7 +103,7 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
                                   8),
                               image: DecorationImage(
                                 image: NetworkImage(ingredient.imageURL),
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           )

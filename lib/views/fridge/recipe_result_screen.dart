@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
+import '../../utils/image_util.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../widgets/display_recipe_widget.dart';
 
 class RecipeResultScreen extends StatelessWidget {
@@ -54,7 +55,7 @@ class RecipeResultScreen extends StatelessWidget {
             Expanded(
               child: DisplayRecipeWidget(
                 recipeString: recipe,
-                imageUrl: imageUrl,
+                imageUrl: ImageUtil().getFullImageUrl(imageUrl),
               ),
             ),
           ],
@@ -102,6 +103,7 @@ class RecipeResultScreen extends StatelessWidget {
       instructions: newRecipe.instructions,
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
+      raw: newRecipe.instructions.join('\n'),
     );
 
     // Show a confirmation message

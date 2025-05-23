@@ -7,6 +7,7 @@ import './widgets/recipe_card.dart';
 import 'view_recipe_screen.dart';
 import '../../main.dart';
 import './widgets/cookbook_filter_sort_sheet.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -16,6 +17,13 @@ class CookbookScreen extends StatefulWidget {
 }
 
 class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
+  final String serverUrl = dotenv.env['SERVER_IP'] ?? '';
+
+  String getFullImageUrl(String imageUrl) {
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return '$serverUrl$imageUrl';
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -108,8 +116,9 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             itemCount: cookbookViewModel.filteredRecipes.length,
             itemBuilder: (context, index) {
               final recipe = cookbookViewModel.filteredRecipes[index];
+              // Pass the full image URL to RecipeCard
               return RecipeCard(
-                recipe: recipe,
+                recipe: recipe,                
                 onTap: () {
                   Navigator.push(
                     context,

@@ -20,17 +20,17 @@ class UserViewModel extends ChangeNotifier {
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;  
 
-  // Fetch User Profile
-  Future<void> fetchUserProfile() async {
+  // Fetch user data
+  Future<void> fetchUserData() async {
     try {
-      final userProfile = await _userService.getUserProfile();
+      final userProfile = await _userService.getUserData();
       _user = userProfile;
       notifyListeners();
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
           await _authService.refreshTokens();
-          final userProfile = await _userService.getUserProfile();
+          final userProfile = await _userService.getUserData();
           _user = userProfile;
           notifyListeners();
         } catch (refreshError) {
@@ -47,7 +47,7 @@ class UserViewModel extends ChangeNotifier {
   }
 
   // Update User Profile
-  Future<void> updateUserProfile({
+  Future<void> updateUser({
     required String firstName,
     required String lastName,
     String? password,
@@ -56,7 +56,7 @@ class UserViewModel extends ChangeNotifier {
     _setLoading(true);
     try {
       // Call the AuthService to update the user profile
-      final updatedData = await _userService.updateUserProfile(
+      final updatedData = await _userService.updateUser(
         firstName,
         lastName,
         password ?? '',
@@ -79,8 +79,7 @@ class UserViewModel extends ChangeNotifier {
         );
         notifyListeners();
       }
-    } catch (e) {
-      print('Error updating profile: $e');
+    } catch (e) {      
       throw Exception('Failed to update profile');
     } finally {
       _setLoading(false);
@@ -109,10 +108,10 @@ class UserViewModel extends ChangeNotifier {
   }  
 
   // Delete User Account
-  Future<void> deleteAccount(BuildContext context) async {
+  Future<void> deleteUser(BuildContext context) async {
     _setLoading(true);
     try {
-      await _userService.deleteAccount();
+      await _userService.deleteUser();
       _user = null; // Clear the user data on account deletion
       notifyListeners(); // Notify listeners to update the UI
       Navigator.pushReplacementNamed(context, '/login');
@@ -133,5 +132,15 @@ class UserViewModel extends ChangeNotifier {
   void setLoggingOut(bool value) {
     isLoggingOut = value;
     notifyListeners();
-  }  
+  }
+
+  // Fetch another user's profile by userId
+  Future<User?> fetchUserProfile(String userId) async {
+    try {
+      final userProfile = await _userService.getUserProfile(userId);
+      return userProfile;
+    } catch (e) {           
+      return null;
+    }
+  }
 }

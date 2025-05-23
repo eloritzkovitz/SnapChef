@@ -20,7 +20,7 @@ class GenerateRecipeScreen extends StatefulWidget {
 
 class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
   final TextEditingController _prepTimeController = TextEditingController();
-  final TextEditingController _cookingTimeController = TextEditingController();  
+  final TextEditingController _cookingTimeController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   String? _selectedMealType;
@@ -40,7 +40,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
   @override
   void dispose() {
     _prepTimeController.dispose();
-    _cookingTimeController.dispose();    
+    _cookingTimeController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -63,7 +63,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
       _selectedCuisine = null;
       _selectedDifficulty = null;
       _prepTimeController.clear();
-      _cookingTimeController.clear();      
+      _cookingTimeController.clear();
       _searchController.clear();
       _filteredIngredients.clear();
 
@@ -122,7 +122,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                           selectedCuisine: _selectedCuisine,
                           selectedDifficulty: _selectedDifficulty,
                           prepTimeController: _prepTimeController,
-                          cookingTimeController: _cookingTimeController,                          
+                          cookingTimeController: _cookingTimeController,
                           onMealTypeChanged: (val) =>
                               setState(() => _selectedMealType = val),
                           onCuisineChanged: (val) =>
@@ -172,7 +172,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                     onPressed: recipeViewModel.isLoading ||
                             recipeViewModel.selectedIngredients.isEmpty
                         ? null
-                        : () async {
+                        : () async {                            
                             await recipeViewModel.generateRecipe(
                               mealType: _selectedMealType,
                               cuisine: _selectedCuisine,
@@ -183,11 +183,10 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                               cookingTime: _cookingTimeController
                                       .text.isNotEmpty
                                   ? int.tryParse(_cookingTimeController.text)
-                                  : null,                              
+                                  : null,
                               preferences: preferences.toJson(),
                             );
                             if (recipeViewModel.recipe.isNotEmpty) {
-                              _resetFields();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -207,10 +206,12 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                         _cookingTimeController.text.isNotEmpty
                                             ? int.tryParse(
                                                 _cookingTimeController.text)
-                                            : null,                                    
+                                            : null,
                                   ),
                                 ),
-                              );
+                              ).then((_) {                                
+                                _resetFields();
+                              });
                             }
                           },
                     style: ElevatedButton.styleFrom(

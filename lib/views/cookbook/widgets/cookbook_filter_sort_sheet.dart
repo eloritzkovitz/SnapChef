@@ -4,6 +4,8 @@ import '../../../viewmodels/cookbook_viewmodel.dart';
 import '../../../theme/colors.dart';
 
 class CookbookFilterSortSheet extends StatefulWidget {
+  const CookbookFilterSortSheet({super.key});
+
   @override
   State<CookbookFilterSortSheet> createState() => _CookbookFilterSortSheetState();
 }

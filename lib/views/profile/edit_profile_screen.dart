@@ -96,7 +96,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
                           : userViewModel.user?.profilePicture != null
-                              ? NetworkImage(ImageUtil.getFullImageUrl(
+                              ? NetworkImage(ImageUtil().getFullImageUrl(
                                       userViewModel.user!.profilePicture!))
                                   as ImageProvider
                               : const AssetImage(
@@ -247,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : null; // Keep the current password if unchanged
 
                           // Update the user profile
-                          await userViewModel.updateUserProfile(
+                          await userViewModel.updateUser(
                             firstName: _firstNameController.text,
                             lastName: _lastNameController.text,
                             password: password, // Pass the new password or null
@@ -319,7 +319,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         );
 
                         try {
-                          await userViewModel.deleteAccount(context);
+                          await userViewModel.deleteUser(context);
                           Navigator.pop(context); // Close the loading indicator
                           Navigator.pushReplacementNamed(
                               context, '/login'); // Redirect to login screen
