@@ -7,7 +7,8 @@ class RecipeService {
   final String? serverUrl = dotenv.env['SERVER_IP'];
 
   // Generate a recipe based on the provided payload
-  Future<Map<String, String>> generateRecipe(Map<String, dynamic> payload) async {
+  Future<Map<String, String>> generateRecipe(
+      Map<String, dynamic> payload) async {
     if (serverUrl == null) {
       throw Exception("Server URL not configured properly.");
     }
@@ -26,7 +27,7 @@ class RecipeService {
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return {
-        'recipe': data['recipe'] ?? 'No recipe found.',
+        'recipe': data['recipe']?['raw'] ?? 'No recipe found.',
         'imageUrl': data['imageUrl'] ?? '',
       };
     } else {
