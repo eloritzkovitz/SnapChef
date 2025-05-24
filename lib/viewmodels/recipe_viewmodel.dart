@@ -75,8 +75,7 @@ class RecipeViewModel extends ChangeNotifier {
       recipe = result['recipe'] ?? 'No recipe generated.';
       imageUrl = result['imageUrl'] ?? '';
 
-      // Parse and store the generated recipe as a Recipe object
-      // This assumes the recipe is a raw string; adjust if you get structured data
+      // Parse and store the generated recipe as a Recipe object      
       String title = 'Generated Recipe';
       final lines = recipe.split('\n').map((l) => l.trim()).toList();
       for (final line in lines) {
@@ -87,9 +86,9 @@ class RecipeViewModel extends ChangeNotifier {
       }
 
       generatedRecipe = Recipe(
-        id: '', // You can generate a temp id if needed
+        id: '',
         title: title,
-        description: '', // Optionally extract or leave blank
+        description: '',
         mealType: mealType ?? '',
         cuisineType: cuisine ?? '',
         difficulty: difficulty ?? '',
@@ -99,6 +98,7 @@ class RecipeViewModel extends ChangeNotifier {
         instructions: recipe.split('\n'),
         imageURL: imageUrl,
         rating: null,
+        source: RecipeSource.ai,
       );
     } catch (error) {
       recipe = 'Failed to generate recipe: $error';
@@ -119,7 +119,7 @@ class RecipeViewModel extends ChangeNotifier {
     int? cookingTime,
     int? prepTime,
     Map<String, dynamic>? preferences,
-    List<String>? ingredients,
+    List<String>? ingredients,    
   }) async {
     isLoading = true;
     notifyListeners();

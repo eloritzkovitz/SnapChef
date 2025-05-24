@@ -17,6 +17,7 @@ class CookbookViewModel extends ChangeNotifier {
   RangeValues? _cookingTimeRange;
   RangeValues? _ratingRange;
   String? _selectedSortOption;
+  String? _selectedSource;
 
   String? get selectedCategory => _selectedCategory;
   String? get selectedCuisine => _selectedCuisine;
@@ -25,6 +26,7 @@ class CookbookViewModel extends ChangeNotifier {
   RangeValues? get cookingTimeRange => _cookingTimeRange;
   RangeValues? get ratingRange => _ratingRange;
   String? get selectedSortOption => _selectedSortOption;
+  String? get selectedSource => _selectedSource;
 
   bool _isLoading = false;
 
@@ -62,6 +64,9 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
+              source: item['source'] == 'ai'
+                  ? RecipeSource.ai
+                  : RecipeSource.user,
             );
           }).toList(),
         );
@@ -90,6 +95,7 @@ class CookbookViewModel extends ChangeNotifier {
     required List<String> instructions,
     String? imageURL,
     double? rating,
+    required RecipeSource source,
     String? raw,
   }) async {
     try {
@@ -106,6 +112,7 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
+        'source': source == RecipeSource.ai ? 'ai' : 'user',
         'raw': raw,
       };
 
@@ -126,6 +133,7 @@ class CookbookViewModel extends ChangeNotifier {
             instructions: instructions,
             imageURL: imageURL ?? '',
             rating: rating,
+            source: source,
           ),
         );
         _applyFiltersAndSorting();
@@ -315,6 +323,12 @@ class CookbookViewModel extends ChangeNotifier {
     _applyFiltersAndSorting();
   }
 
+  // Filter recipes by source
+  void filterBySource(String? source) {
+    _selectedSource = source;
+    _applyFiltersAndSorting();
+  }
+
   // Sort recipes by selected option
   void sortRecipes(String sortOption) {
     _selectedSortOption = sortOption;
@@ -373,6 +387,17 @@ class CookbookViewModel extends ChangeNotifier {
       }).toList();
     }
 
+    if (_selectedSource != null && _selectedSource!.isNotEmpty) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        if (_selectedSource == 'ai') {
+          return recipe.source == RecipeSource.ai;
+        } else if (_selectedSource == 'user' || _selectedSource == 'manual') {
+          return recipe.source == RecipeSource.user;
+        }
+        return true;
+      }).toList();
+    }
+
     if (_filter.isNotEmpty) {
       filteredRecipes = filteredRecipes.where((recipe) {
         return recipe.title.toLowerCase().contains(_filter.toLowerCase());
@@ -409,6 +434,7 @@ class CookbookViewModel extends ChangeNotifier {
     _ratingRange = null;
     _filter = '';
     _selectedSortOption = null;
+    _selectedSource = null;
     _applyFiltersAndSorting();
   }
 }

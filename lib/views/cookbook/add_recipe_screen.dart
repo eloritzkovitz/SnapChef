@@ -48,7 +48,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     final lines = input.split('\n').map((l) => l.trim()).toList();
     String title = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
-        : 'Personal Recipe';
+        : 'User-made Recipe';
     String description = _descriptionController.text.trim();
     List<String> instructions = [];
     List<Ingredient> ingredients = [];
@@ -105,6 +105,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
       instructions: instructions,
       imageURL: imageURL,
       rating: rating,
+      source: RecipeSource.user,
     );
   }
 
@@ -135,6 +136,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
       instructions: recipe.instructions,
       imageURL: recipe.imageURL,
       rating: recipe.rating,
+      source: RecipeSource.user,
       raw: rawInput,
     );
 
@@ -159,7 +161,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Add Manual Recipe',
+          'Add Your Own Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,

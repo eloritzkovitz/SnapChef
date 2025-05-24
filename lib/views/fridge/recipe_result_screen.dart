@@ -152,6 +152,7 @@ class _RecipeResultScreenState extends State<RecipeResultScreen> {
       instructions: widget.recipe.split('\n'),
       imageURL: _currentImageUrl,
       rating: null,
+      source: RecipeSource.ai,
     );
 
     // Save the recipe to the cookbook
@@ -168,7 +169,8 @@ class _RecipeResultScreenState extends State<RecipeResultScreen> {
       instructions: newRecipe.instructions,
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
-      raw: newRecipe.instructions.join('\n'),
+      source: newRecipe.source,
+      raw: newRecipe.instructions.join('\n'),      
     );
 
     // Show a confirmation message

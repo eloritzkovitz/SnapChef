@@ -18,6 +18,7 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
   late RangeValues cookingTimeRange;
   late RangeValues ratingRange;
   late String selectedSort;
+  late String selectedSource;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
     ratingRange = vm.ratingRange ??
         RangeValues(vm.minRating, vm.maxRating);
     selectedSort = vm.selectedSortOption ?? '';
+    selectedSource = vm.selectedSource ?? '';
   }
 
   @override
@@ -118,6 +120,21 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
                 )),
               ],
               onChanged: (val) => setState(() => selectedDifficulty = val ?? ''),
+            ),
+            SizedBox(height: 18),
+            // Source filter
+            DropdownButtonFormField<String>(
+              value: selectedSource,
+              decoration: InputDecoration(
+                labelText: 'Source',
+                prefixIcon: Icon(Icons.source, color: primaryColor),
+              ),
+              items: const [
+                DropdownMenuItem(value: '', child: Text('All Sources')),
+                DropdownMenuItem(value: 'ai', child: Text('AI-generated')),
+                DropdownMenuItem(value: 'user', child: Text('User-made')),
+              ],
+              onChanged: (val) => setState(() => selectedSource = val ?? ''),
             ),
             SizedBox(height: 18),
             // Prep Time
@@ -231,7 +248,8 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
                     vm.filterByPrepTime(prepTimeRange);
                     vm.filterByCookingTime(cookingTimeRange);
                     vm.filterByRating(ratingRange);
-                    vm.sortRecipes(selectedSort.isEmpty ? '' : selectedSort);
+                    vm.filterBySource(selectedSource.isEmpty ? null : selectedSource);
+                    vm.sortRecipes(selectedSort.isEmpty ? '' : selectedSort);                    
                     Navigator.pop(context);
                   },
                   label: const Text('Apply'),
