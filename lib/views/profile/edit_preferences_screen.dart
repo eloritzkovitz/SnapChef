@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
+import '../../constants/dietary_preferences.dart';
 
 class EditPreferencesScreen extends StatefulWidget {
   const EditPreferencesScreen({super.key});
@@ -16,55 +17,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
 
   // These will be initialized in initState
   List<String> _allergies = [];
-  Map<String, bool> _dietaryPreferences = {};
-
-  // Default preferences in case user has none
-  static const List<String> _allDietaryKeys = [
-    'Vegan',
-    'Vegetarian',
-    'Pescatarian',
-    'Carnivore',
-    'Ketogenic',
-    'Paleo',
-    'Low-Carb',
-    'Low-Fat',
-    'Gluten-Free',
-    'Dairy-Free',
-    'Kosher',
-    'Halal',
-  ];
-
-  // Mapping UI keys to backend keys
-  static const Map<String, String> dietaryKeyMap = {
-    'Vegan': 'vegan',
-    'Vegetarian': 'vegetarian',
-    'Pescatarian': 'pescatarian',
-    'Carnivore': 'carnivore',
-    'Ketogenic': 'ketogenic',
-    'Paleo': 'paleo',
-    'Low-Carb': 'lowCarb',
-    'Low-Fat': 'lowFat',
-    'Gluten-Free': 'glutenFree',
-    'Dairy-Free': 'dairyFree',
-    'Kosher': 'kosher',
-    'Halal': 'halal',
-  };
-
-  // Reverse mapping for backend -> UI
-  static const Map<String, String> backendToUiDietaryKeyMap = {
-    'vegan': 'Vegan',
-    'vegetarian': 'Vegetarian',
-    'pescatarian': 'Pescatarian',
-    'carnivore': 'Carnivore',
-    'ketogenic': 'Ketogenic',
-    'paleo': 'Paleo',
-    'lowCarb': 'Low-Carb',
-    'lowFat': 'Low-Fat',
-    'glutenFree': 'Gluten-Free',
-    'dairyFree': 'Dairy-Free',
-    'kosher': 'Kosher',
-    'halal': 'Halal',
-  };
+  Map<String, bool> _dietaryPreferences = {};  
 
   bool _loading = true;
 
@@ -80,7 +33,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
       setState(() {
         _allergies = List<String>.from(user?.preferences?.allergies ?? []);
         _dietaryPreferences = {
-          for (final key in _allDietaryKeys) key: false,
+          for (final key in allDietaryKeys) key: false,
         };
         final userDiet = user?.preferences?.dietaryPreferences ?? {};
         // Map backend keys to UI keys
