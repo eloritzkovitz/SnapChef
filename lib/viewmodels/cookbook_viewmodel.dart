@@ -64,9 +64,8 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
-              source: item['source'] == 'ai'
-                  ? RecipeSource.ai
-                  : RecipeSource.user,
+              source:
+                  item['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
             );
           }).toList(),
         );
@@ -171,7 +170,8 @@ class CookbookViewModel extends ChangeNotifier {
         'difficulty': difficulty,
         'prepTime': prepTime,
         'cookingTime': cookingTime,
-        'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
+        'ingredients':
+            ingredients.map((ingredient) => ingredient.toJson()).toList(),
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
@@ -224,6 +224,53 @@ class CookbookViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error regenerating recipe image: $e');
       return false;
+    }
+  }
+
+  Future<void> reorderRecipe(
+      int oldIndex, int newIndex, String cookbookId) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final recipe = filteredRecipes.removeAt(oldIndex);
+    filteredRecipes.insert(newIndex, recipe);
+
+    // Also reorder in the main _recipes list to keep everything in sync
+    final oldId = recipe.id;
+    final oldMainIndex = _recipes.indexWhere((r) => r.id == oldId);
+    if (oldMainIndex != -1) {
+      final mainRecipe = _recipes.removeAt(oldMainIndex);
+
+      // Find the new index in the main list based on the next recipe in filteredRecipes
+      int newMainIndex;
+      if (newIndex + 1 < filteredRecipes.length) {
+        // Insert before the next recipe in filteredRecipes
+        final nextId = filteredRecipes[newIndex + 1].id;
+        newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
+        if (newMainIndex == -1) {
+          newMainIndex = _recipes.length;
+        }
+      } else {
+        // Insert at the end
+        newMainIndex = _recipes.length;
+      }
+      _recipes.insert(newMainIndex, mainRecipe);
+    }
+
+    // Save the new order to backend
+    await saveRecipeOrder(cookbookId);
+
+    notifyListeners();
+  }
+
+  // Save the new order to backend
+  Future<void> saveRecipeOrder(String cookbookId) async {
+    try {
+      // Send the list of recipe IDs in the new order
+      final orderedIds = _recipes.map((r) => r.id).toList();
+      await _cookbookService.saveRecipeOrder(cookbookId, orderedIds);
+    } catch (e) {
+      log('Error saving recipe order: $e');
     }
   }
 

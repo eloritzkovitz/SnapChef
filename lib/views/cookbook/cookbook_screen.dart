@@ -86,7 +86,6 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
           ),
-          // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
@@ -114,11 +113,28 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             );
           }
 
-          return ListView.builder(
+          return ReorderableListView.builder(
             itemCount: cookbookViewModel.filteredRecipes.length,
+            onReorder: (oldIndex, newIndex) async {
+              await cookbookViewModel.reorderRecipe(
+                oldIndex,
+                newIndex,
+                Provider.of<UserViewModel>(context, listen: false).cookbookId ??
+                    '',
+              );
+            },
+            proxyDecorator: (child, index, animation) {              
+              return Material(
+                color: Colors.transparent,
+                child: child,
+                elevation: 0,
+                type: MaterialType.transparency,
+              );
+            },
             itemBuilder: (context, index) {
               final recipe = cookbookViewModel.filteredRecipes[index];
               return RecipeCard(
+                key: ValueKey(recipe.id),
                 recipe: recipe,
                 onTap: () {
                   Navigator.push(
@@ -139,7 +155,6 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           );
         },
       ),
-      // Floating action button to add personal recipe
       floatingActionButton: FloatingActionButton(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
