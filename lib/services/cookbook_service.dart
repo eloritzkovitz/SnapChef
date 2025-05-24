@@ -78,6 +78,26 @@ class CookbookService {
     }
   }
 
+  // Regenerate the image for a recipe in the cookbook
+  Future<String> regenerateRecipeImage(String cookbookId, String recipeId, Map<String, dynamic> payload) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId/image'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data['imageUrl'] ?? '';
+    } else {
+      throw Exception('Failed to regenerate recipe image: ${response.body}');
+    }
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteCookbookRecipe(String cookbookId, String recipeId) async {
     final token = await TokenUtil.getAccessToken();

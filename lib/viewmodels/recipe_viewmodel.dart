@@ -78,4 +78,40 @@ class RecipeViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Regenerate the recipe image
+  Future<void> regenerateRecipeImage({
+    String? mealType,
+    String? cuisine,
+    String? difficulty,
+    int? cookingTime,
+    int? prepTime,
+    Map<String, dynamic>? preferences,
+  }) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final ingredientsString =
+          selectedIngredients.map((e) => e.name).join(',');
+
+      final requestPayload = {
+        'ingredients': ingredientsString,
+        'mealType': mealType,
+        'cuisine': cuisine,
+        'difficulty': difficulty,
+        'cookingTime': cookingTime,
+        'prepTime': prepTime,
+        'preferences': preferences,
+      };
+
+      final newImageUrl = await _recipeService.regenerateRecipeImage(requestPayload);
+      imageUrl = newImageUrl;
+    } catch (error) {
+      // Optionally handle error
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

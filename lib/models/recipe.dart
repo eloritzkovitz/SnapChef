@@ -66,4 +66,35 @@ class Recipe {
       'rating': rating,
     };
   }
+
+  // Method to convert a Recipe to a Map for saving to a database
+  Recipe copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? mealType,
+    String? cuisineType,
+    String? difficulty,
+    int? prepTime,
+    int? cookingTime,
+    List<Ingredient>? ingredients,
+    List<String>? instructions,
+    String? imageURL,
+    double? rating,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      mealType: mealType ?? this.mealType,
+      cuisineType: cuisineType ?? this.cuisineType,
+      difficulty: difficulty ?? this.difficulty,
+      prepTime: prepTime ?? this.prepTime,
+      cookingTime: cookingTime ?? this.cookingTime,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      imageURL: imageURL ?? this.imageURL,
+      rating: rating ?? this.rating,
+    );
+  }
 }

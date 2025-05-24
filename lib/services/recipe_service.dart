@@ -16,7 +16,7 @@ class RecipeService {
     final token = await TokenUtil.getAccessToken();
 
     final response = await http.post(
-      Uri.parse("$serverUrl/api/recipes/generation"),
+      Uri.parse("$serverUrl/api/recipes/"),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -32,6 +32,31 @@ class RecipeService {
       };
     } else {
       throw Exception('Failed to generate recipe: ${response.body}');
+    }
+  }
+
+  // Regenerate a recipe image using the provided payload
+  Future<String> regenerateRecipeImage(Map<String, dynamic> payload) async {
+    if (serverUrl == null) {
+      throw Exception("Server URL not configured properly.");
+    }
+
+    final token = await TokenUtil.getAccessToken();
+
+    final response = await http.post(
+      Uri.parse("$serverUrl/api/recipes/image"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data['imageUrl'] ?? '';
+    } else {
+      throw Exception('Failed to regenerate recipe image: ${response.body}');
     }
   }
 }

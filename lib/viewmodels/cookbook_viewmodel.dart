@@ -163,8 +163,7 @@ class CookbookViewModel extends ChangeNotifier {
         'difficulty': difficulty,
         'prepTime': prepTime,
         'cookingTime': cookingTime,
-        'ingredients':
-            ingredients.map((ingredient) => ingredient.toJson()).toList(),
+        'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
@@ -175,8 +174,7 @@ class CookbookViewModel extends ChangeNotifier {
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
-          _recipes[index] = Recipe(
-            id: recipeId,
+          _recipes[index] = _recipes[index].copyWith(
             title: title,
             description: description,
             mealType: mealType,
@@ -195,6 +193,28 @@ class CookbookViewModel extends ChangeNotifier {
       return success;
     } catch (e) {
       log('Error updating recipe: $e');
+      return false;
+    }
+  }
+
+  // Regenerate the image for a recipe in the cookbook
+  Future<bool> regenerateRecipeImage({
+    required String cookbookId,
+    required String recipeId,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final newImageUrl = await _cookbookService.regenerateRecipeImage(
+          cookbookId, recipeId, payload);
+      final index = _recipes.indexWhere((r) => r.id == recipeId);
+      if (index != -1) {
+        _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
+        _applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      log('Error regenerating recipe image: $e');
       return false;
     }
   }
