@@ -46,7 +46,8 @@ class FridgeViewModel extends ChangeNotifier {
               id: item['id'],
               name: item['name'],
               category: item['category'],
-              imageURL: item['imageURL'] ?? 'assets/images/placeholder_image.png',
+              imageURL:
+                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
               count: item['quantity'],
             );
           }).toList(),
@@ -165,6 +166,51 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Reorder fridge items
+  Future<void> reorderIngredient(
+      int oldIndex, int newIndex, String fridgeId) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final ingredient = filteredIngredients.removeAt(oldIndex);
+    filteredIngredients.insert(newIndex, ingredient);
+
+    // Also reorder in the main _ingredients list to keep everything in sync
+    final oldId = ingredient.id;
+    final oldMainIndex = _ingredients.indexWhere((i) => i.id == oldId);
+    if (oldMainIndex != -1) {
+      final mainIngredient = _ingredients.removeAt(oldMainIndex);
+
+      // Find the new index in the main list based on the next ingredient in filteredIngredients
+      int newMainIndex;
+      if (newIndex + 1 < filteredIngredients.length) {
+        final nextId = filteredIngredients[newIndex + 1].id;
+        newMainIndex = _ingredients.indexWhere((i) => i.id == nextId);
+        if (newMainIndex == -1) {
+          newMainIndex = _ingredients.length;
+        }
+      } else {
+        newMainIndex = _ingredients.length;
+      }
+      _ingredients.insert(newMainIndex, mainIngredient);
+    }
+
+    // Save the new order to backend
+    await saveFridgeOrder(fridgeId);
+
+    notifyListeners();
+  }
+
+  // Save the new order to backend
+  Future<void> saveFridgeOrder(String fridgeId) async {
+    try {
+      final orderedIds = _ingredients.map((i) => i.id).toList();
+      await _fridgeService.saveFridgeOrder(fridgeId, orderedIds);
+    } catch (e) {
+      log('Error saving fridge order: $e');
+    }
+  }
+
   // Delete an item from the fridge
   Future<bool> deleteFridgeItem(String fridgeId, String itemId) async {
     try {
@@ -242,7 +288,7 @@ class FridgeViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Update an item in the grocery list
   Future<bool> updateGroceryItem(
       String fridgeId, String itemId, int newCount) async {
@@ -364,7 +410,8 @@ class FridgeViewModel extends ChangeNotifier {
   void _applyGroceryFiltersAndSorting() {
     filteredGroceries = List.from(_groceries);
 
-    if (_selectedGroceryCategory != null && _selectedGroceryCategory!.isNotEmpty) {
+    if (_selectedGroceryCategory != null &&
+        _selectedGroceryCategory!.isNotEmpty) {
       filteredGroceries = filteredGroceries.where((ingredient) {
         return ingredient.category.toLowerCase() ==
             _selectedGroceryCategory!.toLowerCase();
@@ -373,7 +420,9 @@ class FridgeViewModel extends ChangeNotifier {
 
     if (_groceryFilter.isNotEmpty) {
       filteredGroceries = filteredGroceries.where((ingredient) {
-        return ingredient.name.toLowerCase().contains(_groceryFilter.toLowerCase());
+        return ingredient.name
+            .toLowerCase()
+            .contains(_groceryFilter.toLowerCase());
       }).toList();
     }
 

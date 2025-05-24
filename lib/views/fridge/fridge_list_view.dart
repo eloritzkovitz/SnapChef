@@ -19,32 +19,44 @@ class FridgeListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return ReorderableListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemCount: ingredients.length,
+      onReorder: (oldIndex, newIndex) async {
+        await viewModel.reorderIngredient(oldIndex, newIndex, fridgeId);
+      },
+      proxyDecorator: (child, index, animation) {
+        // Remove background when dragging
+        return Material(
+          color: Colors.transparent,
+          child: child,
+          elevation: 0,
+          type: MaterialType.transparency,
+        );
+      },
       itemBuilder: (context, index) {
         final ingredient = ingredients[index];
         return ListTile(
+          key: ValueKey(ingredient.id),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          leading:
-              (ingredient.imageURL != null && ingredient.imageURL.isNotEmpty)
-                  ? Image.network(
-                      ingredient.imageURL,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => SizedBox(
-                        width: 50,
-                        height: 50,
-                        child: Icon(Icons.image_not_supported, size: 36),
-                      ),
-                    )
-                  : SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: Icon(Icons.image_not_supported, size: 36),
-                    ),
+          leading: (ingredient.imageURL != null && ingredient.imageURL.isNotEmpty)
+              ? Image.network(
+                  ingredient.imageURL,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: Icon(Icons.image_not_supported, size: 36),
+                  ),
+                )
+              : SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: Icon(Icons.image_not_supported, size: 36),
+                ),
           title: Row(
             children: [
               Expanded(
@@ -70,8 +82,7 @@ class FridgeListView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon:
-                    const Icon(Icons.remove_circle_outline, color: Colors.red),
+                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                 onPressed: () {
                   if (ingredient.count > 1) {
                     viewModel.decreaseCount(index, fridgeId);
@@ -85,8 +96,7 @@ class FridgeListView extends StatelessWidget {
               ),
               Text(
                 '${ingredient.count}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline, color: Colors.green),
