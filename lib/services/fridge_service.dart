@@ -156,6 +156,23 @@ class FridgeService {
     }
   }
 
+  // Save the new fridge order to the backend
+  Future<void> saveGroceriesOrder(String fridgeId, List<String> orderedGroceriesIds) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/reorder'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'orderedItemIds': orderedGroceriesIds}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save fridge order: ${response.body}');
+    }
+  }
+
   // Delete a grocery item
   Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
     final token = await TokenUtil.getAccessToken();

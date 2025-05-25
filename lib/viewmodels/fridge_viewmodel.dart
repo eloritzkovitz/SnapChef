@@ -315,6 +315,41 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Reorder grocery items
+  Future<void> reorderGroceryItem(
+      int oldIndex, int newIndex, String fridgeId) async {
+    if (oldIndex < newIndex) newIndex -= 1;
+    final item = filteredGroceries.removeAt(oldIndex);
+    filteredGroceries.insert(newIndex, item);
+
+    // Also reorder in the main groceries list if you have one
+    final oldId = item.id;
+    final oldMainIndex = _groceries.indexWhere((g) => g.id == oldId);
+    if (oldMainIndex != -1) {
+      final mainItem = _groceries.removeAt(oldMainIndex);
+      int newMainIndex;
+      if (newIndex + 1 < filteredGroceries.length) {
+        final nextId = filteredGroceries[newIndex + 1].id;
+        newMainIndex = _groceries.indexWhere((g) => g.id == nextId);
+        if (newMainIndex == -1) newMainIndex = _groceries.length;
+      } else {
+        newMainIndex = _groceries.length;
+      }
+      _groceries.insert(newMainIndex, mainItem);
+    }
+
+    // Save the new order to backend if needed
+    await saveGroceriesOrder(fridgeId);
+
+    notifyListeners();
+  }
+
+  // Save the new grocery order to the backend
+  Future<void> saveGroceriesOrder(String fridgeId) async {
+    final orderedIds = _groceries.map((g) => g.id).toList();
+    await _fridgeService.saveGroceriesOrder(fridgeId, orderedIds);
+  }
+
   // Delete an item from the grocery list
   Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
     try {
