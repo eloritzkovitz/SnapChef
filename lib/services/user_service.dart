@@ -102,7 +102,7 @@ class UserService {
   // Update the user's FCM token
   Future<void> updateFcmToken(String token) async {
     final url = Uri.parse('$baseUrl/api/users/me/fcm-token');
-    final response = await http.post(
+    final response = await http.put(
       url,
       headers: {
         'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
