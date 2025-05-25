@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // <-- Add this import
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../models/user.dart';
@@ -7,7 +8,7 @@ import '../models/preferences.dart';
 import '../utils/ui_util.dart';
 
 class UserViewModel extends ChangeNotifier {
-  final AuthService _authService = AuthService();  
+  final AuthService _authService = AuthService();
   final UserService _userService = UserService();
 
   bool _isLoading = false;
@@ -18,7 +19,7 @@ class UserViewModel extends ChangeNotifier {
   User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
-  String? get cookbookId => _user?.cookbookId;  
+  String? get cookbookId => _user?.cookbookId;
 
   // Fetch user data
   Future<void> fetchUserData() async {
@@ -26,6 +27,11 @@ class UserViewModel extends ChangeNotifier {
       final userProfile = await _userService.getUserData();
       _user = userProfile;
       notifyListeners();
+
+      // Update FCM token after fetching user data
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      await updateFcmToken(fcmToken); 
+
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -33,6 +39,11 @@ class UserViewModel extends ChangeNotifier {
           final userProfile = await _userService.getUserData();
           _user = userProfile;
           notifyListeners();
+
+          // Update FCM token after refreshing user data
+          final fcmToken = await FirebaseMessaging.instance.getToken();
+          await updateFcmToken(fcmToken);
+
         } catch (refreshError) {
           _user = null;
           notifyListeners();
@@ -79,7 +90,7 @@ class UserViewModel extends ChangeNotifier {
         );
         notifyListeners();
       }
-    } catch (e) {      
+    } catch (e) {
       throw Exception('Failed to update profile');
     } finally {
       _setLoading(false);
@@ -105,7 +116,28 @@ class UserViewModel extends ChangeNotifier {
       ),
     );
     notifyListeners();
-  }  
+  }
+
+  // Update FCM Token
+  Future<void> updateFcmToken(String? token) async {
+    if (token == null || token.isEmpty) return;
+    try {
+      await _userService.updateFcmToken(token);
+      if (_user != null) {
+        _user = _user!.copyWith(fcmToken: token);
+        notifyListeners();
+      }
+    } catch (e) {
+      throw Exception('Failed to update FCM token: ${e.toString()}');      
+    }
+  }
+
+  // Listen for FCM token refresh and update backend
+  void listenForFcmTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await updateFcmToken(newToken);
+    });
+  }
 
   // Delete User Account
   Future<void> deleteUser(BuildContext context) async {
@@ -120,7 +152,7 @@ class UserViewModel extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }  
+  }
 
   // Set the loading state
   void _setLoading(bool value) {
@@ -139,7 +171,7 @@ class UserViewModel extends ChangeNotifier {
     try {
       final userProfile = await _userService.getUserProfile(userId);
       return userProfile;
-    } catch (e) {           
+    } catch (e) {
       return null;
     }
   }

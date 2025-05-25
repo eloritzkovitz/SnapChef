@@ -55,9 +55,10 @@ Future<void> main() async {
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
+  userViewModel.listenForFcmTokenRefresh();
   final fridgeViewModel = FridgeViewModel();
   final cookbookViewModel = CookbookViewModel();
-  final friendViewModel = FriendViewModel(); 
+  final friendViewModel = FriendViewModel();
 
   // Run the app with the login status and viewmodels
   runApp(MyApp(    

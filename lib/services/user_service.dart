@@ -99,6 +99,23 @@ class UserService {
     }
   }
 
+  // Update the user's FCM token
+  Future<void> updateFcmToken(String token) async {
+    final url = Uri.parse('$baseUrl/api/users/me/fcm-token');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'fcmToken': token}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update FCM token: ${response.body}');
+    }
+  }
+
   // Delete user account
   Future<void> deleteUser() async {
     final prefs = await SharedPreferences.getInstance();
