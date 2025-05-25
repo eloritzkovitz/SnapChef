@@ -17,6 +17,7 @@ class CookbookViewModel extends ChangeNotifier {
   RangeValues? _cookingTimeRange;
   RangeValues? _ratingRange;
   String? _selectedSortOption;
+  String? _selectedSource;
 
   String? get selectedCategory => _selectedCategory;
   String? get selectedCuisine => _selectedCuisine;
@@ -25,6 +26,7 @@ class CookbookViewModel extends ChangeNotifier {
   RangeValues? get cookingTimeRange => _cookingTimeRange;
   RangeValues? get ratingRange => _ratingRange;
   String? get selectedSortOption => _selectedSortOption;
+  String? get selectedSource => _selectedSource;
 
   bool _isLoading = false;
 
@@ -62,6 +64,8 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
+              source:
+                  item['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
             );
           }).toList(),
         );
@@ -90,6 +94,7 @@ class CookbookViewModel extends ChangeNotifier {
     required List<String> instructions,
     String? imageURL,
     double? rating,
+    required RecipeSource source,
     String? raw,
   }) async {
     try {
@@ -106,6 +111,7 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
+        'source': source == RecipeSource.ai ? 'ai' : 'user',
         'raw': raw,
       };
 
@@ -126,6 +132,7 @@ class CookbookViewModel extends ChangeNotifier {
             instructions: instructions,
             imageURL: imageURL ?? '',
             rating: rating,
+            source: source,
           ),
         );
         _applyFiltersAndSorting();
@@ -175,8 +182,7 @@ class CookbookViewModel extends ChangeNotifier {
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
-          _recipes[index] = Recipe(
-            id: recipeId,
+          _recipes[index] = _recipes[index].copyWith(
             title: title,
             description: description,
             mealType: mealType,
@@ -196,6 +202,75 @@ class CookbookViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error updating recipe: $e');
       return false;
+    }
+  }
+
+  // Regenerate the image for a recipe in the cookbook
+  Future<bool> regenerateRecipeImage({
+    required String cookbookId,
+    required String recipeId,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final newImageUrl = await _cookbookService.regenerateRecipeImage(
+          cookbookId, recipeId, payload);
+      final index = _recipes.indexWhere((r) => r.id == recipeId);
+      if (index != -1) {
+        _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
+        _applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      log('Error regenerating recipe image: $e');
+      return false;
+    }
+  }
+
+  Future<void> reorderRecipe(
+      int oldIndex, int newIndex, String cookbookId) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final recipe = filteredRecipes.removeAt(oldIndex);
+    filteredRecipes.insert(newIndex, recipe);
+
+    // Also reorder in the main _recipes list to keep everything in sync
+    final oldId = recipe.id;
+    final oldMainIndex = _recipes.indexWhere((r) => r.id == oldId);
+    if (oldMainIndex != -1) {
+      final mainRecipe = _recipes.removeAt(oldMainIndex);
+
+      // Find the new index in the main list based on the next recipe in filteredRecipes
+      int newMainIndex;
+      if (newIndex + 1 < filteredRecipes.length) {
+        // Insert before the next recipe in filteredRecipes
+        final nextId = filteredRecipes[newIndex + 1].id;
+        newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
+        if (newMainIndex == -1) {
+          newMainIndex = _recipes.length;
+        }
+      } else {
+        // Insert at the end
+        newMainIndex = _recipes.length;
+      }
+      _recipes.insert(newMainIndex, mainRecipe);
+    }
+
+    // Save the new order to backend
+    await saveRecipeOrder(cookbookId);
+
+    notifyListeners();
+  }
+
+  // Save the new order to backend
+  Future<void> saveRecipeOrder(String cookbookId) async {
+    try {
+      // Send the list of recipe IDs in the new order
+      final orderedIds = _recipes.map((r) => r.id).toList();
+      await _cookbookService.saveRecipeOrder(cookbookId, orderedIds);
+    } catch (e) {
+      log('Error saving recipe order: $e');
     }
   }
 
@@ -295,6 +370,12 @@ class CookbookViewModel extends ChangeNotifier {
     _applyFiltersAndSorting();
   }
 
+  // Filter recipes by source
+  void filterBySource(String? source) {
+    _selectedSource = source;
+    _applyFiltersAndSorting();
+  }
+
   // Sort recipes by selected option
   void sortRecipes(String sortOption) {
     _selectedSortOption = sortOption;
@@ -353,6 +434,17 @@ class CookbookViewModel extends ChangeNotifier {
       }).toList();
     }
 
+    if (_selectedSource != null && _selectedSource!.isNotEmpty) {
+      filteredRecipes = filteredRecipes.where((recipe) {
+        if (_selectedSource == 'ai') {
+          return recipe.source == RecipeSource.ai;
+        } else if (_selectedSource == 'user' || _selectedSource == 'manual') {
+          return recipe.source == RecipeSource.user;
+        }
+        return true;
+      }).toList();
+    }
+
     if (_filter.isNotEmpty) {
       filteredRecipes = filteredRecipes.where((recipe) {
         return recipe.title.toLowerCase().contains(_filter.toLowerCase());
@@ -389,6 +481,7 @@ class CookbookViewModel extends ChangeNotifier {
     _ratingRange = null;
     _filter = '';
     _selectedSortOption = null;
+    _selectedSource = null;
     _applyFiltersAndSorting();
   }
 }

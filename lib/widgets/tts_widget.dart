@@ -17,18 +17,46 @@ class _TTSWidgetState extends State<TTSWidget> {
   bool _isPlaying = false;
   bool _isPaused = false;
 
+  // Preprocess the text for TTS
+  String preprocessForTTS(String text) {
+    final lines = text.split('\n');
+    final buffer = StringBuffer();
+
+    for (var line in lines) {
+      String l = line.trim();
+      if (l.isEmpty) {
+        buffer.write('. '); // Add a pause for blank lines
+        continue;
+      }
+      // Headings: "# Heading" -> "Heading."
+      l = l.replaceAllMapped(RegExp(r'^#+\s*(.*)'), (m) => '${m[1]}.');
+      // Remove bold/italic markdown
+      l = l.replaceAll(RegExp(r'\*\*|\*|__|_'), '');
+      // List items: "* item" or "- item" -> "• item."
+      l = l.replaceAllMapped(RegExp(r'^[\*\-]\s*'), (m) => 'Next ingredient: ');
+      // Ensure each line ends with a period for a pause
+      if (!l.endsWith('.') && !l.endsWith('!') && !l.endsWith('?')) {
+        l = '$l.';
+      }
+      buffer.write('$l ');
+    }
+    return buffer.toString();
+  }
+
   // Speak the provided text
   Future<void> _speakText() async {
     if (widget.text.isNotEmpty) {
       await _flutterTts.setLanguage("en-US");
       await _flutterTts.setPitch(1.0);
 
+      final ttsText = preprocessForTTS(widget.text);
+
       if (_isPaused) {
         // Resume TTS if paused
-        await _flutterTts.speak(widget.text);
+        await _flutterTts.speak(ttsText);
       } else {
         // Start TTS from the beginning
-        await _flutterTts.speak(widget.text);
+        await _flutterTts.speak(ttsText);
       }
 
       setState(() {

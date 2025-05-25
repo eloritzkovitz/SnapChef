@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'add_recipe_screen.dart';
+import 'recipe_search_delegate.dart';
+import 'view_recipe_screen.dart';
+import './widgets/cookbook_filter_sort_sheet.dart';
+import './widgets/recipe_card.dart';
+import '../../main.dart';
+import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
-import 'recipe_search_delegate.dart';
-import './widgets/recipe_card.dart';
-import 'view_recipe_screen.dart';
-import '../../main.dart';
-import './widgets/cookbook_filter_sort_sheet.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -84,7 +86,6 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
           ),
-          // Search Button
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
@@ -112,13 +113,29 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             );
           }
 
-          return ListView.builder(
+          return ReorderableListView.builder(
             itemCount: cookbookViewModel.filteredRecipes.length,
+            onReorder: (oldIndex, newIndex) async {
+              await cookbookViewModel.reorderRecipe(
+                oldIndex,
+                newIndex,
+                Provider.of<UserViewModel>(context, listen: false).cookbookId ??
+                    '',
+              );
+            },
+            proxyDecorator: (child, index, animation) {              
+              return Material(
+                color: Colors.transparent,
+                child: child,
+                elevation: 0,
+                type: MaterialType.transparency,
+              );
+            },
             itemBuilder: (context, index) {
               final recipe = cookbookViewModel.filteredRecipes[index];
-              // Pass the full image URL to RecipeCard
               return RecipeCard(
-                recipe: recipe,                
+                key: ValueKey(recipe.id),
+                recipe: recipe,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -137,6 +154,24 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        onPressed: () {
+          final cookbookId =
+              Provider.of<UserViewModel>(context, listen: false).cookbookId ??
+                  '';
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddRecipeScreen(cookbookId: cookbookId),
+            ),
+          );
+        },
+        tooltip: 'Add Manual Recipe',
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -3,11 +3,12 @@ import 'package:provider/provider.dart';
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../widgets/display_recipe_widget.dart';
 
-class RecipeResultScreen extends StatelessWidget {
+class RecipeResultScreen extends StatefulWidget {
   final String recipe;
   final String imageUrl;
   final List<Ingredient> usedIngredients;
@@ -30,6 +31,19 @@ class RecipeResultScreen extends StatelessWidget {
   });
 
   @override
+  State<RecipeResultScreen> createState() => _RecipeResultScreenState();
+}
+
+class _RecipeResultScreenState extends State<RecipeResultScreen> {
+  late String _currentImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentImageUrl = widget.imageUrl;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -41,6 +55,11 @@ class RecipeResultScreen extends StatelessWidget {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Regenerate Image',
+            onPressed: () => _regenerateImage(context),
+          ),
           IconButton(
             icon: const Icon(Icons.bookmark_add),
             tooltip: 'Save Recipe to Cookbook',
@@ -54,12 +73,58 @@ class RecipeResultScreen extends StatelessWidget {
           children: [
             Expanded(
               child: DisplayRecipeWidget(
-                recipeString: recipe,
-                imageUrl: ImageUtil().getFullImageUrl(imageUrl),
+                recipeString: widget.recipe,
+                imageUrl: ImageUtil().getFullImageUrl(_currentImageUrl),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _regenerateImage(BuildContext context) async {
+    final recipeViewModel =
+        Provider.of<RecipeViewModel>(context, listen: false);
+
+    final previousImageUrl = _currentImageUrl;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await recipeViewModel.regenerateRecipeImage(
+      mealType: widget.mealType,
+      cuisine: widget.cuisineType,
+      difficulty: widget.difficulty,
+      cookingTime: widget.cookingTime,
+      prepTime: widget.prepTime,
+      preferences: null,
+    );
+
+    Navigator.of(context, rootNavigator: true).pop();
+
+    // Update the image from the viewmodel
+    setState(() {
+      _currentImageUrl = recipeViewModel.imageUrl;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Recipe image regenerated!'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              _currentImageUrl = previousImageUrl;
+              recipeViewModel.imageUrl = previousImageUrl;
+            });
+          },
+        ),
+        duration: const Duration(seconds: 6),
       ),
     );
   }
@@ -78,15 +143,16 @@ class RecipeResultScreen extends StatelessWidget {
       id: DateTime.now().toString(),
       title: 'Generated Recipe',
       description: 'A recipe generated based on your ingredients.',
-      mealType: mealType ?? '',
-      cuisineType: cuisineType ?? '',
-      difficulty: difficulty ?? '',
-      cookingTime: cookingTime ?? 0,
-      prepTime: prepTime ?? 0,
-      ingredients: usedIngredients,
-      instructions: recipe.split('\n'),
-      imageURL: imageUrl,
+      mealType: widget.mealType ?? '',
+      cuisineType: widget.cuisineType ?? '',
+      difficulty: widget.difficulty ?? '',
+      cookingTime: widget.cookingTime ?? 0,
+      prepTime: widget.prepTime ?? 0,
+      ingredients: widget.usedIngredients,
+      instructions: widget.recipe.split('\n'),
+      imageURL: _currentImageUrl,
       rating: null,
+      source: RecipeSource.ai,
     );
 
     // Save the recipe to the cookbook
@@ -103,7 +169,8 @@ class RecipeResultScreen extends StatelessWidget {
       instructions: newRecipe.instructions,
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
-      raw: newRecipe.instructions.join('\n'),
+      source: newRecipe.source,
+      raw: newRecipe.instructions.join('\n'),      
     );
 
     // Show a confirmation message

@@ -6,7 +6,7 @@ import '../../viewmodels/cookbook_viewmodel.dart';
 import './widgets/edit_recipe_modal.dart';
 import '../../utils/image_util.dart';
 
-class ViewRecipeScreen extends StatelessWidget {
+class ViewRecipeScreen extends StatefulWidget {
   final Recipe recipe;
   final String cookbookId;
 
@@ -14,7 +14,20 @@ class ViewRecipeScreen extends StatelessWidget {
     super.key,
     required this.recipe,
     required this.cookbookId,
-  });  
+  });
+
+  @override
+  State<ViewRecipeScreen> createState() => _ViewRecipeScreenState();
+}
+
+class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
+  late Recipe _recipe;
+
+  @override
+  void initState() {
+    super.initState();
+    _recipe = widget.recipe;
+  }
 
   // Show the edit recipe modal
   Future<void> _showEditRecipeDialog(BuildContext context) async {
@@ -24,7 +37,7 @@ class ViewRecipeScreen extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (context) => EditRecipeModal(
-        recipeObj: recipe,
+        recipeObj: _recipe,
         onSave: ({
           required String title,
           required String description,
@@ -32,24 +45,35 @@ class ViewRecipeScreen extends StatelessWidget {
           required String cuisineType,
           required String difficulty,
           required int prepTime,
-          required int cookingTime,          
+          required int cookingTime,
         }) async {
           final success = await cookbookViewModel.updateRecipe(
-            cookbookId: cookbookId,
-            recipeId: recipe.id,
+            cookbookId: widget.cookbookId,
+            recipeId: _recipe.id,
             title: title,
             description: description,
             mealType: mealType,
             cuisineType: cuisineType,
             difficulty: difficulty,
             prepTime: prepTime,
-            cookingTime: cookingTime,           
-            ingredients: recipe.ingredients,
-            instructions: recipe.instructions,
-            imageURL: recipe.imageURL,
-            rating: recipe.rating,
+            cookingTime: cookingTime,
+            ingredients: _recipe.ingredients,
+            instructions: _recipe.instructions,
+            imageURL: _recipe.imageURL,
+            rating: _recipe.rating,
           );
           if (success) {
+            setState(() {
+              _recipe = _recipe.copyWith(
+                title: title,
+                description: description,
+                mealType: mealType,
+                cuisineType: cuisineType,
+                difficulty: difficulty,
+                prepTime: prepTime,
+                cookingTime: cookingTime,
+              );
+            });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Recipe updated successfully')),
             );
@@ -59,6 +83,86 @@ class ViewRecipeScreen extends StatelessWidget {
             );
           }
         },
+      ),
+    );
+  }
+
+  // Regenerate the recipe image
+  Future<void> _regenerateRecipeImage(BuildContext context) async {
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
+
+    final previousImageUrl = _recipe.imageURL;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    // Prepare payload
+    final payload = {
+      'title': _recipe.title,
+      'description': _recipe.description,
+      'mealType': _recipe.mealType,
+      'cuisineType': _recipe.cuisineType,
+      'difficulty': _recipe.difficulty,
+      'prepTime': _recipe.prepTime,
+      'cookingTime': _recipe.cookingTime,
+      'ingredients': _recipe.ingredients.map((i) => i.toJson()).toList(),
+      'instructions': _recipe.instructions,
+      'rating': _recipe.rating,
+    };
+
+    final success = await cookbookViewModel.regenerateRecipeImage(
+      cookbookId: widget.cookbookId,
+      recipeId: _recipe.id,
+      payload: payload,
+    );
+
+    // Get the updated recipe from the viewmodel (if needed)
+    if (success) {
+      final updatedRecipe = cookbookViewModel.filteredRecipes
+          .firstWhere((r) => r.id == _recipe.id, orElse: () => _recipe);
+      setState(() {
+        _recipe = updatedRecipe;
+      });
+    }
+
+    Navigator.of(context, rootNavigator: true).pop(); // Hide loading
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Recipe image regenerated!'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            // Restore the previous image URL
+            final cookbookViewModel =
+                Provider.of<CookbookViewModel>(context, listen: false);
+            await cookbookViewModel.updateRecipe(
+              cookbookId: widget.cookbookId,
+              recipeId: _recipe.id,
+              title: _recipe.title,
+              description: _recipe.description,
+              mealType: _recipe.mealType,
+              cuisineType: _recipe.cuisineType,
+              difficulty: _recipe.difficulty,
+              prepTime: _recipe.prepTime,
+              cookingTime: _recipe.cookingTime,
+              ingredients: _recipe.ingredients,
+              instructions: _recipe.instructions,
+              imageURL: previousImageUrl,
+              rating: _recipe.rating,
+            );
+            // Update local state
+            setState(() {
+              _recipe = _recipe.copyWith(imageURL: previousImageUrl);
+            });
+          },
+        ),
+        duration: const Duration(seconds: 6),
       ),
     );
   }
@@ -93,7 +197,8 @@ class ViewRecipeScreen extends StatelessWidget {
     final cookbookViewModel =
         Provider.of<CookbookViewModel>(context, listen: false);
 
-    final bool success = await cookbookViewModel.deleteRecipe(cookbookId, recipe.id);
+    final bool success =
+        await cookbookViewModel.deleteRecipe(widget.cookbookId, _recipe.id);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +210,7 @@ class ViewRecipeScreen extends StatelessWidget {
         const SnackBar(content: Text('Failed to delete recipe')),
       );
     }
-  }  
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +229,9 @@ class ViewRecipeScreen extends StatelessWidget {
               if (value == 'edit') {
                 _showEditRecipeDialog(context);
               }
+              if (value == 'regenerate_image') {
+                _regenerateRecipeImage(context);
+              }
               if (value == 'delete') {
                 _showDeleteConfirmationDialog(context);
               }
@@ -136,6 +244,16 @@ class ViewRecipeScreen extends StatelessWidget {
                     Icon(Icons.edit, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Edit Recipe'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'regenerate_image',
+                child: Row(
+                  children: const [
+                    Icon(Icons.image, color: Colors.black),
+                    SizedBox(width: 8),
+                    Text('Regenerate Image'),
                   ],
                 ),
               ),
@@ -156,9 +274,9 @@ class ViewRecipeScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: DisplayRecipeWidget(
-          recipeObject: recipe,
-          imageUrl: ImageUtil().getFullImageUrl(recipe.imageURL),
-          cookbookId: cookbookId,
+          recipeObject: _recipe,
+          imageUrl: ImageUtil().getFullImageUrl(_recipe.imageURL),
+          cookbookId: widget.cookbookId,
         ),
       ),
     );

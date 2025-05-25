@@ -21,6 +21,15 @@ class RecipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rating = recipe.rating?.toDouble() ?? 0.0;
 
+    // Choose icon and tooltip based on recipe source
+    final sourceIcon = recipe.source == RecipeSource.ai
+        ? const Icon(Icons.smart_toy, size: 18, color: Colors.red)
+        : const Icon(Icons.person, size: 18, color: Colors.orange);
+
+    final sourceTooltip = recipe.source == RecipeSource.ai
+        ? 'AI Generated'
+        : 'User Recipe';
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       color: primarySwatch[900],
@@ -64,9 +73,21 @@ class RecipeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      recipe.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            recipe.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: sourceTooltip,
+                          child: sourceIcon,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     RatingBarIndicator(

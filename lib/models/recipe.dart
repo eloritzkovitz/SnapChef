@@ -1,5 +1,7 @@
 import 'ingredient.dart';
 
+enum RecipeSource { ai, user }
+
 class Recipe {
   final String id;
   final String title;
@@ -13,6 +15,7 @@ class Recipe {
   final List<String> instructions;
   final String? imageURL;
   final double? rating;
+  final RecipeSource source;
 
   Recipe({
     required this.id,
@@ -27,6 +30,7 @@ class Recipe {
     required this.instructions,
     this.imageURL,
     this.rating,
+    required this.source,
   });
 
   // Factory method to create a Recipe from JSON
@@ -46,6 +50,7 @@ class Recipe {
       instructions: List<String>.from(json['instructions']),
       imageURL: json['imageURL'],
       rating: json['rating'] != null ? (json['rating'] as num).toDouble() : null,
+      source: json['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
     );
   }
 
@@ -64,6 +69,40 @@ class Recipe {
       'instructions': instructions,
       'imageURL': imageURL,
       'rating': rating,
+      'source': source == RecipeSource.ai ? 'ai' : 'user',
     };
+  }
+
+  // Method to convert a Recipe to a Map for saving to a database
+  Recipe copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? mealType,
+    String? cuisineType,
+    String? difficulty,
+    int? prepTime,
+    int? cookingTime,
+    List<Ingredient>? ingredients,
+    List<String>? instructions,
+    String? imageURL,
+    double? rating,
+    RecipeSource? source,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      mealType: mealType ?? this.mealType,
+      cuisineType: cuisineType ?? this.cuisineType,
+      difficulty: difficulty ?? this.difficulty,
+      prepTime: prepTime ?? this.prepTime,
+      cookingTime: cookingTime ?? this.cookingTime,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      imageURL: imageURL ?? this.imageURL,
+      rating: rating ?? this.rating,
+      source: source ?? this.source,
+    );
   }
 }

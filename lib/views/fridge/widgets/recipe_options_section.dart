@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../constants/recipe_options.dart';
 
 class RecipeOptionsSection extends StatelessWidget {
   final String? selectedMealType;
@@ -20,46 +21,7 @@ class RecipeOptionsSection extends StatelessWidget {
     required this.onMealTypeChanged,
     required this.onCuisineChanged,
     required this.onDifficultyChanged,
-  });
-
-  static const List<String> _mealTypes = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Dessert',
-    'Snack',
-    'Drink'
-  ];
-
-  static const List<String> _cuisines = [
-    'African',
-    'American',
-    'Brazilian',
-    'British',
-    'Caribbean',
-    'Chinese',
-    'Ethiopian',
-    'Filipino',
-    'French',
-    'German',
-    'Greek',
-    'Indian',
-    'Indonesian',
-    'Italian',
-    'Japanese',
-    'Korean',
-    'Levantine',
-    'Mexican',
-    'Moroccan',
-    'Persian',
-    'Russian',
-    'Spanish',
-    'Thai',
-    'Turkish',
-    'Vietnamese',
-  ];
-
-  static const List<String> _difficulties = ['Easy', 'Medium', 'Hard'];
+  });  
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +34,7 @@ class RecipeOptionsSection extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           value: selectedMealType,
-          items: _mealTypes
+          items: mealTypes
               .map((type) => DropdownMenuItem(
                     value: type,
                     child: Text(type),
@@ -87,7 +49,7 @@ class RecipeOptionsSection extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           value: selectedCuisine,
-          items: _cuisines
+          items: cuisines
               .map((cuisine) => DropdownMenuItem(
                     value: cuisine,
                     child: Text(cuisine),
@@ -102,7 +64,7 @@ class RecipeOptionsSection extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           value: selectedDifficulty,
-          items: _difficulties
+          items: difficulties
               .map((difficulty) => DropdownMenuItem(
                     value: difficulty,
                     child: Text(difficulty),

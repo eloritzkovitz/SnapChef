@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/recipe_service.dart';
 import '../models/ingredient.dart';
+import '../models/recipe.dart';
 
 class RecipeViewModel extends ChangeNotifier {
   final RecipeService _recipeService = RecipeService();
@@ -9,6 +10,7 @@ class RecipeViewModel extends ChangeNotifier {
   String recipe = '';
   String imageUrl = '';
   final List<Ingredient> selectedIngredients = [];
+  Recipe? generatedRecipe;
 
   // Add an ingredient to the selected list
   void addIngredient(Ingredient ingredient) {
@@ -47,6 +49,7 @@ class RecipeViewModel extends ChangeNotifier {
     isLoading = true;
     recipe = '';
     imageUrl = '';
+    generatedRecipe = null;
     notifyListeners();
 
     try {
@@ -71,8 +74,86 @@ class RecipeViewModel extends ChangeNotifier {
       // Update the recipe and image URL with the response from the backend
       recipe = result['recipe'] ?? 'No recipe generated.';
       imageUrl = result['imageUrl'] ?? '';
+
+      // Parse and store the generated recipe as a Recipe object      
+      String title = 'Generated Recipe';
+      final lines = recipe.split('\n').map((l) => l.trim()).toList();
+      for (final line in lines) {
+        if (line.isNotEmpty && !line.startsWith('*')) {
+          title = line;
+          break;
+        }
+      }
+
+      generatedRecipe = Recipe(
+        id: '',
+        title: title,
+        description: '',
+        mealType: mealType ?? '',
+        cuisineType: cuisine ?? '',
+        difficulty: difficulty ?? '',
+        prepTime: prepTime ?? 0,
+        cookingTime: cookingTime ?? 0,
+        ingredients: List<Ingredient>.from(selectedIngredients),
+        instructions: recipe.split('\n'),
+        imageURL: imageUrl,
+        rating: null,
+        source: RecipeSource.ai,
+      );
     } catch (error) {
       recipe = 'Failed to generate recipe: $error';
+      generatedRecipe = null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Regenerate the recipe image
+  Future<void> regenerateRecipeImage({
+    String? title,
+    String? description,
+    String? mealType,
+    String? cuisine,
+    String? difficulty,
+    int? cookingTime,
+    int? prepTime,
+    Map<String, dynamic>? preferences,
+    List<String>? ingredients,    
+  }) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      // Use provided values, or fall back to generatedRecipe, or selectedIngredients
+      final Recipe? recipeObj = generatedRecipe;
+      final ingredientsList = ingredients ??
+          (recipeObj != null
+              ? recipeObj.ingredients.map((e) => e.name).toList()
+              : selectedIngredients.map((e) => e.name).toList());
+
+      final requestPayload = {
+        'title': title ?? recipeObj?.title ?? '',
+        'description': description ?? recipeObj?.description ?? '',
+        'ingredients': ingredientsList,
+        'mealType': mealType ?? recipeObj?.mealType ?? '',
+        'cuisine': cuisine ?? recipeObj?.cuisineType ?? '',
+        'difficulty': difficulty ?? recipeObj?.difficulty ?? '',
+        'cookingTime': cookingTime ?? recipeObj?.cookingTime,
+        'prepTime': prepTime ?? recipeObj?.prepTime,
+        'preferences': preferences,
+      };
+
+      final newImageUrl =
+          await _recipeService.regenerateRecipeImage(requestPayload);
+      imageUrl = newImageUrl;
+
+      // Update the generatedRecipe's imageURL as well
+      if (generatedRecipe != null) {
+        generatedRecipe = generatedRecipe!.copyWith(imageURL: newImageUrl);
+      }
+    } catch (error) {
+      // Optionally handle error
     } finally {
       isLoading = false;
       notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../constants/recipe_options.dart';
 import '../../../models/recipe.dart';
 import '../../../theme/colors.dart';
 
@@ -31,44 +32,7 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
   late TextEditingController cookingTimeController;  
   late String mealType;
   late String cuisineType;
-  late String difficulty;
-
-  static const List<String> _mealTypes = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Dessert',
-    'Snack',
-    'Drink'
-  ];
-  static const List<String> _cuisines = [
-    'African',
-    'American',
-    'Brazilian',
-    'British',
-    'Caribbean',
-    'Chinese',
-    'Ethiopian',
-    'Filipino',
-    'French',
-    'German',
-    'Greek',
-    'Indian',
-    'Indonesian',
-    'Italian',
-    'Japanese',
-    'Korean',
-    'Levantine',
-    'Mexican',
-    'Moroccan',
-    'Persian',
-    'Russian',
-    'Spanish',
-    'Thai',
-    'Turkish',
-    'Vietnamese'
-  ];
-  static const List<String> _difficulties = ['Easy', 'Medium', 'Hard'];
+  late String difficulty;  
 
   @override
   void initState() {
@@ -95,16 +59,16 @@ class _EditRecipeModalState extends State<EditRecipeModal> {
   Widget build(BuildContext context) {
     // Ensure dropdowns always have the current value
     final mealTypeItems = [
-      ..._mealTypes,
-      if (!_mealTypes.contains(mealType)) mealType,
+      ...mealTypes,
+      if (!mealTypes.contains(mealType)) mealType,
     ];
     final cuisineTypeItems = [
-      ..._cuisines,
-      if (!_cuisines.contains(cuisineType)) cuisineType,
+      ...cuisines,
+      if (!cuisines.contains(cuisineType)) cuisineType,
     ];
     final difficultyItems = [
-      ..._difficulties,
-      if (!_difficulties.contains(difficulty)) difficulty,
+      ...difficulties,
+      if (!difficulties.contains(difficulty)) difficulty,
     ];
 
     return AlertDialog(
