@@ -67,7 +67,7 @@ class FridgeService {
   // Save the new fridge order to the backend
   Future<void> saveFridgeOrder(String fridgeId, List<String> orderedIngredientIds) async {
     final token = await TokenUtil.getAccessToken();
-    final response = await http.post(
+    final response = await http.patch(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items/reorder'),
       headers: {
         'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ class FridgeService {
   // Save the new fridge order to the backend
   Future<void> saveGroceriesOrder(String fridgeId, List<String> orderedGroceriesIds) async {
     final token = await TokenUtil.getAccessToken();
-    final response = await http.post(
+    final response = await http.patch(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/reorder'),
       headers: {
         'Content-Type': 'application/json',

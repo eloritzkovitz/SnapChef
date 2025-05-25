@@ -101,7 +101,7 @@ class CookbookService {
   // Save the new recipe order to the backend
   Future<void> saveRecipeOrder(String cookbookId, List<String> orderedRecipeIds) async {
     final token = await TokenUtil.getAccessToken();
-    final response = await http.post(
+    final response = await http.patch(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/reorder'),
       headers: {
         'Content-Type': 'application/json',
