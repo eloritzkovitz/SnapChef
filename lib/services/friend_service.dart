@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
+import '../models/friend_request.dart';
+import '../models/user.dart';
 import '../utils/token_util.dart';
 
 class FriendService {
@@ -10,13 +11,7 @@ class FriendService {
 
   // Get the current user's friends list
   Future<List<Friend>> getFriends() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    if (userId == null) {
-      throw Exception('User ID not found in SharedPreferences');
-    }
-
-    final url = Uri.parse('$baseUrl/api/users/$userId/friends');
+    final url = Uri.parse('$baseUrl/api/users/friends');
     final response = await http.get(
       url,
       headers: {
@@ -25,45 +20,92 @@ class FriendService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List<dynamic>;
-      return data.map((json) => Friend.fromJson(json)).toList();
+      final data = jsonDecode(response.body);
+      // If your backend returns { friends: [...] }
+      final friendsList = data['friends'] as List<dynamic>;
+      return friendsList.map((json) => Friend.fromJson(json)).toList();
     } else {
       throw Exception('Failed to fetch friends: ${response.body}');
     }
-  }  
+  }
+
+  // Get pending friend requests for the current user
+  Future<List<FriendRequest>> getFriendRequests() async {
+    final url = Uri.parse('$baseUrl/api/users/friends/requests');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // If your backend returns { requests: [...] }
+      final requestsList = data['requests'] as List<dynamic>;
+      return requestsList.map((json) => FriendRequest.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch friend requests: ${response.body}');
+    }
+  }
+
+  // Search users by query
+  Future<List<User>> searchUsers(String query) async {
+    final url = Uri.parse('$baseUrl/api/users/search?query=$query');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // If your backend returns { users: [...] }
+      final usersList = data['users'] as List<dynamic>;
+      return usersList.map((json) => User.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to search users: ${response.body}');
+    }
+  }
 
   // Send a friend request
-  Future<void> sendFriendRequest(String friendId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    if (userId == null) {
-      throw Exception('User ID not found in SharedPreferences');
-    }
-
-    final url = Uri.parse('$baseUrl/api/users/$userId/friends/requests');
+  Future<String?> sendFriendRequest(String userId) async {
+    final url = Uri.parse('$baseUrl/api/users/friends/requests/$userId');
     final response = await http.post(
       url,
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
       },
-      body: jsonEncode({'friendId': friendId}),
+    );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['message'] as String?;
+    } else {
+      throw Exception('Failed to send friend request: ${response.body}');
+    }
+  }
+
+  // Accept or decline a friend request
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    final endpoint = accept ? 'accept' : 'decline';
+    final url = Uri.parse('$baseUrl/api/users/friends/requests/$requestId/$endpoint');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to send friend request: ${response.body}');
+      throw Exception('Failed to ${accept ? 'accept' : 'decline'} friend request: ${response.body}');
     }
   }
 
   // Remove a friend
   Future<void> removeFriend(String friendId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    if (userId == null) {
-      throw Exception('User ID not found in SharedPreferences');
-    }
-
-    final url = Uri.parse('$baseUrl/api/users/$userId/friends/$friendId');
+    final url = Uri.parse('$baseUrl/api/users/friends/$friendId');
     final response = await http.delete(
       url,
       headers: {

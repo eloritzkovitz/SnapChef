@@ -1,51 +1,98 @@
 import 'package:flutter/material.dart';
 import '../models/friend.dart';
+import '../models/friend_request.dart';
+import '../models/user.dart';
 import '../services/friend_service.dart';
 
 class FriendViewModel extends ChangeNotifier {
   final FriendService _friendService = FriendService();
 
   List<Friend> _friends = [];
+  List<FriendRequest> _pendingRequests = [];
   bool _isLoading = false;
   String? _error;
 
   List<Friend> get friends => _friends;
+  List<FriendRequest> get pendingRequests => _pendingRequests;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   // Fetch friends list
   Future<void> fetchFriends() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    _setLoading(true);
     try {
       _friends = await _friendService.getFriends();
+      _error = null;
     } catch (e) {
       _error = e.toString();
     }
-    _isLoading = false;
-    notifyListeners();
+    _setLoading(false);
   }
 
-  // Send a friend request
-  Future<void> sendFriendRequest(String friendId) async {
+  // Fetch pending friend requests
+  Future<void> fetchFriendRequests() async {
+    _setLoading(true);
     try {
-      await _friendService.sendFriendRequest(friendId);      
+      _pendingRequests = await _friendService.getFriendRequests();
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+    }
+    _setLoading(false);
+  }
+
+  // Search users
+  Future<List<User>> searchUsers(String query) async {
+    try {
+      return await _friendService.searchUsers(query);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      return [];
     }
+  }
+
+  // Send a friend request
+  Future<String?> sendFriendRequest(String userId) async {
+    try {
+      final message = await _friendService.sendFriendRequest(userId);
+      return message;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return 'Failed to send request';
+    }
+  }
+
+  // Accept or decline a friend request
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    _setLoading(true);
+    try {
+      await _friendService.respondToRequest(requestId, accept);
+      await fetchFriendRequests();
+      await fetchFriends();
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+    }
+    _setLoading(false);
   }
 
   // Remove a friend
   Future<void> removeFriend(String friendId) async {
+    _setLoading(true);
     try {
       await _friendService.removeFriend(friendId);
       _friends.removeWhere((f) => f.id == friendId);
-      notifyListeners();
+      _error = null;
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
     }
-  }  
+    _setLoading(false);
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
 }
