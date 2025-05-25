@@ -126,9 +126,9 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             proxyDecorator: (child, index, animation) {              
               return Material(
                 color: Colors.transparent,
-                child: child,
                 elevation: 0,
                 type: MaterialType.transparency,
+                child: child,
               );
             },
             itemBuilder: (context, index) {

@@ -12,7 +12,11 @@ class FriendsList extends StatelessWidget {
       isScrollControlled: true,
       builder: (_) => SizedBox(
         height: MediaQuery.of(context).size.height * 0.75,
-        child: FriendSearchModal(),
+        child: FriendSearchModal(
+          onShowSnackBar: (msg) => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg)),
+          ),
+        ),
       ),
     );
   }
@@ -80,7 +84,7 @@ class FriendsList extends StatelessWidget {
                     style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   onTap: () {
-                    // Navigate to friend's profile if needed
+                    // Navigate to friend's profile
                   },
                 ),
               );

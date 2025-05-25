@@ -29,9 +29,9 @@ class FridgeListView extends StatelessWidget {
         // Remove background when dragging
         return Material(
           color: Colors.transparent,
-          child: child,
           elevation: 0,
           type: MaterialType.transparency,
+          child: child,
         );
       },
       itemBuilder: (context, index) {

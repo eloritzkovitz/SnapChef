@@ -29,8 +29,8 @@ class FriendViewModel extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // Fetch pending friend requests
-  Future<void> fetchFriendRequests() async {
+  // Fetch pending friend requests (statetful UI)
+  Future<void> getFriendRequests() async {
     _setLoading(true);
     try {
       _pendingRequests = await _friendService.getFriendRequests();
@@ -39,6 +39,11 @@ class FriendViewModel extends ChangeNotifier {
       _error = e.toString();
     }
     _setLoading(false);
+  }
+
+  // Fetch pending friend requests (FutureBuilder)
+  Future<List<FriendRequest>> fetchFriendRequests() async {
+    return await _friendService.getFriendRequests();
   }
 
   // Search users
@@ -69,7 +74,7 @@ class FriendViewModel extends ChangeNotifier {
     _setLoading(true);
     try {
       await _friendService.respondToRequest(requestId, accept);
-      await fetchFriendRequests();
+      await getFriendRequests();
       await fetchFriends();
       _error = null;
     } catch (e) {

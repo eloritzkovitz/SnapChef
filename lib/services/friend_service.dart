@@ -51,7 +51,7 @@ class FriendService {
 
   // Search users by query
   Future<List<User>> searchUsers(String query) async {
-    final url = Uri.parse('$baseUrl/api/users/search?query=$query');
+    final url = Uri.parse('$baseUrl/api/users?query=$query');
     final response = await http.get(
       url,
       headers: {
@@ -60,9 +60,8 @@ class FriendService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      // If your backend returns { users: [...] }
-      final usersList = data['users'] as List<dynamic>;
+      final data = jsonDecode(response.body);      
+      final usersList = data as List<dynamic>;
       return usersList.map((json) => User.fromJson(json)).toList();
     } else {
       throw Exception('Failed to search users: ${response.body}');
@@ -90,7 +89,8 @@ class FriendService {
   // Accept or decline a friend request
   Future<void> respondToRequest(String requestId, bool accept) async {
     final endpoint = accept ? 'accept' : 'decline';
-    final url = Uri.parse('$baseUrl/api/users/friends/requests/$requestId/$endpoint');
+    final url =
+        Uri.parse('$baseUrl/api/users/friends/requests/$requestId/$endpoint');
     final response = await http.post(
       url,
       headers: {
@@ -99,7 +99,8 @@ class FriendService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to ${accept ? 'accept' : 'decline'} friend request: ${response.body}');
+      throw Exception(
+          'Failed to ${accept ? 'accept' : 'decline'} friend request: ${response.body}');
     }
   }
 
