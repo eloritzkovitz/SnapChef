@@ -1,5 +1,4 @@
 import 'preferences.dart';
-import 'friend.dart';
 
 class User {
   final String id;
@@ -12,7 +11,7 @@ class User {
   final String fridgeId;
   final String cookbookId;
   final Preferences? preferences;
-  final List<Friend> friends;
+  final List<User> friends;
   final String? fcmToken;
 
   User({
@@ -31,26 +30,51 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    String parseId(dynamic id) {
+      if (id is Map && id.containsKey('\$oid')) {
+        return id['\$oid'] as String;
+      }
+      return id as String;
+    }
+
     return User(
-      id: json['_id'] ?? json['id'] ?? '',
+      id: parseId(json['_id'] ?? json['id'] ?? ''),
       firstName: json['firstName'] ?? 'Unknown',
       lastName: json['lastName'] ?? 'User',
-      email: json['email'] ?? 'No Email',      
-      profilePicture: json['profilePicture']?.isNotEmpty == true ? json['profilePicture'] : null,
+      email: json['email'] ?? 'No Email',
+      profilePicture: json['profilePicture']?.isNotEmpty == true
+          ? json['profilePicture']
+          : null,
       joinDate: json['joinDate'] ?? 'No date available',
       fridgeId: json['fridgeId'] ?? 'No Fridge ID',
       cookbookId: json['cookbookId'] ?? 'No Cookbook ID',
       preferences: json['preferences'] != null
           ? Preferences.fromJson(json['preferences'])
           : null,
-      friends: (json['friends'] as List<dynamic>?)
-              ?.map((friend) => Friend.fromJson(friend)).toList() ?? [],
+      friends: (json['friends'] as List<dynamic>?)?.map((friend) {
+            if (friend is Map<String, dynamic>) {
+              return User.fromJson(friend);
+            } else if (friend is String) {
+              // Only ID is present, create a minimal User
+              return User(
+                id: friend,
+                firstName: 'Unknown',
+                lastName: 'User',
+                email: '',
+                fridgeId: '',
+                cookbookId: '',
+              );
+            } else {
+              throw Exception('Unknown friend type: $friend');
+            }
+          }).toList() ??
+          [],
       fcmToken: json['fcmToken'],
     );
   }
 
   // Method to convert User object to JSON
-  User copyWith({    
+  User copyWith({
     String? firstName,
     String? lastName,
     String? password,
@@ -59,7 +83,7 @@ class User {
     String? fridgeId,
     String? cookbookId,
     Preferences? preferences,
-    List<Friend>? friends,
+    List<User>? friends,
     String? fcmToken,
   }) {
     return User(
@@ -77,7 +101,7 @@ class User {
       fcmToken: fcmToken ?? this.fcmToken,
     );
   }
-  
+
   // Concatenate first and last name
   String get fullName => '$firstName $lastName';
 }

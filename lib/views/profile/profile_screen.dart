@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'widgets/friends_list.dart';
 import 'widgets/settings_menu.dart';
 import '../../utils/image_util.dart';
-import '../../viewmodels/friend_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,14 +17,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Fetch the user profile when the screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {      
       final userViewModel = Provider.of<UserViewModel>(context, listen: false);
       userViewModel.fetchUserData();
-      // Fetch friends when the screen is initialized
-      final friendViewModel =
-          Provider.of<FriendViewModel>(context, listen: false);
-      friendViewModel.fetchFriends();
     });
   }
 
@@ -74,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: MediaQuery.of(context).size.width,
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,                
+                color: Colors.white,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
@@ -149,9 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context);
-    final friendViewModel = Provider.of<FriendViewModel>(context);
-
-    final int friendCount = friendViewModel.friends.length;
+    final int friendCount = userViewModel.user?.friends.length ?? 0;
 
     return Scaffold(
       appBar: AppBar(

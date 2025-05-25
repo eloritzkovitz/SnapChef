@@ -21,7 +21,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _loadFriendRequests() {
-    final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
+    final friendViewModel =
+        Provider.of<FriendViewModel>(context, listen: false);
     _friendRequestsFuture = friendViewModel.fetchFriendRequests();
   }
 
@@ -74,16 +75,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   itemCount: requests.length,
                   itemBuilder: (context, index) {
                     final req = requests[index];
+                    final user = req.from;
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: req.from.profilePicture != null
-                            ? NetworkImage(req.from.profilePicture!)
+                        backgroundImage: user.profilePicture != null
+                            ? NetworkImage(user.profilePicture!)
                             : const AssetImage(
                                     'assets/images/default_profile.png')
                                 as ImageProvider,
                       ),
-                      title: Text(req.from.fullName),
-                      subtitle: Text(req.from.email),
+                      title: Text(user
+                          .fullName),
+                      subtitle: Text(user.email),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

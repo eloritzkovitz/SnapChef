@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../viewmodels/friend_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 import 'friend_search_modal.dart';
 
 class FriendsList extends StatelessWidget {
@@ -23,13 +23,14 @@ class FriendsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final friendViewModel = Provider.of<FriendViewModel>(context);
+    final userViewModel = Provider.of<UserViewModel>(context);
+    final friends = userViewModel.user?.friends ?? [];
 
-    if (friendViewModel.isLoading) {
+    if (userViewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (friendViewModel.friends.isEmpty) {
+    if (friends.isEmpty) {
       return Column(
         children: [
           const Expanded(
@@ -59,10 +60,10 @@ class FriendsList extends StatelessWidget {
       children: [
         Expanded(
           child: ListView.separated(
-            itemCount: friendViewModel.friends.length,
+            itemCount: friends.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              final friend = friendViewModel.friends[index];
+              final friend = userViewModel.user?.friends[index];
               return Container(
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
@@ -70,17 +71,17 @@ class FriendsList extends StatelessWidget {
                 child: ListTile(
                   leading: CircleAvatar(
                     radius: 26,
-                    backgroundImage: friend.profilePicture != null
+                    backgroundImage: friend != null && friend.profilePicture != null
                         ? NetworkImage(friend.profilePicture!)
                         : const AssetImage('assets/images/default_profile.png')
                             as ImageProvider,
                   ),
                   title: Text(
-                    friend.fullName,
+                    friend?.fullName ?? '',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    friend.email,
+                    friend?.email ?? '',
                     style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   onTap: () {

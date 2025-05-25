@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import '../models/friend.dart';
 import '../models/friend_request.dart';
 import '../models/user.dart';
 import '../utils/token_util.dart';
@@ -10,7 +9,7 @@ class FriendService {
   final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
 
   // Get the current user's friends list
-  Future<List<Friend>> getFriends() async {
+  Future<List<User>> getFriends() async {
     final url = Uri.parse('$baseUrl/api/users/friends');
     final response = await http.get(
       url,
@@ -23,7 +22,7 @@ class FriendService {
       final data = jsonDecode(response.body);
       // If your backend returns { friends: [...] }
       final friendsList = data['friends'] as List<dynamic>;
-      return friendsList.map((json) => Friend.fromJson(json)).toList();
+      return friendsList.map((json) => User.fromJson(json)).toList();
     } else {
       throw Exception('Failed to fetch friends: ${response.body}');
     }

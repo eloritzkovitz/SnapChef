@@ -2,8 +2,8 @@ import '../../models/user.dart';
 
 class FriendRequest {
   final String id;
-  final User from;
-  final User to;
+  final User from; // Populated user object
+  final String to; // Just a user ID
   final String status;
   final DateTime createdAt;
 
@@ -16,12 +16,23 @@ class FriendRequest {
   });
 
   factory FriendRequest.fromJson(Map<String, dynamic> json) {
+    String parseId(dynamic id) {
+      if (id is Map && id.containsKey('\$oid')) {
+        return id['\$oid'] as String;
+      }
+      return id as String;
+    }
+
     return FriendRequest(
-      id: json['_id'] as String,
+      id: parseId(json['_id']),
       from: User.fromJson(json['from']),
-      to: User.fromJson(json['to']),
+      to: json['to'] is Map ? parseId(json['to']) : json['to'],
       status: json['status'] as String,
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: DateTime.parse(
+        json['createdAt'] is Map && json['createdAt'].containsKey('\$date')
+            ? json['createdAt']['\$date']
+            : json['createdAt'],
+      ),
     );
   }
 }

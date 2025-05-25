@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // <-- Add this import
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../models/user.dart';
@@ -21,7 +21,7 @@ class UserViewModel extends ChangeNotifier {
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;
 
-  // Fetch user data
+  // Fetch user data (including friends)
   Future<void> fetchUserData() async {
     try {
       final userProfile = await _userService.getUserData();
@@ -66,27 +66,21 @@ class UserViewModel extends ChangeNotifier {
   }) async {
     _setLoading(true);
     try {
-      // Call the AuthService to update the user profile
       final updatedData = await _userService.updateUser(
         firstName,
         lastName,
         password ?? '',
         profilePicture,
       );
-
-      // Extract the new profile picture relative path from the response
       final newProfilePicture = updatedData['profilePicture'];
-
-      // Update the local user object
       if (_user != null) {
         _user = _user!.copyWith(
           firstName: firstName,
           lastName: lastName,
-          password: password ??
-              _user!.password, // Keep the current password if not updated
+          password: password ?? _user!.password,
           profilePicture: profilePicture != null
               ? newProfilePicture ?? _user!.profilePicture
-              : _user!.profilePicture, // Update profile picture if provided
+              : _user!.profilePicture,
         );
         notifyListeners();
       }
@@ -107,8 +101,6 @@ class UserViewModel extends ChangeNotifier {
       allergies: allergies,
       dietaryPreferences: dietaryPreferences,
     );
-
-    // Update the local user object with new preferences
     _user = _user!.copyWith(
       preferences: Preferences(
         allergies: allergies,
@@ -144,8 +136,8 @@ class UserViewModel extends ChangeNotifier {
     _setLoading(true);
     try {
       await _userService.deleteUser();
-      _user = null; // Clear the user data on account deletion
-      notifyListeners(); // Notify listeners to update the UI
+      _user = null;
+      notifyListeners();
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       UIUtil.showError(context, e.toString());
