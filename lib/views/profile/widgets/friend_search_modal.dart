@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:snapchef/theme/colors.dart';
 import '../../../models/user.dart';
 import '../../../viewmodels/friend_viewmodel.dart';
 import '../../../viewmodels/user_viewmodel.dart';
@@ -19,6 +20,20 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
   List<User> _results = [];
   String? _error;
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final currentUserId = userViewModel.user?.id;
+      if (currentUserId != null) {
+        await Provider.of<FriendViewModel>(context, listen: false)
+            .getAllFriendRequests(currentUserId);
+        setState(() {}); // Rebuild to get updated pendingRequestUserIds
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -53,12 +68,11 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
           .searchUsers(_searchQuery);
 
       // Exclude current user from results
-      final currentUserId =
-          Provider.of<UserViewModel>(context, listen: false).user?.id;
-      final filteredUsers = users.where((u) => u.id != currentUserId).toList();
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final currentUserId = userViewModel.user?.id;
 
       setState(() {
-        _results = filteredUsers;
+        _results = users.where((u) => u.id != currentUserId).toList();
       });
     } catch (e) {
       setState(() {
@@ -72,18 +86,27 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
   }
 
   // Send a friend request to the selected user
-  Future<void> _sendRequest(BuildContext context, String userId) async {   
+  Future<void> _sendRequest(BuildContext context, String userId) async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
     String? message;
     try {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final currentUserId = userViewModel.user?.id;
+      if (currentUserId == null) {
+        throw Exception('Current user ID is null');
+      }
       message = await Provider.of<FriendViewModel>(context, listen: false)
-          .sendFriendRequest(userId);
+          .sendFriendRequest(userId, currentUserId);
       if (message == null || message.isEmpty) {
         message = 'Friend request sent!';
       }
+      // After sending, refresh all friend requests and update results
+      await Provider.of<FriendViewModel>(context, listen: false)
+          .getAllFriendRequests(currentUserId);
+      await _search(context);
     } catch (e) {
       message = 'Failed to send friend request: ${e.toString()}';
     } finally {
@@ -104,6 +127,12 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
 
   @override
   Widget build(BuildContext context) {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final currentFriends = userViewModel.user?.friends ?? [];
+    final currentFriendIds = currentFriends.map((f) => f.id).toSet();
+    final pendingRequestUserIds =
+        Provider.of<FriendViewModel>(context).pendingRequestUserIds;
+
     return Padding(
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -144,6 +173,10 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                 itemCount: _results.length,
                 itemBuilder: (context, index) {
                   final user = _results[index];
+                  final isFriend = currentFriendIds.contains(user.id);
+                  final isPending = pendingRequestUserIds.contains(user.id);
+                  print(
+                      'user.id: ${user.id} | pendingRequestUserIds: $pendingRequestUserIds');
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundImage: user.profilePicture != null
@@ -154,10 +187,45 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                     ),
                     title: Text(user.fullName),
                     subtitle: Text(user.email),
-                    trailing: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _sendRequest(context, user.id),
-                      child: const Text('Add'),
-                    ),
+                    trailing: isFriend
+                        ? Chip(
+                            label: const Text('Friend'),
+                            avatar: const Icon(Icons.check,
+                                color: Colors.white, size: 18),  
+                            backgroundColor: primarySwatch[200],                        
+                            labelStyle: const TextStyle(  
+                                color: Colors.white,                             
+                                fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 0),
+                          )
+                        : isPending
+                            ? const Chip(
+                                label: Text('Pending'),
+                                avatar: Icon(Icons.hourglass_top,
+                                    color: Colors.orange, size: 18),                               
+                                labelStyle: TextStyle(                                  
+                                    fontWeight: FontWeight.bold),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 0),
+                              )
+                            : Chip(
+                                label: const Text('Add'),
+                                avatar: const Icon(Icons.person_add,
+                                    color: Colors.blue, size: 18),                                
+                                labelStyle: const TextStyle(                                   
+                                    fontWeight: FontWeight.bold),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 0),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,                                
+                                labelPadding: EdgeInsets.zero,
+                                onDeleted: null,
+                                deleteIcon: null,                                
+                              ),
+                    onTap: isFriend || isPending || _isLoading
+                        ? null
+                        : () => _sendRequest(context, user.id),
                   );
                 },
               ),

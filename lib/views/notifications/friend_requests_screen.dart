@@ -22,6 +22,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   void _loadFriendRequests() {
     final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
     _friendRequestsFuture = friendViewModel.fetchFriendRequests();
+    setState(() {}); // Ensure the FutureBuilder rebuilds with the new future
   }
 
   @override
@@ -67,26 +68,22 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                       icon: const Icon(Icons.check, color: Colors.green),
                       onPressed: () async {
                         await Provider.of<FriendViewModel>(context, listen: false)
-                            .respondToRequest(req.id, true);
+                            .respondToRequest(req.id, true, req.to);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Friend request accepted')),
                         );
-                        setState(() {
-                          _loadFriendRequests();
-                        });
+                        _loadFriendRequests();
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
                       onPressed: () async {
                         await Provider.of<FriendViewModel>(context, listen: false)
-                            .respondToRequest(req.id, false);
+                            .respondToRequest(req.id, false, req.to);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Friend request declined')),
                         );
-                        setState(() {
-                          _loadFriendRequests();
-                        });
+                        _loadFriendRequests();
                       },
                     ),
                   ],
