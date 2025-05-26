@@ -4,6 +4,7 @@ import '../theme/colors.dart';
 final ThemeData appTheme = ThemeData(
   primaryColor: primaryColor,
   scaffoldBackgroundColor: Colors.white,
+  // Color scheme
   colorScheme: ColorScheme.fromSeed(
     seedColor: primaryColor,
     primary: primaryColor,
@@ -23,7 +24,7 @@ final ThemeData appTheme = ThemeData(
     foregroundColor: Colors.black,
     iconTheme: IconThemeData(color: Colors.black),
     elevation: 1,
-  ),  
+  ),
   // Bottom navigation bar theme
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     type: BottomNavigationBarType.fixed,
@@ -32,6 +33,16 @@ final ThemeData appTheme = ThemeData(
     unselectedItemColor: Colors.grey,
     showUnselectedLabels: false,
     showSelectedLabels: false,
+  ),
+  // Bottom sheet theme
+  bottomSheetTheme: const BottomSheetThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+  ),
+  // Dialog theme
+  dialogTheme: const DialogThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
   ),
   // Elevated button theme (for primary actions)
   elevatedButtonTheme: ElevatedButtonThemeData(
