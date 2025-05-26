@@ -6,10 +6,11 @@ import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
+import 'widgets/fridge_filter_sort_sheet.dart';
 import '../../models/notifications/ingredient_reminder.dart';
+import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
-import '../../services/ingredient_service.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -37,12 +38,11 @@ class _FridgeScreenState extends State<FridgeScreen> {
               width: MediaQuery.of(context).size.width,
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,              
+                color: Colors.white,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  // AppBar-style header with filter/sort/search
                   AppBar(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
@@ -57,42 +57,38 @@ class _FridgeScreenState extends State<FridgeScreen> {
                       ),
                     ),
                     actions: [
-                      // Filtering Dropdown
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          Provider.of<FridgeViewModel>(context, listen: false)
-                              .filterGroceriesByCategory(
-                                  value == 'All' ? null : value);
+                      IconButton(
+                        icon: const Icon(Icons.tune, color: Colors.black),
+                        tooltip: 'Filter & Sort',
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24)),
+                            ),
+                            builder: (context) {
+                              final vm = Provider.of<FridgeViewModel>(context,
+                                  listen: false);
+                              return FilterSortSheet(
+                                selectedCategory:
+                                    vm.selectedGroceryCategory ?? '',
+                                selectedSort:
+                                    vm.selectedGrocerySortOption ?? '',
+                                categories: vm.getGroceryCategories(),
+                                onClear: vm.clearGroceryFilters,
+                                onApply: (cat, sort) {
+                                  vm.filterGroceriesByCategory(
+                                      cat.isEmpty ? null : cat);
+                                  vm.sortGroceries(sort.isEmpty ? null : sort);
+                                },
+                                categoryLabel: 'Category',
+                                sortLabel: 'Sort By',
+                              );
+                            },
+                          );
                         },
-                        itemBuilder: (context) {
-                          final categories = Provider.of<FridgeViewModel>(
-                                  context,
-                                  listen: false)
-                              .getGroceryCategories();
-                          return [
-                            const PopupMenuItem(
-                                value: 'All', child: Text('All Categories')),
-                            ...categories.map((category) => PopupMenuItem(
-                                value: category, child: Text(category))),
-                          ];
-                        },
-                        icon:
-                            const Icon(Icons.filter_list, color: Colors.black),
-                      ),
-                      // Sorting Dropdown
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          Provider.of<FridgeViewModel>(context, listen: false)
-                              .sortGroceries(value);
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                              value: 'Name', child: Text('Sort by Name')),
-                          const PopupMenuItem(
-                              value: 'Quantity',
-                              child: Text('Sort by Quantity')),
-                        ],
-                        icon: const Icon(Icons.sort, color: Colors.black),
                       ),
                       // Search Button
                       IconButton(
@@ -168,37 +164,35 @@ class _FridgeScreenState extends State<FridgeScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         actions: [
-          // Filtering Dropdown
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              Provider.of<FridgeViewModel>(context, listen: false)
-                  .filterByCategory(value == 'All' ? null : value);
+          // Sorting and filtering button
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.black),
+            tooltip: 'Filter & Sort',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (context) {
+                  final vm =
+                      Provider.of<FridgeViewModel>(context, listen: false);
+                  return FilterSortSheet(
+                    selectedCategory: vm.selectedCategory ?? '',
+                    selectedSort: vm.selectedSortOption ?? '',
+                    categories: vm.getCategories(),
+                    onClear: vm.clearFilters,
+                    onApply: (cat, sort) {
+                      vm.filterByCategory(cat.isEmpty ? null : cat);
+                      vm.sortIngredients(sort.isEmpty ? null : sort);
+                    },
+                    categoryLabel: 'Category',
+                    sortLabel: 'Sort By',
+                  );
+                },
+              );
             },
-            itemBuilder: (context) {
-              final categories =
-                  Provider.of<FridgeViewModel>(context, listen: false)
-                      .getCategories();
-              return [
-                const PopupMenuItem(
-                    value: 'All', child: Text('All Categories')),
-                ...categories.map((category) =>
-                    PopupMenuItem(value: category, child: Text(category))),
-              ];
-            },
-            icon: const Icon(Icons.filter_list, color: Colors.black),
-          ),
-          // Sorting Dropdown
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              Provider.of<FridgeViewModel>(context, listen: false)
-                  .sortIngredients(value);
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'Name', child: Text('Sort by Name')),
-              const PopupMenuItem(
-                  value: 'Quantity', child: Text('Sort by Quantity')),
-            ],
-            icon: const Icon(Icons.sort, color: Colors.black),
           ),
           // Toggle Button for View Mode
           IconButton(

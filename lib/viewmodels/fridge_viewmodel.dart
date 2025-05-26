@@ -28,6 +28,8 @@ class FridgeViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
   List<Ingredient> get groceries => List.unmodifiable(_groceries);
+  String? get selectedCategory => _selectedCategory;
+  String? get selectedSortOption => _selectedSortOption;
 
   // --- Fridge logic ---
 
@@ -370,6 +372,37 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // --- Generic filtering and sorting logic ---
+  
+  List<Ingredient> _applyGenericFiltersAndSorting({
+    required List<Ingredient> source,
+    required String filter,
+    required String? category,
+    required String? sortOption,
+  }) {
+    var result = List<Ingredient>.from(source);
+
+    if (category != null && category.isNotEmpty) {
+      result = result.where((ingredient) =>
+        ingredient.category.toLowerCase() == category.toLowerCase()
+      ).toList();
+    }
+
+    if (filter.isNotEmpty) {
+      result = result.where((ingredient) =>
+        ingredient.name.toLowerCase().contains(filter.toLowerCase())
+      ).toList();
+    }
+
+    if (sortOption == 'Name') {
+      result.sort((a, b) => a.name.compareTo(b.name));
+    } else if (sortOption == 'Quantity') {
+      result.sort((a, b) => b.count.compareTo(a.count));
+    }
+
+    return result;
+  }
+
   // --- Filtering and sorting for fridge ---
 
   List<String> getCategories() {
@@ -379,12 +412,22 @@ class FridgeViewModel extends ChangeNotifier {
     return categories;
   }
 
+  set selectedCategory(String? value) {
+    _selectedCategory = value;
+    _applyFiltersAndSorting();
+  }
+
+  set selectedSortOption(String? value) {
+    _selectedSortOption = value;
+    _applyFiltersAndSorting();
+  }
+
   void filterByCategory(String? category) {
     _selectedCategory = category;
     _applyFiltersAndSorting();
   }
 
-  void sortIngredients(String sortOption) {
+  void sortIngredients(String? sortOption) {
     _selectedSortOption = sortOption;
     _applyFiltersAndSorting();
   }
@@ -395,27 +438,20 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   void _applyFiltersAndSorting() {
-    filteredIngredients = List.from(_ingredients);
-
-    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-      filteredIngredients = filteredIngredients.where((ingredient) {
-        return ingredient.category.toLowerCase() ==
-            _selectedCategory!.toLowerCase();
-      }).toList();
-    }
-
-    if (_filter.isNotEmpty) {
-      filteredIngredients = filteredIngredients.where((ingredient) {
-        return ingredient.name.toLowerCase().contains(_filter.toLowerCase());
-      }).toList();
-    }
-
-    if (_selectedSortOption == 'Name') {
-      filteredIngredients.sort((a, b) => a.name.compareTo(b.name));
-    } else if (_selectedSortOption == 'Quantity') {
-      filteredIngredients.sort((a, b) => b.count.compareTo(a.count));
-    }
+    filteredIngredients = _applyGenericFiltersAndSorting(
+      source: _ingredients,
+      filter: _filter,
+      category: _selectedCategory,
+      sortOption: _selectedSortOption,
+    );
     notifyListeners();
+  }
+
+  void clearFilters() {
+    _selectedCategory = null;
+    _selectedSortOption = null;
+    _filter = '';
+    _applyFiltersAndSorting();
   }
 
   // --- Filtering and sorting for groceries ---
@@ -427,12 +463,15 @@ class FridgeViewModel extends ChangeNotifier {
     return categories;
   }
 
+  String? get selectedGroceryCategory => _selectedGroceryCategory;
+  String? get selectedGrocerySortOption => _selectedGrocerySortOption;
+
   void filterGroceriesByCategory(String? category) {
     _selectedGroceryCategory = category;
     _applyGroceryFiltersAndSorting();
   }
 
-  void sortGroceries(String sortOption) {
+  void sortGroceries(String? sortOption) {
     _selectedGrocerySortOption = sortOption;
     _applyGroceryFiltersAndSorting();
   }
@@ -443,30 +482,20 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   void _applyGroceryFiltersAndSorting() {
-    filteredGroceries = List.from(_groceries);
-
-    if (_selectedGroceryCategory != null &&
-        _selectedGroceryCategory!.isNotEmpty) {
-      filteredGroceries = filteredGroceries.where((ingredient) {
-        return ingredient.category.toLowerCase() ==
-            _selectedGroceryCategory!.toLowerCase();
-      }).toList();
-    }
-
-    if (_groceryFilter.isNotEmpty) {
-      filteredGroceries = filteredGroceries.where((ingredient) {
-        return ingredient.name
-            .toLowerCase()
-            .contains(_groceryFilter.toLowerCase());
-      }).toList();
-    }
-
-    if (_selectedGrocerySortOption == 'Name') {
-      filteredGroceries.sort((a, b) => a.name.compareTo(b.name));
-    } else if (_selectedGrocerySortOption == 'Quantity') {
-      filteredGroceries.sort((a, b) => b.count.compareTo(a.count));
-    }
+    filteredGroceries = _applyGenericFiltersAndSorting(
+      source: _groceries,
+      filter: _groceryFilter,
+      category: _selectedGroceryCategory,
+      sortOption: _selectedGrocerySortOption,
+    );
     notifyListeners();
+  }
+
+  void clearGroceryFilters() {
+    _selectedGroceryCategory = null;
+    _selectedGrocerySortOption = null;
+    _groceryFilter = '';
+    _applyGroceryFiltersAndSorting();
   }
 
   // --- Image recognition ---
