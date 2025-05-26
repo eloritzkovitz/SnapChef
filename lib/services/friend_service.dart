@@ -19,8 +19,7 @@ class FriendService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      // If your backend returns { friends: [...] }
+      final data = jsonDecode(response.body);      
       final friendsList = data['friends'] as List<dynamic>;
       return friendsList.map((json) => User.fromJson(json)).toList();
     } else {
