@@ -158,6 +158,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
         kToolbarHeight -
         32; // 32 for padding
 
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -168,6 +170,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -175,176 +178,179 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Title
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          labelText: 'Title',
-                          border: const OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: primaryColor),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a title.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      // Description
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: InputDecoration(
-                          labelText: 'Description',
-                          border: const OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: primaryColor),
-                          ),
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedMealType,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Title
+                            TextFormField(
+                              controller: _titleController,
                               decoration: InputDecoration(
-                                labelText: 'Meal Type',
+                                labelText: 'Title',
                                 border: const OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
                               ),
-                              items: mealTypes
-                                  .map((type) => DropdownMenuItem(
-                                        value: type,
-                                        child: Text(type),
-                                      ))
-                                  .toList(),
-                              onChanged: (val) =>
-                                  setState(() => _selectedMealType = val),
-                              isExpanded: true,
-                              isDense: true,
-                              iconEnabledColor: primaryColor,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter a title.';
+                                }
+                                return null;
+                              },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedCuisine,
+                            const SizedBox(height: 8),
+                            // Description
+                            TextFormField(
+                              controller: _descriptionController,
                               decoration: InputDecoration(
-                                labelText: 'Cuisine',
+                                labelText: 'Description',
                                 border: const OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
                               ),
-                              items: cuisines
-                                  .map((type) => DropdownMenuItem(
-                                        value: type,
-                                        child: Text(type),
-                                      ))
-                                  .toList(),
-                              onChanged: (val) =>
-                                  setState(() => _selectedCuisine = val),
-                              isExpanded: true,
-                              isDense: true,
-                              iconEnabledColor: primaryColor,
+                              maxLines: 2,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedDifficulty,
-                              decoration: InputDecoration(
-                                labelText: 'Difficulty',
-                                border: const OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: primaryColor),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedMealType,
+                                    decoration: InputDecoration(
+                                      labelText: 'Meal Type',
+                                      border: const OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: primaryColor),
+                                      ),
+                                    ),
+                                    items: mealTypes
+                                        .map((type) => DropdownMenuItem(
+                                              value: type,
+                                              child: Text(type),
+                                            ))
+                                        .toList(),
+                                    onChanged: (val) =>
+                                        setState(() => _selectedMealType = val),
+                                    isExpanded: true,
+                                    isDense: true,
+                                    iconEnabledColor: primaryColor,
+                                  ),
                                 ),
-                              ),
-                              items: difficulties
-                                  .map((type) => DropdownMenuItem(
-                                        value: type,
-                                        child: Text(type),
-                                      ))
-                                  .toList(),
-                              onChanged: (val) =>
-                                  setState(() => _selectedDifficulty = val),
-                              isExpanded: true,
-                              isDense: true,
-                              iconEnabledColor: primaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _prepTimeController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'Prep Time (min)',
-                                border: const OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: primaryColor),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedCuisine,
+                                    decoration: InputDecoration(
+                                      labelText: 'Cuisine',
+                                      border: const OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: primaryColor),
+                                      ),
+                                    ),
+                                    items: cuisines
+                                        .map((type) => DropdownMenuItem(
+                                              value: type,
+                                              child: Text(type),
+                                            ))
+                                        .toList(),
+                                    onChanged: (val) =>
+                                        setState(() => _selectedCuisine = val),
+                                    isExpanded: true,
+                                    isDense: true,
+                                    iconEnabledColor: primaryColor,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _cookingTimeController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'Cooking Time (min)',
-                                border: const OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: primaryColor),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedDifficulty,
+                                    decoration: InputDecoration(
+                                      labelText: 'Difficulty',
+                                      border: const OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: primaryColor),
+                                      ),
+                                    ),
+                                    items: difficulties
+                                        .map((type) => DropdownMenuItem(
+                                              value: type,
+                                              child: Text(type),
+                                            ))
+                                        .toList(),
+                                    onChanged: (val) =>
+                                        setState(() => _selectedDifficulty = val),
+                                    isExpanded: true,
+                                    isDense: true,
+                                    iconEnabledColor: primaryColor,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _prepTimeController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Prep Time (min)',
+                                      border: const OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: primaryColor),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _cookingTimeController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Cooking Time (min)',
+                                      border: const OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: primaryColor),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Paste or type your recipe in the format below:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: availableHeight * 0.5,
-                          minHeight: 120,
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Scrollbar(
-                            controller: _recipeScrollController,
-                            thumbVisibility: true,
-                            child: TextFormField(
-                              controller: _recipeTextController,
-                              maxLines: null,
-                              expands: true,
-                              scrollController: _recipeScrollController,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.all(12),
-                                hintText: '''**Ingredients:**
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Paste or type your recipe in the format below:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: availableHeight * 0.5,
+                                minHeight: 120,
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Scrollbar(
+                                  controller: _recipeScrollController,
+                                  thumbVisibility: true,
+                                  child: TextFormField(
+                                    controller: _recipeTextController,
+                                    maxLines: null,
+                                    expands: true,
+                                    scrollController: _recipeScrollController,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.all(12),
+                                      hintText: '''**Ingredients:**
 *   1 cup Flour
 *   2 Eggs
 
@@ -352,43 +358,72 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
 *   Mix ingredients.
 *   Bake for 20 minutes.
 ''',
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Please enter your recipe.';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
                               ),
-                              style: const TextStyle(
-                                fontSize: 15,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter your recipe.';
-                                }
-                                return null;
-                              },
                             ),
+                            const SizedBox(height: 16),
+                            if (isKeyboardOpen)
+                              SafeArea(
+                                top: false,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    icon: _isSaving
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2, color: Colors.white),
+                                          )
+                                        : const Icon(Icons.save),
+                                    label: Text(_isSaving ? 'Saving...' : 'Save Recipe'),
+                                    onPressed: _isSaving ? null : () => _saveRecipe(context),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (!isKeyboardOpen)
+                      SafeArea(
+                        top: false,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: _isSaving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.save),
+                            label: Text(_isSaving ? 'Saving...' : 'Save Recipe'),
+                            onPressed: _isSaving ? null : () => _saveRecipe(context),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                          icon: _isSaving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Icon(Icons.save),
-                          label: Text(_isSaving ? 'Saving...' : 'Save Recipe'),
-                          onPressed:
-                              _isSaving ? null : () => _saveRecipe(context),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             );
