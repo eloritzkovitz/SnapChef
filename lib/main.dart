@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'services/notification_service.dart';
-import 'theme/colors.dart';
+import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
@@ -50,7 +50,7 @@ Future<void> main() async {
     log("Environment variables loaded successfully.");
   } catch (e) {
     log("Error loading .env file: $e");
-  }  
+  }
 
   // Initialize the AuthViewModel
   final authViewModel = AuthViewModel();
@@ -61,7 +61,7 @@ Future<void> main() async {
   final friendViewModel = FriendViewModel();
 
   // Run the app with the login status and viewmodels
-  runApp(MyApp(    
+  runApp(MyApp(
     authViewModel: authViewModel,
     userViewModel: userViewModel,
     fridgeViewModel: fridgeViewModel,
@@ -70,14 +70,14 @@ Future<void> main() async {
   ));
 }
 
-class MyApp extends StatelessWidget {  
+class MyApp extends StatelessWidget {
   final AuthViewModel authViewModel;
   final UserViewModel userViewModel;
   final FridgeViewModel fridgeViewModel;
   final CookbookViewModel cookbookViewModel;
   final FriendViewModel friendViewModel;
 
-  const MyApp({    
+  const MyApp({
     required this.authViewModel,
     required this.userViewModel,
     required this.fridgeViewModel,
@@ -100,29 +100,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
       ],
       child: MaterialApp(
-        theme: ThemeData(
-          primaryColor: primaryColor,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
-            foregroundColor: Colors.black,
-            iconTheme: IconThemeData(color: Colors.black),
-            elevation: 1,
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-          ),
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: primaryColor,
-            unselectedItemColor: Colors.grey,
-            showUnselectedLabels: false,
-            showSelectedLabels: false,
-          ),
-        ),
+        theme: appTheme,
         navigatorObservers: [routeObserver],
         home: AnimatedSplashScreen(),
         routes: {
