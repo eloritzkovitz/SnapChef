@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -12,21 +13,28 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/icon_appbar.png',
-              height: 36,
-              width: 36,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'SnapChef',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
+        title: DefaultTextStyle(
+          style: const TextStyle(
+            fontFamily:
+                'BerlinSansFBDemi',
+            fontWeight: FontWeight.bold,
+            fontSize: 32,
+            color: primaryColor,
+          ),
+          child: Row(
+            children: [
+              Image.asset(
+                'assets/images/icon_appbar.png',
+                height: 36,
+                width: 36,
+              ),
+              const SizedBox(width: 8),
+              const Text('SnapChef'),
+            ],
+          ),
         ),
         backgroundColor: Colors.white,
+        foregroundColor: primaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
