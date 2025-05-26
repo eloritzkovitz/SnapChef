@@ -104,11 +104,15 @@ class MyApp extends StatelessWidget {
           primaryColor: primaryColor,
           scaffoldBackgroundColor: Colors.white,
           appBarTheme: const AppBarTheme(
-            foregroundColor: secondaryColor,
-            iconTheme: IconThemeData(color: Colors.white),
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            foregroundColor: Colors.black,
+            iconTheme: IconThemeData(color: Colors.black),
+            elevation: 1,
           ),
           floatingActionButtonTheme: const FloatingActionButtonThemeData(
             backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             type: BottomNavigationBarType.fixed,
