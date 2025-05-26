@@ -72,6 +72,7 @@ class FriendsList extends StatelessWidget {
       children: [
         Expanded(
           child: ListView.separated(
+            padding: const EdgeInsets.only(top: 0),
             itemCount: friends.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {

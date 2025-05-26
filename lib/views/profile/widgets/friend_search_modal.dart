@@ -175,57 +175,88 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                   final user = _results[index];
                   final isFriend = currentFriendIds.contains(user.id);
                   final isPending = pendingRequestUserIds.contains(user.id);
-                  print(
-                      'user.id: ${user.id} | pendingRequestUserIds: $pendingRequestUserIds');
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: user.profilePicture != null
-                          ? NetworkImage(user.profilePicture!)
-                          : const AssetImage(
-                                  'assets/images/default_profile.png')
-                              as ImageProvider,
-                    ),
-                    title: Text(user.fullName),
-                    subtitle: Text(user.email),
-                    trailing: isFriend
-                        ? Chip(
-                            label: const Text('Friend'),
-                            avatar: const Icon(Icons.check,
-                                color: Colors.white, size: 18),  
-                            backgroundColor: primarySwatch[200],                        
-                            labelStyle: const TextStyle(  
-                                color: Colors.white,                             
-                                fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 0),
-                          )
-                        : isPending
-                            ? const Chip(
-                                label: Text('Pending'),
-                                avatar: Icon(Icons.hourglass_top,
-                                    color: Colors.orange, size: 18),                               
-                                labelStyle: TextStyle(                                  
-                                    fontWeight: FontWeight.bold),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 0),
-                              )
-                            : Chip(
+
+                  return GestureDetector(
+                    onTap: () {                                           
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: user.profilePicture != null
+                                ? NetworkImage(user.profilePicture!)
+                                : const AssetImage(
+                                        'assets/images/default_profile.png')
+                                    as ImageProvider,
+                          ),
+                          const SizedBox(width: 18),
+                          Expanded(
+                            child: Text(
+                              user.fullName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          if (isFriend)
+                            Chip(
+                              label: const Text('Friend'),
+                              avatar: const Icon(Icons.check,
+                                  color: Colors.white, size: 18),
+                              backgroundColor: primarySwatch[200],
+                              labelStyle: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 0),
+                            )
+                          else if (isPending)
+                            const Chip(
+                              label: Text('Pending'),
+                              avatar: Icon(Icons.hourglass_top,
+                                  color: Colors.orange, size: 18),
+                              labelStyle:
+                                  TextStyle(fontWeight: FontWeight.bold),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 0),
+                            )
+                          else
+                            InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: _isLoading
+                                  ? null
+                                  : () => _sendRequest(context, user.id),
+                              child: Chip(
                                 label: const Text('Add'),
                                 avatar: const Icon(Icons.person_add,
-                                    color: Colors.blue, size: 18),                                
-                                labelStyle: const TextStyle(                                   
+                                    color: Colors.blue, size: 18),
+                                labelStyle: const TextStyle(
                                     fontWeight: FontWeight.bold),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 0),
                                 materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,                                
-                                labelPadding: EdgeInsets.zero,
-                                onDeleted: null,
-                                deleteIcon: null,                                
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
-                    onTap: isFriend || isPending || _isLoading
-                        ? null
-                        : () => _sendRequest(context, user.id),
+                            ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
