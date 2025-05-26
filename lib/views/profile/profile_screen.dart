@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'widgets/friends_list.dart';
+import 'widgets/profile_details.dart';
 import 'widgets/settings_menu.dart';
-import '../../utils/image_util.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -17,7 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {      
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final userViewModel = Provider.of<UserViewModel>(context, listen: false);
       userViewModel.fetchUserData();
     });
@@ -129,21 +128,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Format the join date
-  String _formatJoinDate(String? rawDate) {
-    if (rawDate == null || rawDate.isEmpty) return '';
-    try {
-      final date = DateTime.parse(rawDate);
-      return 'Joined ${DateFormat.yMMMMd().format(date)}';
-    } catch (e) {
-      return rawDate; // fallback to raw if parsing fails
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context);
-    final int friendCount = userViewModel.user?.friends.length ?? 0;
+    //final int friendCount = userViewModel.user?.friends.length ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -184,118 +172,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Profile Picture
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 80,
-                              backgroundImage: userViewModel
-                                          .user?.profilePicture !=
-                                      null
-                                  ? NetworkImage(ImageUtil().getFullImageUrl(
-                                          userViewModel.user!.profilePicture!))
-                                      as ImageProvider
-                                  : const AssetImage(
-                                          'assets/images/default_profile.png')
-                                      as ImageProvider,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-
-                        // User Full Name
-                        Text(
-                          userViewModel.user?.fullName ?? 'Unknown User',
-                          style: const TextStyle(
-                              fontSize: 28, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // User Email and Join Date
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 28,
-                                  child: const Icon(Icons.email,
-                                      color: Colors.grey, size: 20),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  userViewModel.user?.email ?? 'No Email',
-                                  style: const TextStyle(
-                                      fontSize: 18, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 28,
-                                  child: const Icon(Icons.calendar_today,
-                                      color: Colors.grey, size: 20),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _formatJoinDate(userViewModel.user?.joinDate),
-                                  style: const TextStyle(
-                                      fontSize: 18, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Friends count button
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => _openFriendsList(context),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.group,
-                                      color: Colors.black, size: 24),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    '$friendCount Friend${friendCount == 1 ? '' : 's'}',
-                                    style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black),
-                                  ),
-                                  const Icon(Icons.chevron_right,
-                                      color: Colors.black54, size: 24),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        // ... (rest of your profile content)
-                      ],
+                    child: ProfileDetails(
+                      user: userViewModel.user!,
+                      showSettings: true,
+                      friendsClickable: true,
+                      onSettingsTap: () => _openSideMenu(context),
+                      onFriendsTap: () => _openFriendsList(context),
                     ),
                   ),
                 ),

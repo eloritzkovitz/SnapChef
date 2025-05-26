@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../public_profile_screen.dart';
+import '../widgets/friend_search_modal.dart';
 import '../../../viewmodels/user_viewmodel.dart';
-import 'friend_search_modal.dart';
 
 class FriendsList extends StatelessWidget {
   const FriendsList({super.key});
 
+  // Opens the modal to add a new friend
   void _openAddFriendModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -17,6 +19,16 @@ class FriendsList extends StatelessWidget {
             SnackBar(content: Text(msg)),
           ),
         ),
+      ),
+    );
+  }
+
+  // Opens the public profile of a user
+  void _openPublicProfile(BuildContext context, user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfileScreen(user: user),
       ),
     );
   }
@@ -61,32 +73,61 @@ class FriendsList extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             itemCount: friends.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final friend = userViewModel.user?.friends[index];
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 26,
-                    backgroundImage: friend != null && friend.profilePicture != null
-                        ? NetworkImage(friend.profilePicture!)
-                        : const AssetImage('assets/images/default_profile.png')
-                            as ImageProvider,
+              final friend = friends[index];
+              return GestureDetector(
+                onTap: () => _openPublicProfile(context, friend),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  title: Text(
-                    friend?.fullName ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundImage: friend.profilePicture != null
+                            ? NetworkImage(friend.profilePicture!)
+                            : const AssetImage(
+                                    'assets/images/default_profile.png')
+                                as ImageProvider,
+                      ),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              friend.fullName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              friend.email,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.grey),
+                    ],
                   ),
-                  subtitle: Text(
-                    friend?.email ?? '',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                  onTap: () {
-                    // Navigate to friend's profile
-                  },
                 ),
               );
             },
