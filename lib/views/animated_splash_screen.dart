@@ -34,13 +34,13 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     );
 
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 950),
       vsync: this,
     );
 
     // Fade controller for fade out effect
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 50),
       vsync: this,
     );
     _fadeAnimation =
@@ -143,6 +143,14 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
     // Fade out after animation and data loading
     await _fadeController.forward();
+
+    // Set system navigation bar to white for the main app
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     Navigator.of(context).pushReplacementNamed(
       isLoggedIn ? '/main' : '/login',
