@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
-import '../../widgets/display_recipe_widget.dart';
-import '../../viewmodels/cookbook_viewmodel.dart';
-import './widgets/edit_recipe_modal.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../widgets/display_recipe_widget.dart';
+import './widgets/edit_recipe_modal.dart';
 
 class ViewRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -167,6 +168,69 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
     );
   }
 
+  // Show share recipe dialog to select a friend
+  Future<void> _showShareWithFriendDialog(BuildContext context) async {
+    // Fetch friends from your viewmodel/service
+    final friends =
+        await Provider.of<UserViewModel>(context, listen: false).getFriends();
+    String? selectedFriendId;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Share with Friend'),
+        content: DropdownButtonFormField<String>(
+          items: friends.map<DropdownMenuItem<String>>((friend) {
+            return DropdownMenuItem<String>(
+              value: friend.id,
+              child: Text(friend.fullName),
+            );
+          }).toList(),
+          onChanged: (value) {
+            selectedFriendId = value;
+          },
+          decoration: const InputDecoration(labelText: 'Select Friend'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (selectedFriendId != null) {
+                final rootContext = context;
+                Navigator.pop(context);
+                await _shareRecipe(rootContext, selectedFriendId!);
+              }
+            },
+            child: const Text('Share'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Share the recipe with a friend
+  Future<void> _shareRecipe(BuildContext context, String friendId) async {
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
+    try {
+      await cookbookViewModel.shareRecipeWithFriend(
+        cookbookId: widget.cookbookId,
+        recipeId: _recipe.id,
+        friendId: friendId,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe shared successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to share recipe: $e')),
+      );
+    }
+  }
+
   // Show a confirmation dialog before deleting the recipe
   Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
     final bool? confirm = await showDialog<bool>(
@@ -232,6 +296,9 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
               if (value == 'regenerate_image') {
                 _regenerateRecipeImage(context);
               }
+              if (value == 'share') {
+                _showShareWithFriendDialog(context);
+              }
               if (value == 'delete') {
                 _showDeleteConfirmationDialog(context);
               }
@@ -254,6 +321,16 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                     Icon(Icons.image, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Regenerate Image'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: const [
+                    Icon(Icons.share, color: Colors.black),
+                    SizedBox(width: 8),
+                    Text('Share Recipe'),
                   ],
                 ),
               ),

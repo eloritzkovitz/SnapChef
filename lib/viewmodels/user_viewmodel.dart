@@ -21,6 +21,7 @@ class UserViewModel extends ChangeNotifier {
 
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;
+  List<User> get friends => _user?.friends ?? [];
 
   // Fetch user data (including friends)
   Future<void> fetchUserData() async {
@@ -54,6 +55,12 @@ class UserViewModel extends ChangeNotifier {
         rethrow;
       }
     }
+  }
+
+  // Get friends list
+  Future<List<User>> getFriends() async {
+    await fetchUserData();
+    return _user?.friends ?? [];
   }
 
   // Update User Profile

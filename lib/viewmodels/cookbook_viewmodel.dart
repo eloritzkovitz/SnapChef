@@ -274,6 +274,19 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
+  // Share a recipe with a friend
+  Future<void> shareRecipeWithFriend({
+    required String cookbookId,
+    required String recipeId,
+    required String friendId,
+  }) async {
+    await _cookbookService.shareRecipeWithFriend(
+      cookbookId: cookbookId,
+      recipeId: recipeId,
+      friendId: friendId,
+    );
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {

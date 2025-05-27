@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../utils/token_util.dart';
 
 class CookbookService {
-  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';  
+  final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
 
   // Fetch all recipes in the cookbook
   Future<List<dynamic>> fetchCookbookRecipes(String cookbookId) async {
@@ -15,7 +15,7 @@ class CookbookService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-    );    
+    );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -79,7 +79,8 @@ class CookbookService {
   }
 
   // Regenerate the image for a recipe in the cookbook
-  Future<String> regenerateRecipeImage(String cookbookId, String recipeId, Map<String, dynamic> payload) async {
+  Future<String> regenerateRecipeImage(
+      String cookbookId, String recipeId, Map<String, dynamic> payload) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.post(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId/image'),
@@ -99,7 +100,8 @@ class CookbookService {
   }
 
   // Save the new recipe order to the backend
-  Future<void> saveRecipeOrder(String cookbookId, List<String> orderedRecipeIds) async {
+  Future<void> saveRecipeOrder(
+      String cookbookId, List<String> orderedRecipeIds) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.patch(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/reorder'),
@@ -112,6 +114,27 @@ class CookbookService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to save recipe order: ${response.body}');
+    }
+  }
+
+  // Share a recipe with a friend
+  Future<void> shareRecipeWithFriend({
+    required String cookbookId,
+    required String recipeId,
+    required String friendId,
+  }) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId/share'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'friendId': friendId}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to share recipe: ${response.body}');
     }
   }
 
