@@ -44,6 +44,12 @@ final ThemeData appTheme = ThemeData(
     backgroundColor: Colors.white,
     surfaceTintColor: Colors.white,
   ),
+  // Popup menu theme
+  popupMenuTheme: const PopupMenuThemeData(
+    color: Colors.white, 
+    textStyle: TextStyle(color: Colors.black),
+    surfaceTintColor: Colors.white,
+  ),
   // Elevated button theme (for primary actions)
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
