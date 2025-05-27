@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/theme/colors.dart';
 import '../../../models/user.dart';
+import '../../../utils/image_util.dart';
 import '../../../viewmodels/friend_viewmodel.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 
@@ -30,7 +31,7 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       if (currentUserId != null) {
         await Provider.of<FriendViewModel>(context, listen: false)
             .getAllFriendRequests(currentUserId);
-        setState(() {}); // Rebuild to get updated pendingRequestUserIds
+        setState(() {});
       }
     });
   }
@@ -177,8 +178,7 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                   final isPending = pendingRequestUserIds.contains(user.id);
 
                   return GestureDetector(
-                    onTap: () {                                           
-                    },
+                    onTap: () {},
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       padding: const EdgeInsets.all(16),
@@ -197,8 +197,11 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundImage: user.profilePicture != null
-                                ? NetworkImage(user.profilePicture!)
+                            backgroundColor: Colors.grey[200],
+                            backgroundImage: (user.profilePicture != null &&
+                                    user.profilePicture!.isNotEmpty)
+                                ? NetworkImage(ImageUtil()
+                                    .getFullImageUrl(user.profilePicture!))
                                 : const AssetImage(
                                         'assets/images/default_profile.png')
                                     as ImageProvider,
