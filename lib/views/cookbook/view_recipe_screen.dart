@@ -169,15 +169,15 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
   }
 
   // Show share recipe dialog to select a friend
-  Future<void> _showShareWithFriendDialog(BuildContext context) async {
+  Future<void> _showShareWithFriendDialog(BuildContext parentContext) async {
     // Fetch friends from your viewmodel/service
     final friends =
-        await Provider.of<UserViewModel>(context, listen: false).getFriends();
+        await Provider.of<UserViewModel>(parentContext, listen: false).getFriends();
     String? selectedFriendId;
 
     await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Share with Friend'),
         content: DropdownButtonFormField<String>(
           items: friends.map<DropdownMenuItem<String>>((friend) {
@@ -193,15 +193,14 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
               if (selectedFriendId != null) {
-                final rootContext = context;
-                Navigator.pop(context);
-                await _shareRecipe(rootContext, selectedFriendId!);
+                Navigator.pop(dialogContext);
+                await _shareRecipe(parentContext, selectedFriendId!);
               }
             },
             child: const Text('Share'),

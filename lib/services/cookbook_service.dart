@@ -133,7 +133,7 @@ class CookbookService {
       body: jsonEncode({'friendId': friendId}),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to share recipe: ${response.body}');
     }
   }
