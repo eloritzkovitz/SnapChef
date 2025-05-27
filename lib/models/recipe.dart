@@ -1,6 +1,6 @@
 import 'ingredient.dart';
 
-enum RecipeSource { ai, user }
+enum RecipeSource { ai, user, shared }
 
 class Recipe {
   final String id;

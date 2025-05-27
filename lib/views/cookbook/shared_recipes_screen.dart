@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'view_recipe_screen.dart';
+import 'view_shared_recipe_screen.dart';
+import './widgets/recipe_card.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
-import '../../viewmodels/user_viewmodel.dart';
 
 class SharedRecipesScreen extends StatelessWidget {
   const SharedRecipesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final sharedRecipes = Provider.of<CookbookViewModel>(context).sharedRecipes;
-    final cookbookId = Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '';
+    final cookbookViewModel = Provider.of<CookbookViewModel>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,40 +19,45 @@ class SharedRecipesScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: sharedRecipes.isEmpty
-          ? const Center(
+      body: Builder(
+        builder: (context) {
+          if (cookbookViewModel.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final sharedRecipes = cookbookViewModel.sharedRecipes;
+
+          if (sharedRecipes.isEmpty) {
+            return const Center(
               child: Text(
                 'No shared recipes.',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
-            )
-          : ListView.builder(
-              itemCount: sharedRecipes.length,
-              itemBuilder: (context, index) {
-                final sharedRecipe = sharedRecipes[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    title: Text(sharedRecipe.recipe.title),
-                    subtitle: Text(
-                      'From: ${sharedRecipe.fromUser} • Status: ${sharedRecipe.status[0].toUpperCase()}${sharedRecipe.status.substring(1)}',
+            );
+          }
+
+          return ListView.builder(
+            itemCount: sharedRecipes.length,
+            itemBuilder: (context, index) {
+              final sharedRecipe = sharedRecipes[index];
+              return RecipeCard(
+                key: ValueKey(sharedRecipe.recipe.id),
+                recipe: sharedRecipe.recipe,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewSharedRecipeScreen(
+                        sharedRecipe: sharedRecipe,                        
+                      ),
                     ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ViewRecipeScreen(
-                            recipe: sharedRecipe.recipe,
-                            cookbookId: cookbookId,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
