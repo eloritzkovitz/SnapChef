@@ -129,7 +129,9 @@ class FriendsList extends StatelessWidget {
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert),
                         onSelected: (value) async {
-                          if (value == 'remove') {
+                          if (value == 'view') {
+                            _openPublicProfile(context, friend);
+                          } else if (value == 'remove') {
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
@@ -172,22 +174,28 @@ class FriendsList extends StatelessWidget {
                           }
                         },
                         itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'view',
+                            child: Row(
+                              children: const [
+                                Icon(Icons.person, color: Colors.black),
+                                SizedBox(width: 8),
+                                Text('View Profile'),
+                              ],
+                            ),
+                          ),
                           const PopupMenuItem(
                             value: 'remove',
                             child: Row(
                               children: [
-                                Icon(Icons.person_remove, color: Colors.red),
+                                Icon(Icons.person_remove, color: Colors.black),
                                 SizedBox(width: 8),
-                                Text(
-                                  'Remove Friend',
-                                  style: TextStyle(color: Colors.red),
-                                ),
+                                Text('Remove Friend'),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
                     ],
                   ),
                 ),
