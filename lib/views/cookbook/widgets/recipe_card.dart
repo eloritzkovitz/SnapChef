@@ -23,10 +23,10 @@ class RecipeCard extends StatelessWidget {
 
     // Choose icon and tooltip based on recipe source
     final sourceIcon = recipe.source == RecipeSource.ai
-    ? Icon(Icons.smart_toy, size: 18, color: primarySwatch[200])
+    ? Icon(Icons.smart_toy, size: 18, color: primaryColor)
     : recipe.source == RecipeSource.shared
-        ? Icon(Icons.people_alt_outlined, size: 18, color: primarySwatch[300])
-        : Icon(Icons.person, size: 18, color: primarySwatch[400]);
+        ? Icon(Icons.people_alt, size: 18, color: primaryColor)
+        : Icon(Icons.person, size: 18, color: primaryColor);
 
     final sourceTooltip = recipe.source == RecipeSource.ai
         ? 'AI Generated'
