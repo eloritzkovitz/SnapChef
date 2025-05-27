@@ -130,8 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userViewModel = Provider.of<UserViewModel>(context);
-    //final int friendCount = userViewModel.user?.friends.length ?? 0;
+    final userViewModel = Provider.of<UserViewModel>(context);    
 
     return Scaffold(
       appBar: AppBar(

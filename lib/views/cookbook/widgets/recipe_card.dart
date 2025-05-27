@@ -23,12 +23,16 @@ class RecipeCard extends StatelessWidget {
 
     // Choose icon and tooltip based on recipe source
     final sourceIcon = recipe.source == RecipeSource.ai
-        ? const Icon(Icons.smart_toy, size: 18, color: Colors.red)
-        : const Icon(Icons.person, size: 18, color: Colors.orange);
+    ? Icon(Icons.smart_toy, size: 18, color: primaryColor)
+    : recipe.source == RecipeSource.shared
+        ? Icon(Icons.people_alt, size: 18, color: primaryColor)
+        : Icon(Icons.person, size: 18, color: primaryColor);
 
     final sourceTooltip = recipe.source == RecipeSource.ai
         ? 'AI Generated'
-        : 'User Recipe';
+        : recipe.source == RecipeSource.shared
+            ? 'Shared Recipe'
+            : 'User Recipe';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -41,7 +45,10 @@ class RecipeCard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => ViewRecipeScreen(
                     recipe: recipe,
-                    cookbookId: Provider.of<UserViewModel>(context, listen: false).cookbookId ?? '',
+                    cookbookId:
+                        Provider.of<UserViewModel>(context, listen: false)
+                                .cookbookId ??
+                            '',
                   ),
                 ),
               );
@@ -92,7 +99,8 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     RatingBarIndicator(
                       rating: rating,
-                      itemBuilder: (context, _) => const Icon(Icons.star, color: primaryColor),
+                      itemBuilder: (context, _) =>
+                          const Icon(Icons.star, color: primaryColor),
                       itemCount: 5,
                       itemSize: 20.0,
                       unratedColor: Colors.grey,
@@ -101,21 +109,24 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.restaurant, size: 16, color: Colors.grey),
+                        const Icon(Icons.restaurant,
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
                           recipe.mealType,
                           style: const TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.room_service, size: 16, color: Colors.grey),
+                        const Icon(Icons.room_service,
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
                           recipe.cuisineType,
                           style: const TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.emoji_events, size: 16, color: Colors.grey),
+                        const Icon(Icons.emoji_events,
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
                           recipe.difficulty,
@@ -126,7 +137,8 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                        const Icon(Icons.access_time,
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
                           '${recipe.prepTime}m',

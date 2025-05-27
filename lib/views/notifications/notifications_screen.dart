@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:snapchef/views/notifications/upcoming_alerts_screen.dart';
-import '../../viewmodels/friend_viewmodel.dart';
-import '../../models/friend_request.dart';
+import 'friend_requests_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -12,20 +10,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late Future<List<FriendRequest>> _friendRequestsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFriendRequests();
-  }
-
-  void _loadFriendRequests() {
-    final friendViewModel =
-        Provider.of<FriendViewModel>(context, listen: false);
-    _friendRequestsFuture = friendViewModel.fetchFriendRequests();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +21,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
+            icon: const Icon(Icons.people),
+            tooltip: 'Friend Requests',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FriendRequestsScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.alarm),
+            tooltip: 'Upcoming Alerts',
             onPressed: () {
               Navigator.push(
                 context,
@@ -49,86 +46,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Friend Requests',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          Expanded(
-            child: FutureBuilder<List<FriendRequest>>(
-              future: _friendRequestsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error loading friend requests'));
-                }
-                final requests = snapshot.data ?? [];
-                if (requests.isEmpty) {
-                  return const Center(child: Text('No friend requests.'));
-                }
-                return ListView.builder(
-                  itemCount: requests.length,
-                  itemBuilder: (context, index) {
-                    final req = requests[index];
-                    final user = req.from;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: user.profilePicture != null
-                            ? NetworkImage(user.profilePicture!)
-                            : const AssetImage(
-                                    'assets/images/default_profile.png')
-                                as ImageProvider,
-                      ),
-                      title: Text(user
-                          .fullName),
-                      subtitle: Text(user.email),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.check, color: Colors.green),
-                            onPressed: () async {
-                              await Provider.of<FriendViewModel>(context,
-                                      listen: false)
-                                  .respondToRequest(req.id, true);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Friend request accepted')),
-                              );
-                              setState(() {
-                                _loadFriendRequests();
-                              });
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.red),
-                            onPressed: () async {
-                              await Provider.of<FriendViewModel>(context,
-                                      listen: false)
-                                  .respondToRequest(req.id, false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Friend request declined')),
-                              );
-                              setState(() {
-                                _loadFriendRequests();
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'No notifications',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

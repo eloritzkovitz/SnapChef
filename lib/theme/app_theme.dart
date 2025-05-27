@@ -4,6 +4,7 @@ import '../theme/colors.dart';
 final ThemeData appTheme = ThemeData(
   primaryColor: primaryColor,
   scaffoldBackgroundColor: Colors.white,
+  // Color scheme
   colorScheme: ColorScheme.fromSeed(
     seedColor: primaryColor,
     primary: primaryColor,
@@ -16,6 +17,7 @@ final ThemeData appTheme = ThemeData(
     onError: Colors.white,
     brightness: Brightness.light,
   ),
+  // App bar theme
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.white,
     surfaceTintColor: Colors.white,
@@ -23,10 +25,7 @@ final ThemeData appTheme = ThemeData(
     iconTheme: IconThemeData(color: Colors.black),
     elevation: 1,
   ),
-  floatingActionButtonTheme: const FloatingActionButtonThemeData(
-    backgroundColor: primaryColor,
-    foregroundColor: Colors.white,
-  ),
+  // Bottom navigation bar theme
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     type: BottomNavigationBarType.fixed,
     backgroundColor: Colors.white,
@@ -35,6 +34,23 @@ final ThemeData appTheme = ThemeData(
     showUnselectedLabels: false,
     showSelectedLabels: false,
   ),
+  // Bottom sheet theme
+  bottomSheetTheme: const BottomSheetThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+  ),
+  // Dialog theme
+  dialogTheme: const DialogThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+  ),
+  // Popup menu theme
+  popupMenuTheme: const PopupMenuThemeData(
+    color: Colors.white, 
+    textStyle: TextStyle(color: Colors.black),
+    surfaceTintColor: Colors.white,
+  ),
+  // Elevated button theme (for primary actions)
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: primaryColor,
@@ -43,19 +59,24 @@ final ThemeData appTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      minimumSize: const Size.fromHeight(50),
+      minimumSize: const Size(88, 50),
     ),
   ),
+  // Text button theme (for cancel buttons)
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
-      iconColor: Colors.white,
+      foregroundColor: primaryColor,
+      backgroundColor: Colors.transparent,
       textStyle: const TextStyle(fontWeight: FontWeight.bold),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
     ),
+  ),
+  // Floating action button theme
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    backgroundColor: primaryColor,
+    foregroundColor: Colors.white,
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(

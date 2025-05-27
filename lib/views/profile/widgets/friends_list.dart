@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../public_profile_screen.dart';
+import '../../../utils/image_util.dart';
 import '../widgets/friend_search_modal.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 
@@ -72,6 +73,7 @@ class FriendsList extends StatelessWidget {
       children: [
         Expanded(
           child: ListView.separated(
+            padding: const EdgeInsets.only(top: 0),
             itemCount: friends.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
@@ -96,11 +98,19 @@ class FriendsList extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 32,
-                        backgroundImage: friend.profilePicture != null
-                            ? NetworkImage(friend.profilePicture!)
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: (friend.profilePicture != null &&
+                                friend.profilePicture!.isNotEmpty)
+                            ? NetworkImage(ImageUtil()
+                                .getFullImageUrl(friend.profilePicture!))
                             : const AssetImage(
                                     'assets/images/default_profile.png')
                                 as ImageProvider,
+                        child: (friend.profilePicture == null ||
+                                friend.profilePicture!.isEmpty)
+                            ? Image.asset('assets/images/default_profile.png',
+                                fit: BoxFit.cover)
+                            : null,
                       ),
                       const SizedBox(width: 18),
                       Expanded(
@@ -125,7 +135,76 @@ class FriendsList extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) async {
+                          if (value == 'view') {
+                            _openPublicProfile(context, friend);
+                          } else if (value == 'remove') {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Remove Friend'),
+                                content: Text(
+                                    'Are you sure you want to remove ${friend.fullName}?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(true),
+                                    child: const Text('Remove',
+                                        style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true) {
+                              try {
+                                await Provider.of<UserViewModel>(context,
+                                        listen: false)
+                                    .removeFriend(friend.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          '${friend.fullName} removed from friends.')),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Failed to remove friend: $e')),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'view',
+                            child: Row(
+                              children: const [
+                                Icon(Icons.person, color: Colors.black),
+                                SizedBox(width: 8),
+                                Text('View Profile'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'remove',
+                            child: Row(
+                              children: [
+                                Icon(Icons.person_remove, color: Colors.black),
+                                SizedBox(width: 8),
+                                Text('Remove Friend'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

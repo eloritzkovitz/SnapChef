@@ -84,7 +84,10 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-      body: screens[viewModel.selectedIndex],
+      body: IndexedStack(
+        index: viewModel.selectedIndex,
+        children: screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

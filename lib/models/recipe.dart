@@ -1,6 +1,6 @@
 import 'ingredient.dart';
 
-enum RecipeSource { ai, user }
+enum RecipeSource { ai, user, shared }
 
 class Recipe {
   final String id;
@@ -10,7 +10,7 @@ class Recipe {
   final String cuisineType;
   final String difficulty;
   final int prepTime;
-  final int cookingTime;  
+  final int cookingTime;
   final List<Ingredient> ingredients;
   final List<String> instructions;
   final String? imageURL;
@@ -25,7 +25,7 @@ class Recipe {
     required this.cuisineType,
     required this.difficulty,
     required this.prepTime,
-    required this.cookingTime,    
+    required this.cookingTime,
     required this.ingredients,
     required this.instructions,
     this.imageURL,
@@ -43,14 +43,19 @@ class Recipe {
       cuisineType: json['cuisineType'],
       difficulty: json['difficulty'],
       prepTime: json['prepTime'],
-      cookingTime: json['cookingTime'],      
+      cookingTime: json['cookingTime'],
       ingredients: (json['ingredients'] as List<dynamic>)
           .map((ingredient) => Ingredient.fromJson(ingredient))
           .toList(),
       instructions: List<String>.from(json['instructions']),
       imageURL: json['imageURL'],
-      rating: json['rating'] != null ? (json['rating'] as num).toDouble() : null,
-      source: json['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
+      rating:
+          json['rating'] != null ? (json['rating'] as num).toDouble() : null,
+      source: json['source'] == 'ai'
+          ? RecipeSource.ai
+          : json['source'] == 'shared'
+              ? RecipeSource.shared
+              : RecipeSource.user,
     );
   }
 
@@ -62,14 +67,19 @@ class Recipe {
       'description': description,
       'mealType': mealType,
       'cuisineType': cuisineType,
-      'difficulty': difficulty,      
+      'difficulty': difficulty,
       'prepTime': prepTime,
       'cookingTime': cookingTime,
-      'ingredients': ingredients.map((ingredient) => ingredient.toJson()).toList(),
+      'ingredients':
+          ingredients.map((ingredient) => ingredient.toJson()).toList(),
       'instructions': instructions,
       'imageURL': imageURL,
       'rating': rating,
-      'source': source == RecipeSource.ai ? 'ai' : 'user',
+      'source': source == RecipeSource.ai
+          ? 'ai'
+          : source == RecipeSource.shared
+              ? 'shared'
+              : 'user',
     };
   }
 

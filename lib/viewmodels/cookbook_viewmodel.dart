@@ -2,11 +2,13 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
+import '../models/shared_recipe.dart';
 import '../services/cookbook_service.dart';
 
 class CookbookViewModel extends ChangeNotifier {
   final List<Recipe> _recipes = [];
   List<Recipe> filteredRecipes = [];
+  List<SharedRecipe> sharedRecipes = [];
   final CookbookService _cookbookService = CookbookService();
 
   String _filter = '';
@@ -64,8 +66,11 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
-              source:
-                  item['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
+              source: item['source'] == 'ai'
+                  ? RecipeSource.ai
+                  : item['source'] == 'shared'
+                      ? RecipeSource.shared
+                      : RecipeSource.user,
             );
           }).toList(),
         );
@@ -78,6 +83,12 @@ class CookbookViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Fetch shared recipes
+  Future<void> fetchSharedRecipes(String cookbookId) async {
+    sharedRecipes = await _cookbookService.fetchSharedRecipes(cookbookId);
+    notifyListeners();
   }
 
   // Add a recipe to the cookbook
@@ -111,7 +122,11 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
-        'source': source == RecipeSource.ai ? 'ai' : 'user',
+        'source': source == RecipeSource.ai
+            ? 'ai'
+            : source == RecipeSource.shared
+                ? 'shared'
+                : 'user',
         'raw': raw,
       };
 
@@ -272,6 +287,19 @@ class CookbookViewModel extends ChangeNotifier {
     } catch (e) {
       log('Error saving recipe order: $e');
     }
+  }
+
+  // Share a recipe with a friend
+  Future<void> shareRecipeWithFriend({
+    required String cookbookId,
+    required String recipeId,
+    required String friendId,
+  }) async {
+    await _cookbookService.shareRecipeWithFriend(
+      cookbookId: cookbookId,
+      recipeId: recipeId,
+      friendId: friendId,
+    );
   }
 
   // Delete a recipe from the cookbook
