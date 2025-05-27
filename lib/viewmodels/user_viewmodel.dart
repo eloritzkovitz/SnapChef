@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/auth_service.dart';
+import '../services/friend_service.dart';
 import '../services/user_service.dart';
 import '../models/user.dart';
 import '../models/preferences.dart';
@@ -30,8 +31,7 @@ class UserViewModel extends ChangeNotifier {
 
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
-      await updateFcmToken(fcmToken); 
-
+      await updateFcmToken(fcmToken);
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -43,7 +43,6 @@ class UserViewModel extends ChangeNotifier {
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
           await updateFcmToken(fcmToken);
-
         } catch (refreshError) {
           _user = null;
           notifyListeners();
@@ -120,7 +119,7 @@ class UserViewModel extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      throw Exception('Failed to update FCM token: ${e.toString()}');      
+      throw Exception('Failed to update FCM token: ${e.toString()}');
     }
   }
 
@@ -166,5 +165,12 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  // Remove friend
+  Future<void> removeFriend(String friendId) async {
+    await FriendService().removeFriend(friendId);
+    // Optionally, refresh the user data or friends list
+    await fetchUserData();
   }
 }
