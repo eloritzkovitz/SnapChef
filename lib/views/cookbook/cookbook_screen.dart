@@ -97,7 +97,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
+            icon: const Icon(Icons.people_alt_outlined, color: Colors.black),
             tooltip: 'Shared Recipes',
             onPressed: () async {
               final userId =

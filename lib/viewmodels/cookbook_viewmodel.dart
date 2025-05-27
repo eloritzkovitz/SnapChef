@@ -119,7 +119,11 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
-        'source': source == RecipeSource.ai ? 'ai' : 'user',
+        'source': source == RecipeSource.ai
+            ? 'ai'
+            : source == RecipeSource.shared
+                ? 'shared'
+                : 'user',
         'raw': raw,
       };
 
