@@ -174,8 +174,16 @@ class FriendsList extends StatelessWidget {
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'remove',
-                            child: Text('Remove Friend',
-                                style: TextStyle(color: Colors.red)),
+                            child: Row(
+                              children: [
+                                Icon(Icons.person_remove, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Remove Friend',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
