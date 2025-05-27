@@ -66,8 +66,11 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
-              source:
-                  item['source'] == 'ai' ? RecipeSource.ai : RecipeSource.user,
+              source: item['source'] == 'ai'
+                  ? RecipeSource.ai
+                  : item['source'] == 'shared'
+                      ? RecipeSource.shared
+                      : RecipeSource.user,
             );
           }).toList(),
         );
