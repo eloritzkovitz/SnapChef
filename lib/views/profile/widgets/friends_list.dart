@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../public_profile_screen.dart';
+import '../../../utils/image_util.dart';
 import '../widgets/friend_search_modal.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 
@@ -97,11 +98,19 @@ class FriendsList extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 32,
-                        backgroundImage: friend.profilePicture != null
-                            ? NetworkImage(friend.profilePicture!)
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: (friend.profilePicture != null &&
+                                friend.profilePicture!.isNotEmpty)
+                            ? NetworkImage(ImageUtil()
+                                .getFullImageUrl(friend.profilePicture!))
                             : const AssetImage(
                                     'assets/images/default_profile.png')
                                 as ImageProvider,
+                        child: (friend.profilePicture == null ||
+                                friend.profilePicture!.isEmpty)
+                            ? Image.asset('assets/images/default_profile.png',
+                                fit: BoxFit.cover)
+                            : null,
                       ),
                       const SizedBox(width: 18),
                       Expanded(
