@@ -10,10 +10,12 @@ import '../../widgets/display_recipe_widget.dart';
 
 class ViewSharedRecipeScreen extends StatefulWidget {
   final SharedRecipe sharedRecipe;
+  final bool isSharedByMe;
 
   const ViewSharedRecipeScreen({
     super.key,
     required this.sharedRecipe,
+    this.isSharedByMe = false,
   });
 
   @override
@@ -29,13 +31,16 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   void initState() {
     super.initState();
     _currentImageUrl = widget.sharedRecipe.recipe.imageURL;
-    _fetchSharerName();
+    _fetchRelevantUser();
   }
 
-  Future<void> _fetchSharerName() async {
+  Future<void> _fetchRelevantUser() async {
     final userService = UserService();
+    final userId = widget.isSharedByMe
+        ? widget.sharedRecipe.toUser
+        : widget.sharedRecipe.fromUser;
     try {
-      final user = await userService.getUserProfile(widget.sharedRecipe.fromUser);
+      final user = await userService.getUserProfile(userId);
       setState(() {
         _sharedByName = '${user.firstName} ${user.lastName}'.trim();
         _sharedByProfilePic = user.profilePicture;
@@ -134,13 +139,19 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: (_sharedByProfilePic != null && _sharedByProfilePic!.isNotEmpty)
-                          ? NetworkImage(ImageUtil().getFullImageUrl(_sharedByProfilePic!))
-                          : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                      backgroundImage: (_sharedByProfilePic != null &&
+                              _sharedByProfilePic!.isNotEmpty)
+                          ? NetworkImage(
+                              ImageUtil().getFullImageUrl(_sharedByProfilePic!))
+                          : const AssetImage(
+                                  'assets/images/default_profile.png')
+                              as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Shared by: $sharedBy',
+                      widget.isSharedByMe
+                          ? 'Shared with: $sharedBy'
+                          : 'Shared by: $sharedBy',
                       style: const TextStyle(fontSize: 15, color: Colors.grey),
                     ),
                   ],

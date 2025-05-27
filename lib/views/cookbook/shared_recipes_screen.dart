@@ -16,13 +16,13 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
 
   @override
   void initState() {
-    super.initState();    
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     final cookbookViewModel = Provider.of<CookbookViewModel>(context);
-    
+
     final sharedWithMe = cookbookViewModel.sharedWithMeRecipes ?? [];
     final sharedByMe = cookbookViewModel.sharedByMeRecipes ?? [];
 
@@ -30,7 +30,8 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shared Recipes', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Shared Recipes',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -92,6 +93,8 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
                           MaterialPageRoute(
                             builder: (context) => ViewSharedRecipeScreen(
                               sharedRecipe: sharedRecipe,
+                              isSharedByMe:
+                                  showSharedByMe,
                             ),
                           ),
                         );
