@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../models/shared_recipe.dart';
 import '../utils/token_util.dart';
 
 class CookbookService {
@@ -33,6 +34,27 @@ class CookbookService {
     } else {
       throw Exception(
           'Failed to fetch cookbook recipes: ${response.statusCode}');
+    }
+  }
+
+  // Fetch shared recipes
+  Future<List<SharedRecipe>> fetchSharedRecipes(String cookbookId) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/shared'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // Extract the sharedRecipes array from the response object
+      final sharedRecipesList = data['sharedRecipes'] as List<dynamic>;
+      return sharedRecipesList
+          .map((json) => SharedRecipe.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch shared recipes');
     }
   }
 

@@ -2,11 +2,13 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
+import '../models/shared_recipe.dart';
 import '../services/cookbook_service.dart';
 
 class CookbookViewModel extends ChangeNotifier {
   final List<Recipe> _recipes = [];
   List<Recipe> filteredRecipes = [];
+  List<SharedRecipe> sharedRecipes = [];
   final CookbookService _cookbookService = CookbookService();
 
   String _filter = '';
@@ -78,6 +80,12 @@ class CookbookViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Fetch shared recipes
+  Future<void> fetchSharedRecipes(String cookbookId) async {
+    sharedRecipes = await _cookbookService.fetchSharedRecipes(cookbookId);
+    notifyListeners();
   }
 
   // Add a recipe to the cookbook

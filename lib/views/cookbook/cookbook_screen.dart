@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'add_recipe_screen.dart';
 import 'recipe_search_delegate.dart';
+import 'shared_recipes_screen.dart';
 import 'view_recipe_screen.dart';
 import './widgets/cookbook_filter_sort_sheet.dart';
 import './widgets/recipe_card.dart';
@@ -95,6 +96,22 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.black),
+            tooltip: 'Shared Recipes',
+            onPressed: () async {
+              final userId =
+                  Provider.of<UserViewModel>(context, listen: false).user?.id ??
+                      '';
+              await Provider.of<CookbookViewModel>(context, listen: false)
+                  .fetchSharedRecipes(userId);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SharedRecipesScreen()),
+              );
+            },
+          ),
         ],
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -123,7 +140,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                     '',
               );
             },
-            proxyDecorator: (child, index, animation) {              
+            proxyDecorator: (child, index, animation) {
               return Material(
                 color: Colors.transparent,
                 elevation: 0,
