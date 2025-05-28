@@ -92,7 +92,7 @@ class _MainScreenState extends State<MainScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 2,
             ),
           ],

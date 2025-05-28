@@ -140,7 +140,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
                     image: NetworkImage(
