@@ -9,10 +9,10 @@ class TTSWidget extends StatefulWidget {
   const TTSWidget({super.key, required this.text});
 
   @override
-  _TTSWidgetState createState() => _TTSWidgetState();
+  TTSWidgetState createState() => TTSWidgetState();
 }
 
-class _TTSWidgetState extends State<TTSWidget> {
+class TTSWidgetState extends State<TTSWidget> {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isPlaying = false;
   bool _isPaused = false;

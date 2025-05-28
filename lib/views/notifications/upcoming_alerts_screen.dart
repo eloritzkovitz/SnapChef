@@ -206,12 +206,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            dialogBackgroundColor: Colors.white,
-            textTheme: Theme.of(context).textTheme.apply(
-                  bodyColor: Colors.black,
-                  displayColor: Colors.black,
-                ),
+          data: Theme.of(context).copyWith(            
             colorScheme: Theme.of(context).colorScheme.copyWith(
                   primary: primaryColor,
                   onPrimary: Colors.white,

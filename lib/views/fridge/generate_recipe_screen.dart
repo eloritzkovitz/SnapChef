@@ -93,10 +93,12 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     final preferences = userViewModel.user?.preferences ??
         Preferences(allergies: [], dietaryPreferences: {});
 
-    return WillPopScope(
-      onWillPop: () async {
-        _resetFields();
-        return true;
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          _resetFields();
+        }
       },
       child: Scaffold(
         appBar: AppBar(

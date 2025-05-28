@@ -212,11 +212,13 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                             allergies: _allergies,
                             dietaryPreferences: backendDietaryPreferences,
                           );
-                          if (context.mounted)
+                          if (context.mounted) {
                             Navigator.pop(
                                 context); // Close the loading indicator
-                          if (context.mounted)
+                          }
+                          if (context.mounted) {
                             Navigator.pop(context); // Go back
+                          }
                         } catch (e) {
                           if (context.mounted) Navigator.pop(context);
                           if (context.mounted) {

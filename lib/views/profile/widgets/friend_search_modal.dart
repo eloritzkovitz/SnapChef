@@ -118,12 +118,12 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       setState(() {
         _isLoading = false;
       });
-      if (!mounted) return;
-      // Use parent callback if provided, else fallback to local context
-      if (widget.onShowSnackBar != null) {
-        widget.onShowSnackBar!(message!);
-      } else {
-        if (context.mounted) {
+      // Only show snackbar if still mounted
+      if (mounted) {
+        // Use parent callback if provided, else fallback to local context
+        if (widget.onShowSnackBar != null) {
+          widget.onShowSnackBar!(message!);
+        } else if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message!)),
           );
