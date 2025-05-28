@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../models/friend_request.dart';
 import '../../viewmodels/friend_viewmodel.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/notifications_viewmodel.dart';
+import '../../models/notifications/friend_notification.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -80,6 +82,17 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         await Provider.of<FriendViewModel>(context,
                                 listen: false)
                             .respondToRequest(req.id, true, req.to);
+                        // Add notification for new friendship
+                        final notificationsViewModel = Provider.of<NotificationsViewModel>(context, listen: false);
+                        await notificationsViewModel.addNotification(
+                          FriendNotification(
+                            id: await notificationsViewModel.generateUniqueNotificationId(),
+                            title: 'You are now friends with ${user.fullName}',
+                            body: 'You and ${user.fullName} can now share recipes!',
+                            scheduledTime: DateTime.now(),
+                            friendName: user.fullName,
+                          ),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Friend request accepted')),

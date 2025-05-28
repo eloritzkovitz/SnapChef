@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/notifications/share_notification.dart';
 import '../../models/recipe.dart';
 import '../../models/user.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../widgets/display_recipe_widget.dart';
 import './widgets/edit_recipe_modal.dart';
@@ -236,10 +238,12 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                                   leading: CircleAvatar(
                                     radius: 20,
                                     backgroundColor: Colors.grey[200],
-                                    backgroundImage: (friend.profilePicture != null &&
+                                    backgroundImage: (friend.profilePicture !=
+                                                null &&
                                             friend.profilePicture!.isNotEmpty)
                                         ? NetworkImage(ImageUtil()
-                                            .getFullImageUrl(friend.profilePicture!))
+                                            .getFullImageUrl(
+                                                friend.profilePicture!))
                                         : const AssetImage(
                                                 'assets/images/default_profile.png')
                                             as ImageProvider,
@@ -256,24 +260,34 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                                             CircleAvatar(
                                               radius: 20,
                                               backgroundColor: Colors.grey[200],
-                                              backgroundImage: (friend.profilePicture != null &&
-                                                      friend.profilePicture!.isNotEmpty)
-                                                  ? NetworkImage(ImageUtil().getFullImageUrl(friend.profilePicture!))
-                                                  : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                                              backgroundImage: (friend
+                                                              .profilePicture !=
+                                                          null &&
+                                                      friend.profilePicture!
+                                                          .isNotEmpty)
+                                                  ? NetworkImage(ImageUtil()
+                                                      .getFullImageUrl(friend
+                                                          .profilePicture!))
+                                                  : const AssetImage(
+                                                          'assets/images/default_profile.png')
+                                                      as ImageProvider,
                                             ),
                                             const SizedBox(width: 12),
                                             Expanded(
-                                              child: Text('Share this recipe with ${friend.fullName}?'),
+                                              child: Text(
+                                                  'Share this recipe with ${friend.fullName}?'),
                                             ),
                                           ],
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(ctx, false),
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, false),
                                             child: const Text('Cancel'),
                                           ),
                                           TextButton(
-                                            onPressed: () => Navigator.pop(ctx, true),
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, true),
                                             child: const Text('Share'),
                                           ),
                                         ],
@@ -281,8 +295,10 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                                     );
 
                                     if (confirmed == true) {
-                                      Navigator.pop(context); // Close the bottom sheet
-                                      await _shareRecipe(parentContext, friend.id);
+                                      Navigator.pop(
+                                          context); // Close the bottom sheet
+                                      await _shareRecipe(
+                                          parentContext, friend.id);
                                     }
                                   },
                                 );
@@ -303,12 +319,32 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
   Future<void> _shareRecipe(BuildContext context, String friendId) async {
     final cookbookViewModel =
         Provider.of<CookbookViewModel>(context, listen: false);
+    final notificationsViewModel =
+        Provider.of<NotificationsViewModel>(context, listen: false);
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+
     try {
       await cookbookViewModel.shareRecipeWithFriend(
         cookbookId: widget.cookbookId,
         recipeId: _recipe.id,
         friendId: friendId,
       );
+
+      // Add notification for sharing
+      await notificationsViewModel.addNotification(
+        ShareNotification(
+          id: await notificationsViewModel.generateUniqueNotificationId(),
+          title:
+              '${userViewModel.user?.fullName ?? "Someone"} shared a recipe with you',
+          body:
+              '${userViewModel.user?.fullName ?? "Someone"} is now sharing "${_recipe.title}" with you.',
+          scheduledTime: DateTime.now(),
+          friendName: userViewModel.user?.fullName ?? "",
+          recipeName: _recipe.title,
+          userId: friendId,
+        ),
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe shared successfully!')),
       );
