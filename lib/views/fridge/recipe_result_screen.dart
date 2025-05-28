@@ -105,28 +105,28 @@ class _RecipeResultScreenState extends State<RecipeResultScreen> {
       preferences: null,
     );
 
-    Navigator.of(context, rootNavigator: true).pop();
-
-    // Update the image from the viewmodel
-    setState(() {
-      _currentImageUrl = recipeViewModel.imageUrl;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Recipe image regenerated!'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            setState(() {
-              _currentImageUrl = previousImageUrl;
-              recipeViewModel.imageUrl = previousImageUrl;
-            });
-          },
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      // Update the image from the viewmodel
+      setState(() {
+        _currentImageUrl = recipeViewModel.imageUrl;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Recipe image regenerated!'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              setState(() {
+                _currentImageUrl = previousImageUrl;
+                recipeViewModel.imageUrl = previousImageUrl;
+              });
+            },
+          ),
+          duration: const Duration(seconds: 6),
         ),
-        duration: const Duration(seconds: 6),
-      ),
-    );
+      );
+    }
   }
 
   // Save the recipe to the cookbook
@@ -170,7 +170,7 @@ class _RecipeResultScreenState extends State<RecipeResultScreen> {
       imageURL: newRecipe.imageURL,
       rating: newRecipe.rating,
       source: newRecipe.source,
-      raw: newRecipe.instructions.join('\n'),      
+      raw: newRecipe.instructions.join('\n'),
     );
 
     // Show a confirmation message

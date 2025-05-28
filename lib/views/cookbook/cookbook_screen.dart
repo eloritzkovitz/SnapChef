@@ -104,11 +104,13 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                   Provider.of<UserViewModel>(context, listen: false).user;
               await Provider.of<CookbookViewModel>(context, listen: false)
                   .fetchSharedRecipes(user?.cookbookId ?? '');
-              Navigator.push(
+              if (context.mounted) {
+                Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context) => const SharedRecipesScreen()),
               );
+              }
             },
           ),
         ],

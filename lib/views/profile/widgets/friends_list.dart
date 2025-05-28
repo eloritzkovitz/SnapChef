@@ -203,22 +203,26 @@ class _FriendsListState extends State<FriendsList> {
                                         ],
                                       ),
                                     );
-                                    if (confirmed == true) {
+                                    if (confirmed == true && context.mounted) {
                                       try {
                                         await Provider.of<UserViewModel>(context,
                                                 listen: false)
                                             .removeFriend(friend.id);
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                               content: Text(
                                                   '${friend.fullName} removed from friends.')),
                                         );
+                                        }
                                       } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                               content:
                                                   Text('Failed to remove friend: $e')),
                                         );
+                                        }
                                       }
                                     }
                                   }

@@ -143,10 +143,12 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     setState(() => _isSaving = false);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe added!')),
       );
-      Navigator.pop(context);
+      }
+      if (context.mounted) Navigator.pop(context);
     }
   }
 

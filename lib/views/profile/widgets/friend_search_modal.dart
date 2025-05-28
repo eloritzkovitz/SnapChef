@@ -104,10 +104,14 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       if (message == null || message.isEmpty) {
         message = 'Friend request sent!';
       }
-      // After sending, refresh all friend requests and update results
-      await Provider.of<FriendViewModel>(context, listen: false)
-          .getAllFriendRequests(currentUserId);
-      await _search(context);
+      if (context.mounted) {
+        // After sending, refresh all friend requests and update results
+        await Provider.of<FriendViewModel>(context, listen: false)
+            .getAllFriendRequests(currentUserId);
+      }
+      if (context.mounted) {
+        await _search(context);
+      }
     } catch (e) {
       message = 'Failed to send friend request: ${e.toString()}';
     } finally {
@@ -119,9 +123,11 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       if (widget.onShowSnackBar != null) {
         widget.onShowSnackBar!(message!);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message!)),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message!)),
+          );
+        }
       }
     }
   }

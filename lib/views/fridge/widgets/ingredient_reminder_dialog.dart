@@ -117,7 +117,8 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
               primary: primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ),
+        dialogTheme: DialogThemeData(backgroundColor: Colors.white),
       ),
       child: AlertDialog(
         backgroundColor: Colors.white,
@@ -232,21 +233,25 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                   ),
                 );
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Notification scheduled for ${widget.ingredient.name} at ${alertDateTime.toLocal()}',
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Notification scheduled for ${widget.ingredient.name} at ${alertDateTime.toLocal()}',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
 
-                Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Invalid date or time format.'),
-                  ),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Invalid date or time format.'),
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Set Reminder'),

@@ -144,9 +144,9 @@ class UserViewModel extends ChangeNotifier {
       await _userService.deleteUser();
       _user = null;
       notifyListeners();
-      Navigator.pushReplacementNamed(context, '/login');
+      if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
-      UIUtil.showError(context, e.toString());
+      if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
       _setLoading(false);
     }

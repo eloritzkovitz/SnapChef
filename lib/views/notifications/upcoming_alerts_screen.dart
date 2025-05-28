@@ -34,9 +34,11 @@ class UpcomingAlertsScreen extends StatelessWidget {
             }
 
             // Only show IngredientReminder for the current user
-            final ingredientReminders = viewModel.notifications.where((n) =>
-                n is IngredientReminder &&
-                (userId == null || (n).recipientId == userId)).toList();
+            final ingredientReminders = viewModel.notifications
+                .where((n) =>
+                    n is IngredientReminder &&
+                    (userId == null || (n).recipientId == userId))
+                .toList();
 
             return ValueListenableBuilder<ReminderType?>(
               valueListenable: filterType,
@@ -336,8 +338,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                       onPressed: () async {
                         final TimeOfDay? picked = await showTimePicker(
                           context: context,
-                          initialTime:
-                              TimeOfDay.fromDateTime(selectedDateTime),
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
                           builder: (context, child) {
                             return Theme(
                               data: Theme.of(context).copyWith(
@@ -387,7 +388,8 @@ class UpcomingAlertsScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     try {
-                      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+                      final userViewModel =
+                          Provider.of<UserViewModel>(context, listen: false);
                       final updatedNotification = IngredientReminder(
                         id: notification.id,
                         ingredientName: notification is IngredientReminder
@@ -401,19 +403,22 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         type: notification is IngredientReminder
                             ? notification.type
                             : ReminderType.expiry,
-                        recipientId: userViewModel.user?.id ?? '', // Ensure recipientId is set
+                        recipientId: userViewModel.user?.id ??
+                            '', // Ensure recipientId is set
                       );
 
                       await viewModel.editNotification(
                           notification.id, updatedNotification);
 
-                      Navigator.pop(context);
+                      if (context.mounted) Navigator.pop(context);
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Invalid date or time format.'),
-                        ),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Invalid date or time format.'),
+                          ),
+                        );
+                      }
                     }
                   },
                   child: const Text('Save'),

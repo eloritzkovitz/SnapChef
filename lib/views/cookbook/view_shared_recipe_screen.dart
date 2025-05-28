@@ -115,10 +115,12 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
     if (confirm != true) return;
 
     try {
-      await Provider.of<CookbookViewModel>(context, listen: false)
-          .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
-              isSharedByMe: widget.isSharedByMe);
-      if (mounted) {
+      if (context.mounted) {
+        await Provider.of<CookbookViewModel>(context, listen: false)
+            .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
+                isSharedByMe: widget.isSharedByMe);
+      }
+      if (context.mounted) {
         Navigator.of(context).pop(true); // Go back after removal
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,7 +131,7 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to remove shared recipe')),
         );

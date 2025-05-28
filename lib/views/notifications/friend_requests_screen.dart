@@ -53,8 +53,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           // Only show requests with status 'pending' and not sent by current user
           final requests = (snapshot.data ?? [])
               .where((req) =>
-                  req.status == 'pending' &&
-                  req.from.id != currentUser?.id)
+                  req.status == 'pending' && req.from.id != currentUser?.id)
               .toList();
           if (requests.isEmpty) {
             return const Center(child: Text('No friend requests.'));
@@ -87,12 +86,16 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                 listen: false)
                             .respondToRequest(req.id, true, req.to);
                         // Add notification for new friendship (to current user)
-                        final notificationsViewModel = Provider.of<NotificationsViewModel>(context, listen: false);
+                        final notificationsViewModel =
+                            Provider.of<NotificationsViewModel>(context,
+                                listen: false);
                         await notificationsViewModel.addNotification(
                           FriendNotification(
-                            id: await notificationsViewModel.generateUniqueNotificationId(),
+                            id: await notificationsViewModel
+                                .generateUniqueNotificationId(),
                             title: 'You are now friends with ${user.fullName}',
-                            body: 'You and ${user.fullName} can now share recipes!',
+                            body:
+                                'You and ${user.fullName} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: user.fullName,
                             userId: currentUser?.id ?? '',
@@ -101,18 +104,23 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         // Add notification for the other user (the one who sent the request)
                         await notificationsViewModel.addNotification(
                           FriendNotification(
-                            id: await notificationsViewModel.generateUniqueNotificationId(),
-                            title: 'You are now friends with ${currentUser?.fullName ?? "your friend"}',
-                            body: 'You and ${currentUser?.fullName ?? "your friend"} can now share recipes!',
+                            id: await notificationsViewModel
+                                .generateUniqueNotificationId(),
+                            title:
+                                'You are now friends with ${currentUser?.fullName ?? "your friend"}',
+                            body:
+                                'You and ${currentUser?.fullName ?? "your friend"} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: currentUser?.fullName ?? "",
                             userId: user.id,
                           ),
                         );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Friend request accepted')),
-                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Friend request accepted')),
+                          );
+                        }
                         _loadFriendRequests();
                       },
                     ),
@@ -122,10 +130,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         await Provider.of<FriendViewModel>(context,
                                 listen: false)
                             .respondToRequest(req.id, false, req.to);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Friend request declined')),
-                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Friend request declined')),
+                          );
+                        }
                         _loadFriendRequests();
                       },
                     ),

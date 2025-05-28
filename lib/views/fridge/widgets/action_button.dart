@@ -16,7 +16,7 @@ class ActionButton extends StatelessWidget {
 
   Future<void> _pickImage(BuildContext context, String endpoint) async {
     final image = await _imageService.pickImage(context);
-    if (image != null) {
+    if (image != null && context.mounted) {
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -28,17 +28,19 @@ class ActionButton extends StatelessWidget {
         if (endpoint == 'barcode') {
           // 1. Use ML Kit to scan barcode from the image
           final barcode = await scanBarcodeWithMLKit(image);
-          if (barcode != null && barcode.isNotEmpty) {            
+          if (barcode != null && barcode.isNotEmpty) {
             recognizedIngredients = await _imageService.processImage(
               image, // or dummyImage if needed
               endpoint,
               barcode: barcode,
             );
           } else {
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No barcode found in the image.')),
-            );
+            if (context.mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No barcode found in the image.')),
+              );
+            }
             return;
           }
         } else {
@@ -46,16 +48,19 @@ class ActionButton extends StatelessWidget {
               await _imageService.processImage(image, endpoint);
         }
 
-        Navigator.of(context).pop(); // Close loading
+        if (context.mounted) Navigator.of(context).pop(); // Close loading
 
-        if (recognizedIngredients.isNotEmpty) {
+        if (recognizedIngredients.isNotEmpty && context.mounted) {
           _showRecognitionResults(context, recognizedIngredients);
         } else {
-          _showNoIngredientsPopup(context);
+          if (context.mounted) _showNoIngredientsPopup(context);
         }
       } catch (e) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
       }
     }
   }

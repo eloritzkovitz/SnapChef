@@ -186,7 +186,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   : null,
                               preferences: preferences.toJson(),
                             );
-                            if (recipeViewModel.recipe.isNotEmpty) {
+                            if (recipeViewModel.recipe.isNotEmpty && context.mounted) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

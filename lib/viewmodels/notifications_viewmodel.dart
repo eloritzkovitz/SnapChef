@@ -55,7 +55,7 @@ class NotificationsViewModel extends ChangeNotifier {
     // Get the current user's id (recipient)
     String? userId;
     if (context != null) {
-      userId = Provider.of<UserViewModel>(context, listen: false).user?.id;
+      if (context.mounted) userId = Provider.of<UserViewModel>(context, listen: false).user?.id;
     }
 
     // Filter notifications for the current user (recipientId)

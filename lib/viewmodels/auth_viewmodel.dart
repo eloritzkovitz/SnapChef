@@ -36,13 +36,13 @@ class AuthViewModel extends ChangeNotifier {
           await fetchUserProfile();
 
           // Navigate to the main screen
-          Navigator.pushReplacementNamed(context, '/main');
+          if (context.mounted) Navigator.pushReplacementNamed(context, '/main');
         } else {
           throw Exception('Failed to retrieve Google ID token');
         }
       }
     } catch (e) {
-      UIUtil.showError(context, 'Google Sign-In failed: $e');
+      if (context.mounted) UIUtil.showError(context, 'Google Sign-In failed: $e');
     } finally {
       _setLoading(false);
     }
@@ -64,9 +64,9 @@ class AuthViewModel extends ChangeNotifier {
       await fetchUserProfile();
 
       // If login is successful, navigate to the main screen
-      Navigator.pushReplacementNamed(context, '/main');
+      if (context.mounted) Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      UIUtil.showError(context, e.toString());
+      if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
       _setLoading(false);
     }
@@ -80,18 +80,20 @@ class AuthViewModel extends ChangeNotifier {
       await _authService.signup(firstName, lastName, email, password);
 
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('User created successfully!'),
           duration: Duration(seconds: 3),
         ),
       );
+      }
 
       // Navigate to the login screen
-      Navigator.pushReplacementNamed(context, '/login');
+      if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       // Show error message
-      UIUtil.showError(context, e.toString());
+      if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
       _setLoading(false);
     }
@@ -102,9 +104,9 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _authService.logout();     
       notifyListeners();
-      Navigator.pushReplacementNamed(context, '/login');
+      if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
-      UIUtil.showError(context, e.toString());
+      if (context.mounted) UIUtil.showError(context, e.toString());
     }
   }
   
