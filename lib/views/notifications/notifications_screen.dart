@@ -68,32 +68,70 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             }
             return ListView.separated(
               itemCount: notifications.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final notif = notifications[index];
                 IconData icon;
                 Color color;
-                String subtitle = '';
                 if (notif is FriendNotification) {
                   icon = Icons.person_add_alt_1;
                   color = Colors.green;
-                  subtitle = notif.friendName;
                 } else if (notif is ShareNotification) {
                   icon = Icons.restaurant_menu;
                   color = Colors.orange;
-                  subtitle = '${notif.friendName} shared "${notif.recipeName}"';
                 } else {
                   icon = Icons.notifications;
                   color = Colors.blueGrey;
-                  subtitle = '';
                 }
-                return ListTile(
-                  leading: Icon(icon, color: color),
-                  title: Text(notif.title),
-                  subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
-                  trailing: Text(
-                    '${notif.scheduledTime.hour.toString().padLeft(2, '0')}:${notif.scheduledTime.minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                return Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, color: color, size: 32),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                notif.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              if (notif.body.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(
+                                    notif.body,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${notif.scheduledTime.hour.toString().padLeft(2, '0')}:${notif.scheduledTime.minute.toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
