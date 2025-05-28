@@ -59,7 +59,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         padding: const EdgeInsets.all(16),
         child: Consumer<NotificationsViewModel>(
           builder: (context, notificationsViewModel, child) {
-            final notifications = notificationsViewModel.notifications;
+            // Sort notifications by scheduledTime descending (most recent first)
+            final notifications = List.of(notificationsViewModel.notifications)
+              ..sort((a, b) => b.scheduledTime.compareTo(a.scheduledTime));
+
             if (notificationsViewModel.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
