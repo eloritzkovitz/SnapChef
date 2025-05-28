@@ -5,6 +5,7 @@ import '../../viewmodels/friend_viewmodel.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/notifications_viewmodel.dart';
 import '../../models/notifications/friend_notification.dart';
+import '../../viewmodels/user_viewmodel.dart'; // <-- Add this import
 
 class FriendRequestsScreen extends StatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -31,6 +32,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = Provider.of<UserViewModel>(context, listen: false).user;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friend Requests',
@@ -48,9 +50,11 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           if (snapshot.hasError) {
             return const Center(child: Text('Error loading friend requests'));
           }
-          // Only show requests with status 'pending'
+          // Only show requests with status 'pending' and not sent by current user
           final requests = (snapshot.data ?? [])
-              .where((req) => req.status == 'pending')
+              .where((req) =>
+                  req.status == 'pending' &&
+                  req.from.id != currentUser?.id)
               .toList();
           if (requests.isEmpty) {
             return const Center(child: Text('No friend requests.'));
@@ -82,7 +86,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         await Provider.of<FriendViewModel>(context,
                                 listen: false)
                             .respondToRequest(req.id, true, req.to);
-                        // Add notification for new friendship
+                        // Add notification for new friendship (to current user)
                         final notificationsViewModel = Provider.of<NotificationsViewModel>(context, listen: false);
                         await notificationsViewModel.addNotification(
                           FriendNotification(
@@ -91,6 +95,18 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                             body: 'You and ${user.fullName} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: user.fullName,
+                            userId: currentUser?.id ?? '',
+                          ),
+                        );
+                        // Add notification for the other user (the one who sent the request)
+                        await notificationsViewModel.addNotification(
+                          FriendNotification(
+                            id: await notificationsViewModel.generateUniqueNotificationId(),
+                            title: 'You are now friends with ${currentUser?.fullName ?? "your friend"}',
+                            body: 'You and ${currentUser?.fullName ?? "your friend"} can now share recipes!',
+                            scheduledTime: DateTime.now(),
+                            friendName: currentUser?.fullName ?? "",
+                            userId: user.id,
                           ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
