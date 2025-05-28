@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/theme/colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,6 +14,8 @@ class UpcomingAlertsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filterType = ValueNotifier<ReminderType?>(null);
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final userId = userViewModel.user?.id;
 
     return ChangeNotifierProvider(
       create: (_) => NotificationsViewModel(),
@@ -30,13 +33,18 @@ class UpcomingAlertsScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // Only show IngredientReminder for the current user
+            final ingredientReminders = viewModel.notifications.where((n) =>
+                n is IngredientReminder &&
+                (userId == null || (n).recipientId == userId)).toList();
+
             return ValueListenableBuilder<ReminderType?>(
               valueListenable: filterType,
               builder: (context, selectedType, _) {
                 // Filter notifications based on dropdown
                 final filtered = selectedType == null
-                    ? viewModel.notifications
-                    : viewModel.notifications
+                    ? ingredientReminders
+                    : ingredientReminders
                         .where((n) =>
                             n is IngredientReminder && n.type == selectedType)
                         .toList();
@@ -379,6 +387,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     try {
+                      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
                       final updatedNotification = IngredientReminder(
                         id: notification.id,
                         ingredientName: notification is IngredientReminder
@@ -392,6 +401,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         type: notification is IngredientReminder
                             ? notification.type
                             : ReminderType.expiry,
+                        recipientId: userViewModel.user?.id ?? '', // Ensure recipientId is set
                       );
 
                       await viewModel.editNotification(

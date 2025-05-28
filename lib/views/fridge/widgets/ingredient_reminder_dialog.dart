@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import '../../../models/ingredient.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 import 'package:snapchef/theme/colors.dart';
 
 class IngredientReminderDialog extends StatefulWidget {
@@ -211,6 +212,8 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
 
                 final viewModel =
                     Provider.of<NotificationsViewModel>(context, listen: false);
+                final userViewModel =
+                    Provider.of<UserViewModel>(context, listen: false);
                 final String newId =
                     await viewModel.generateUniqueNotificationId();
                 await viewModel.addNotification(
@@ -225,6 +228,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                         : '${widget.ingredient.name} is on your grocery list!',
                     scheduledTime: alertDateTime,
                     type: widget.type,
+                    recipientId: userViewModel.user?.id ?? '',
                   ),
                 );
 
