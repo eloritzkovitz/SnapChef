@@ -86,6 +86,57 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
     );
   }
 
+  // Remove the shared recipe
+  Future<void> _removeSharedRecipe(BuildContext context) async {
+    final user = Provider.of<UserViewModel>(context, listen: false);
+    final String cookbookId = user.cookbookId ?? '';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+            widget.isSharedByMe ? 'Stop Sharing?' : 'Remove Shared Recipe?'),
+        content: Text(widget.isSharedByMe
+            ? 'Do you want to stop sharing this recipe with this user?'
+            : 'Do you want to remove this shared recipe from your list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await Provider.of<CookbookViewModel>(context, listen: false)
+          .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
+              isSharedByMe: widget.isSharedByMe);
+      if (mounted) {
+        Navigator.of(context).pop(true); // Go back after removal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.isSharedByMe
+                ? 'Stopped sharing recipe.'
+                : 'Removed shared recipe.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove shared recipe')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final recipe = widget.sharedRecipe.recipe;
@@ -101,10 +152,30 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmark_add),
-            tooltip: 'Save Recipe to Cookbook',
-            onPressed: () => _saveRecipeToCookbook(context),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'add') {
+                _saveRecipeToCookbook(context);
+              } else if (value == 'remove') {
+                await _removeSharedRecipe(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'add',
+                child: ListTile(
+                  leading: Icon(Icons.bookmark_add),
+                  title: Text('Add to Cookbook'),
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'remove',
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline),
+                  title: Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

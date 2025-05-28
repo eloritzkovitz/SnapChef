@@ -165,6 +165,21 @@ class CookbookService {
     }
   }
 
+  // Delete a shared recipe
+  Future<void> deleteSharedRecipe(String cookbookId, String sharedRecipeId) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/shared/$sharedRecipeId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove shared recipe');
+    }
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteCookbookRecipe(String cookbookId, String recipeId) async {
     final token = await TokenUtil.getAccessToken();
@@ -182,5 +197,5 @@ class CookbookService {
       throw Exception(
           'Failed to delete cookbook recipe: ${response.statusCode}');
     }
-  }
+  }  
 }

@@ -305,6 +305,25 @@ class CookbookViewModel extends ChangeNotifier {
     );
   }
 
+  // Remove a shared recipe
+  Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
+      {required bool isSharedByMe}) async {
+    try {
+      // Call the service to delete the shared recipe
+      await _cookbookService.deleteSharedRecipe(cookbookId, sharedRecipeId);
+
+      // Remove from the correct list
+      if (isSharedByMe) {
+        sharedByMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
+      } else {
+        sharedWithMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
+      }
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
@@ -319,7 +338,7 @@ class CookbookViewModel extends ChangeNotifier {
       log('Error deleting recipe: $e');
       return false;
     }
-  }
+  }  
 
   // Get a list of all categories
   List<String> getCategories() {
