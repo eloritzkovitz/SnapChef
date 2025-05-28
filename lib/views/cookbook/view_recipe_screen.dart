@@ -139,7 +139,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
     }
 
     if (context.mounted) {
-      Navigator.of(context, rootNavigator: true).pop(); // Hide loading    
+      Navigator.of(context, rootNavigator: true).pop(); // Hide loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Recipe image regenerated!'),
@@ -173,6 +173,35 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
           duration: const Duration(seconds: 6),
         ),
       );
+    }
+  }
+
+  // Toggle favorite status for the recipe
+  Future<void> _toggleFavorite(BuildContext context) async {
+    final cookbookViewModel = Provider.of<CookbookViewModel>(context, listen: false);
+    final success = await cookbookViewModel.toggleRecipeFavoriteStatus(
+      widget.cookbookId,
+      _recipe.id,
+    );
+    if (success) {
+      setState(() {
+        _recipe = _recipe.copyWith(isFavorite: !_recipe.isFavorite);
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_recipe.isFavorite
+                ? 'Recipe added to favorites'
+                : 'Recipe removed from favorites'),
+          ),
+        );
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to toggle favorite')),
+        );
+      }
     }
   }
 
@@ -404,7 +433,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
         await cookbookViewModel.deleteRecipe(widget.cookbookId, _recipe.id);
 
     if (context.mounted) {
-      if (success ) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recipe deleted successfully')),
         );
@@ -437,6 +466,9 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
               if (value == 'regenerate_image') {
                 _regenerateRecipeImage(context);
               }
+              if (value == 'toggle_favorite') {
+                _toggleFavorite(context);
+              }
               if (value == 'share') {
                 _showShareWithFriendDialog(context);
               }
@@ -462,6 +494,21 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                     Icon(Icons.image, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Regenerate Image'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'toggle_favorite',
+                child: Row(
+                  children: [
+                    Icon(
+                      _recipe.isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: Colors.black,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(_recipe.isFavorite ? 'Unfavorite' : 'Favorite'),
                   ],
                 ),
               ),

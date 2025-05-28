@@ -109,7 +109,7 @@ class CookbookService {
   Future<String> regenerateRecipeImage(
       String cookbookId, String recipeId, Map<String, dynamic> payload) async {
     final token = await TokenUtil.getAccessToken();
-    final response = await http.post(
+    final response = await http.patch(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId/image'),
       headers: {
         'Content-Type': 'application/json',
@@ -123,6 +123,26 @@ class CookbookService {
       return data['imageUrl'] ?? '';
     } else {
       throw Exception('Failed to regenerate recipe image: ${response.body}');
+    }
+  }
+
+  // Toggle the favorite status of a recipe
+  Future<bool> toggleRecipeFavoriteStatus(
+      String cookbookId, String recipeId) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/recipes/$recipeId/favorite'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception(
+          'Failed to toggle favorite status: ${response.statusCode}');
     }
   }
 

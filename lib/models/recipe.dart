@@ -13,8 +13,9 @@ class Recipe {
   final int cookingTime;
   final List<Ingredient> ingredients;
   final List<String> instructions;
-  final String? imageURL;
+  final String? imageURL;  
   final double? rating;
+  final bool isFavorite;
   final RecipeSource source;
 
   Recipe({
@@ -30,6 +31,7 @@ class Recipe {
     required this.instructions,
     this.imageURL,
     this.rating,
+    this.isFavorite = false,
     required this.source,
   });
 
@@ -51,6 +53,7 @@ class Recipe {
       imageURL: json['imageURL'],
       rating:
           json['rating'] != null ? (json['rating'] as num).toDouble() : null,
+      isFavorite: json['isFavorite'] ?? false,
       source: json['source'] == 'ai'
           ? RecipeSource.ai
           : json['source'] == 'shared'
@@ -75,6 +78,7 @@ class Recipe {
       'instructions': instructions,
       'imageURL': imageURL,
       'rating': rating,
+      'isFavorite': false,
       'source': source == RecipeSource.ai
           ? 'ai'
           : source == RecipeSource.shared
@@ -97,6 +101,7 @@ class Recipe {
     List<String>? instructions,
     String? imageURL,
     double? rating,
+    bool? isFavorite,
     RecipeSource? source,
   }) {
     return Recipe(
@@ -112,6 +117,7 @@ class Recipe {
       instructions: instructions ?? this.instructions,
       imageURL: imageURL ?? this.imageURL,
       rating: rating ?? this.rating,
+      isFavorite: isFavorite ?? false,
       source: source ?? this.source,
     );
   }
