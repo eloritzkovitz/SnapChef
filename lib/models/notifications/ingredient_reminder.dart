@@ -13,6 +13,7 @@ class IngredientReminder implements AppNotification {
   @override
   final DateTime scheduledTime;
   final ReminderType type;
+  final String recipientId;
 
   IngredientReminder({
     required this.id,
@@ -21,6 +22,7 @@ class IngredientReminder implements AppNotification {
     required this.body,
     required this.scheduledTime,
     required this.type,
+    required this.recipientId,
   });
 
   @override
@@ -31,6 +33,7 @@ class IngredientReminder implements AppNotification {
         'body': body,
         'scheduledTime': scheduledTime.toIso8601String(),
         'type': type.name,
+        'recipientId': recipientId,
       };
 
   static IngredientReminder fromJson(Map<String, dynamic> json) {
@@ -56,6 +59,7 @@ class IngredientReminder implements AppNotification {
       body: json['body'] ?? '',
       scheduledTime: DateTime.parse(rawScheduledTime),
       type: ReminderType.values.firstWhere((e) => e.name == rawType),
+      recipientId: json['recipientId'] ?? '',
     );
   }
 }

@@ -100,16 +100,17 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             icon: const Icon(Icons.people_alt_outlined, color: Colors.black),
             tooltip: 'Shared Recipes',
             onPressed: () async {
-              final userId =
-                  Provider.of<UserViewModel>(context, listen: false).user?.id ??
-                      '';
+              final user =
+                  Provider.of<UserViewModel>(context, listen: false).user;
               await Provider.of<CookbookViewModel>(context, listen: false)
-                  .fetchSharedRecipes(userId);
-              Navigator.push(
+                  .fetchSharedRecipes(user?.cookbookId ?? '');
+              if (context.mounted) {
+                Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context) => const SharedRecipesScreen()),
               );
+              }
             },
           ),
         ],

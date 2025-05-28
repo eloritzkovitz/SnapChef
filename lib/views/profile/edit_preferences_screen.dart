@@ -17,7 +17,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
 
   // These will be initialized in initState
   List<String> _allergies = [];
-  Map<String, bool> _dietaryPreferences = {};  
+  Map<String, bool> _dietaryPreferences = {};
 
   bool _loading = true;
 
@@ -212,14 +212,22 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                             allergies: _allergies,
                             dietaryPreferences: backendDietaryPreferences,
                           );
-                          Navigator.pop(context); // Close the loading indicator
-                          Navigator.pop(context); // Go back
+                          if (context.mounted) {
+                            Navigator.pop(
+                                context); // Close the loading indicator
+                          }
+                          if (context.mounted) {
+                            Navigator.pop(context); // Go back
+                          }
                         } catch (e) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Failed to update preferences: $e')),
-                          );
+                          if (context.mounted) Navigator.pop(context);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text('Failed to update preferences: $e')),
+                            );
+                          }
                         }
                       }
                     },

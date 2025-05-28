@@ -27,8 +27,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    
-      // Initialize controllers with current user data
+
+    // Initialize controllers with current user data
     _firstNameController =
         TextEditingController(text: userViewModel.user?.firstName ?? '');
     _lastNameController =
@@ -208,7 +208,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     if (_passwordController.text == placeholder) {
                       _passwordController.clear();
                     }
-                  },                  
+                  },
                   // Validate the password
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -254,15 +254,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             profilePicture: _selectedImage,
                           );
 
-                          Navigator.pop(context); // Close the loading indicator
-                          Navigator.pop(
+                          if (context.mounted) Navigator.pop(context); // Close the loading indicator
+                          if (context.mounted) {
+                            Navigator.pop(
                               context); // Go back to the previous screen after successful update
+                          }
                         } catch (e) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (context.mounted) Navigator.pop(context);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text('Failed to update profile: $e')),
                           );
+                          }
                         }
                       }
                     },
@@ -309,7 +313,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       );
 
-                      if (shouldDelete == true) {
+                      if (shouldDelete == true && context.mounted) {
                         showDialog(
                           context: context,
                           barrierDismissible: false,
@@ -319,16 +323,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         );
 
                         try {
-                          await userViewModel.deleteUser(context);
-                          Navigator.pop(context); // Close the loading indicator
-                          Navigator.pushReplacementNamed(
-                              context, '/login'); // Redirect to login screen
+                          if (context.mounted) {
+                            await userViewModel.deleteUser(context);
+                          }
+                          if (context.mounted) {
+                            Navigator.pop(
+                                context); // Close the loading indicator
+                          }
+                          if (context.mounted) {
+                            Navigator.pushReplacementNamed(
+                                context, '/login'); // Redirect to login screen
+                          }
                         } catch (e) {
-                          Navigator.pop(context); // Close the loading indicator
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Failed to delete account: $e')),
-                          );
+                          if (context.mounted) {
+                            Navigator.pop(
+                                context); // Close the loading indicator
+                          }
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text('Failed to delete account: $e')),
+                            );
+                          }
                         }
                       }
                     },

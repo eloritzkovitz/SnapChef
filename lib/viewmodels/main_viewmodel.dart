@@ -34,6 +34,6 @@ class MainViewModel extends ChangeNotifier {
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // Clear stored tokens
-    Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
+    if (context.mounted) Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
   }
 }

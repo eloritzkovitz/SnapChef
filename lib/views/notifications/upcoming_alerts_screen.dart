@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/theme/colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,6 +14,8 @@ class UpcomingAlertsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filterType = ValueNotifier<ReminderType?>(null);
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final userId = userViewModel.user?.id;
 
     return ChangeNotifierProvider(
       create: (_) => NotificationsViewModel(),
@@ -30,13 +33,20 @@ class UpcomingAlertsScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // Only show IngredientReminder for the current user
+            final ingredientReminders = viewModel.notifications
+                .where((n) =>
+                    n is IngredientReminder &&
+                    (userId == null || (n).recipientId == userId))
+                .toList();
+
             return ValueListenableBuilder<ReminderType?>(
               valueListenable: filterType,
               builder: (context, selectedType, _) {
                 // Filter notifications based on dropdown
                 final filtered = selectedType == null
-                    ? viewModel.notifications
-                    : viewModel.notifications
+                    ? ingredientReminders
+                    : ingredientReminders
                         .where((n) =>
                             n is IngredientReminder && n.type == selectedType)
                         .toList();
@@ -196,12 +206,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            dialogBackgroundColor: Colors.white,
-            textTheme: Theme.of(context).textTheme.apply(
-                  bodyColor: Colors.black,
-                  displayColor: Colors.black,
-                ),
+          data: Theme.of(context).copyWith(            
             colorScheme: Theme.of(context).colorScheme.copyWith(
                   primary: primaryColor,
                   onPrimary: Colors.white,
@@ -227,7 +232,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -328,8 +333,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
                       onPressed: () async {
                         final TimeOfDay? picked = await showTimePicker(
                           context: context,
-                          initialTime:
-                              TimeOfDay.fromDateTime(selectedDateTime),
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
                           builder: (context, child) {
                             return Theme(
                               data: Theme.of(context).copyWith(
@@ -379,6 +383,8 @@ class UpcomingAlertsScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     try {
+                      final userViewModel =
+                          Provider.of<UserViewModel>(context, listen: false);
                       final updatedNotification = IngredientReminder(
                         id: notification.id,
                         ingredientName: notification is IngredientReminder
@@ -392,18 +398,22 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         type: notification is IngredientReminder
                             ? notification.type
                             : ReminderType.expiry,
+                        recipientId: userViewModel.user?.id ??
+                            '', // Ensure recipientId is set
                       );
 
                       await viewModel.editNotification(
                           notification.id, updatedNotification);
 
-                      Navigator.pop(context);
+                      if (context.mounted) Navigator.pop(context);
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Invalid date or time format.'),
-                        ),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Invalid date or time format.'),
+                          ),
+                        );
+                      }
                     }
                   },
                   child: const Text('Save'),

@@ -160,7 +160,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                           imageUrl,
                                           ingredient['quantity'],
                                         );
-                                        if (success) {
+                                        if (success && context.mounted) {
                                           setState(() {
                                             localIngredients.remove(name);
                                           });
@@ -174,12 +174,14 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                             Navigator.pop(context);
                                           }
                                         } else {
-                                          ScaffoldMessenger.of(context)
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             SnackBar(
                                                 content: Text(
                                                     'Failed to add $name to fridge')),
                                           );
+                                          }
                                         }
                                       },
                                     ),

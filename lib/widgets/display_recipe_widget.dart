@@ -92,7 +92,8 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
                         allowHalfRating: true,
                         itemCount: 5,
                         itemSize: 32.0,
-                        itemPadding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        itemPadding:
+                            const EdgeInsets.symmetric(horizontal: 2.0),
                         itemBuilder: (context, _) => const Icon(
                           Icons.star,
                           color: primaryColor,
@@ -103,7 +104,8 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
                             _localRating = newRating;
                           });
                           if (widget.cookbookId != null) {
-                            await Provider.of<CookbookViewModel>(context, listen: false)
+                            await Provider.of<CookbookViewModel>(context,
+                                    listen: false)
                                 .updateRecipe(
                               cookbookId: widget.cookbookId!,
                               recipeId: recipeObject.id,
@@ -119,9 +121,12 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
                               imageURL: recipeObject.imageURL,
                               rating: newRating,
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Rating updated!')),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Rating updated!')),
+                              );
+                            }
                           }
                         },
                       ),

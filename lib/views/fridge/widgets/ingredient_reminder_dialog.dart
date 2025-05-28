@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import '../../../models/ingredient.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 import 'package:snapchef/theme/colors.dart';
 
 class IngredientReminderDialog extends StatefulWidget {
@@ -116,7 +117,8 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
               primary: primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ),
+        dialogTheme: DialogThemeData(backgroundColor: Colors.white),
       ),
       child: AlertDialog(
         backgroundColor: Colors.white,
@@ -139,7 +141,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
                     image: NetworkImage(
@@ -211,6 +213,8 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
 
                 final viewModel =
                     Provider.of<NotificationsViewModel>(context, listen: false);
+                final userViewModel =
+                    Provider.of<UserViewModel>(context, listen: false);
                 final String newId =
                     await viewModel.generateUniqueNotificationId();
                 await viewModel.addNotification(
@@ -225,24 +229,29 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                         : '${widget.ingredient.name} is on your grocery list!',
                     scheduledTime: alertDateTime,
                     type: widget.type,
+                    recipientId: userViewModel.user?.id ?? '',
                   ),
                 );
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Notification scheduled for ${widget.ingredient.name} at ${alertDateTime.toLocal()}',
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Notification scheduled for ${widget.ingredient.name} at ${alertDateTime.toLocal()}',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
 
-                Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Invalid date or time format.'),
-                  ),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Invalid date or time format.'),
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Set Reminder'),

@@ -8,7 +8,8 @@ import '../services/cookbook_service.dart';
 class CookbookViewModel extends ChangeNotifier {
   final List<Recipe> _recipes = [];
   List<Recipe> filteredRecipes = [];
-  List<SharedRecipe> sharedRecipes = [];
+  List<SharedRecipe>? sharedWithMeRecipes = [];
+  List<SharedRecipe>? sharedByMeRecipes = [];
   final CookbookService _cookbookService = CookbookService();
 
   String _filter = '';
@@ -85,9 +86,11 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Fetch shared recipes
+  // Fetch recipes shared with the user
   Future<void> fetchSharedRecipes(String cookbookId) async {
-    sharedRecipes = await _cookbookService.fetchSharedRecipes(cookbookId);
+    final result = await _cookbookService.fetchSharedRecipes(cookbookId);
+    sharedWithMeRecipes = result['sharedWithMe'] ?? [];
+    sharedByMeRecipes = result['sharedByMe'] ?? [];
     notifyListeners();
   }
 
@@ -302,6 +305,25 @@ class CookbookViewModel extends ChangeNotifier {
     );
   }
 
+  // Remove a shared recipe
+  Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
+      {required bool isSharedByMe}) async {
+    try {
+      // Call the service to delete the shared recipe
+      await _cookbookService.deleteSharedRecipe(cookbookId, sharedRecipeId);
+
+      // Remove from the correct list
+      if (isSharedByMe) {
+        sharedByMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
+      } else {
+        sharedWithMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
+      }
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
@@ -316,7 +338,7 @@ class CookbookViewModel extends ChangeNotifier {
       log('Error deleting recipe: $e');
       return false;
     }
-  }
+  }  
 
   // Get a list of all categories
   List<String> getCategories() {

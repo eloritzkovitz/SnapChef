@@ -10,10 +10,12 @@ import '../../widgets/display_recipe_widget.dart';
 
 class ViewSharedRecipeScreen extends StatefulWidget {
   final SharedRecipe sharedRecipe;
+  final bool isSharedByMe;
 
   const ViewSharedRecipeScreen({
     super.key,
     required this.sharedRecipe,
+    this.isSharedByMe = false,
   });
 
   @override
@@ -29,13 +31,16 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   void initState() {
     super.initState();
     _currentImageUrl = widget.sharedRecipe.recipe.imageURL;
-    _fetchSharerName();
+    _fetchRelevantUser();
   }
 
-  Future<void> _fetchSharerName() async {
+  Future<void> _fetchRelevantUser() async {
     final userService = UserService();
+    final userId = widget.isSharedByMe
+        ? widget.sharedRecipe.toUser
+        : widget.sharedRecipe.fromUser;
     try {
-      final user = await userService.getUserProfile(widget.sharedRecipe.fromUser);
+      final user = await userService.getUserProfile(userId);
       setState(() {
         _sharedByName = '${user.firstName} ${user.lastName}'.trim();
         _sharedByProfilePic = user.profilePicture;
@@ -81,6 +86,59 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
     );
   }
 
+  // Remove the shared recipe
+  Future<void> _removeSharedRecipe(BuildContext context) async {
+    final user = Provider.of<UserViewModel>(context, listen: false);
+    final String cookbookId = user.cookbookId ?? '';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+            widget.isSharedByMe ? 'Stop Sharing?' : 'Remove Shared Recipe?'),
+        content: Text(widget.isSharedByMe
+            ? 'Do you want to stop sharing this recipe with this user?'
+            : 'Do you want to remove this shared recipe from your list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      if (context.mounted) {
+        await Provider.of<CookbookViewModel>(context, listen: false)
+            .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
+                isSharedByMe: widget.isSharedByMe);
+      }
+      if (context.mounted) {
+        Navigator.of(context).pop(true); // Go back after removal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.isSharedByMe
+                ? 'Stopped sharing recipe.'
+                : 'Removed shared recipe.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove shared recipe')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final recipe = widget.sharedRecipe.recipe;
@@ -96,10 +154,30 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmark_add),
-            tooltip: 'Save Recipe to Cookbook',
-            onPressed: () => _saveRecipeToCookbook(context),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'add') {
+                _saveRecipeToCookbook(context);
+              } else if (value == 'remove') {
+                await _removeSharedRecipe(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'add',
+                child: ListTile(
+                  leading: Icon(Icons.bookmark_add),
+                  title: Text('Add to Cookbook'),
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'remove',
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline),
+                  title: Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -121,7 +199,7 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 2,
                   ),
                 ],
@@ -134,13 +212,19 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: (_sharedByProfilePic != null && _sharedByProfilePic!.isNotEmpty)
-                          ? NetworkImage(ImageUtil().getFullImageUrl(_sharedByProfilePic!))
-                          : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                      backgroundImage: (_sharedByProfilePic != null &&
+                              _sharedByProfilePic!.isNotEmpty)
+                          ? NetworkImage(
+                              ImageUtil().getFullImageUrl(_sharedByProfilePic!))
+                          : const AssetImage(
+                                  'assets/images/default_profile.png')
+                              as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Shared by: $sharedBy',
+                      widget.isSharedByMe
+                          ? 'Shared with: $sharedBy'
+                          : 'Shared by: $sharedBy',
                       style: const TextStyle(fontSize: 15, color: Colors.grey),
                     ),
                   ],

@@ -38,7 +38,8 @@ class CookbookService {
   }
 
   // Fetch shared recipes
-  Future<List<SharedRecipe>> fetchSharedRecipes(String cookbookId) async {
+  Future<Map<String, List<SharedRecipe>>> fetchSharedRecipes(
+      String cookbookId) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.get(
       Uri.parse('$baseUrl/api/cookbook/$cookbookId/shared'),
@@ -48,11 +49,15 @@ class CookbookService {
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      // Extract the sharedRecipes array from the response object
-      final sharedRecipesList = data['sharedRecipes'] as List<dynamic>;
-      return sharedRecipesList
-          .map((json) => SharedRecipe.fromJson(json))
-          .toList();
+      final sharedWithMeList = data['sharedWithMe'] as List<dynamic>;
+      final sharedByMeList = data['sharedByMe'] as List<dynamic>;
+      return {
+        'sharedWithMe': sharedWithMeList
+            .map((json) => SharedRecipe.fromJson(json))
+            .toList(),
+        'sharedByMe':
+            sharedByMeList.map((json) => SharedRecipe.fromJson(json)).toList(),
+      };
     } else {
       throw Exception('Failed to fetch shared recipes');
     }
@@ -160,6 +165,21 @@ class CookbookService {
     }
   }
 
+  // Delete a shared recipe
+  Future<void> deleteSharedRecipe(String cookbookId, String sharedRecipeId) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/cookbook/$cookbookId/shared/$sharedRecipeId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove shared recipe');
+    }
+  }
+
   // Delete a recipe from the cookbook
   Future<bool> deleteCookbookRecipe(String cookbookId, String recipeId) async {
     final token = await TokenUtil.getAccessToken();
@@ -177,5 +197,5 @@ class CookbookService {
       throw Exception(
           'Failed to delete cookbook recipe: ${response.statusCode}');
     }
-  }
+  }  
 }

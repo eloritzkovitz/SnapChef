@@ -28,7 +28,6 @@ class FriendViewModel extends ChangeNotifier {
     try {
       final allRequests = await _friendService
           .getFriendRequests(); // returns all requests involving the user
-          print('allRequests: ${allRequests.map((r) => 'from: ${r.from.id}, to: ${r.to}, status: ${r.status}').toList()}');
 
       // Requests you received (where you are the "to" and still pending)
       _pendingRequests = allRequests

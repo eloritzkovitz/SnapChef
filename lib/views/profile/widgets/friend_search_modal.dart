@@ -64,14 +64,15 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       _isLoading = true;
       _error = null;
     });
+    
+    // Exclude current user from results
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final currentUserId = userViewModel.user?.id;
+
     try {
       final users = await Provider.of<FriendViewModel>(context, listen: false)
           .searchUsers(_searchQuery);
-
-      // Exclude current user from results
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      final currentUserId = userViewModel.user?.id;
-
+      
       setState(() {
         _results = users.where((u) => u.id != currentUserId).toList();
       });
@@ -104,24 +105,30 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       if (message == null || message.isEmpty) {
         message = 'Friend request sent!';
       }
-      // After sending, refresh all friend requests and update results
-      await Provider.of<FriendViewModel>(context, listen: false)
-          .getAllFriendRequests(currentUserId);
-      await _search(context);
+      if (context.mounted) {
+        // After sending, refresh all friend requests and update results
+        await Provider.of<FriendViewModel>(context, listen: false)
+            .getAllFriendRequests(currentUserId);
+      }
+      if (context.mounted) {
+        await _search(context);
+      }
     } catch (e) {
       message = 'Failed to send friend request: ${e.toString()}';
     } finally {
       setState(() {
         _isLoading = false;
       });
-      if (!mounted) return;
-      // Use parent callback if provided, else fallback to local context
-      if (widget.onShowSnackBar != null) {
-        widget.onShowSnackBar!(message!);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message!)),
-        );
+      // Only show snackbar if still mounted
+      if (mounted) {
+        // Use parent callback if provided, else fallback to local context
+        if (widget.onShowSnackBar != null) {
+          widget.onShowSnackBar!(message!);
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message!)),
+          );
+        }
       }
     }
   }
@@ -187,7 +194,7 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),

@@ -1,4 +1,6 @@
 import 'ingredient_reminder.dart';
+import 'friend_notification.dart';
+import 'share_notification.dart';
 
 abstract class AppNotification {
   String get id;
@@ -12,7 +14,11 @@ abstract class AppNotification {
     switch (json['type']) {
       case 'expiry':
       case 'grocery':
-        return IngredientReminder.fromJson(json);      
+        return IngredientReminder.fromJson(json);
+      case 'friend':
+        return FriendNotification.fromJson(json);
+      case 'share':
+        return ShareNotification.fromJson(json);
       default:
         throw Exception('Unknown notification type: ${json['type']}');
     }

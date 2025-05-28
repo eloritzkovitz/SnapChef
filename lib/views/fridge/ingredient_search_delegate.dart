@@ -332,7 +332,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                             quantity,
                           );
 
-                          if (success) {
+                          if (success && context.mounted) {
                             Navigator.pop(context); // Close the dialog
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -340,11 +340,13 @@ class IngredientSearchDelegate extends SearchDelegate {
                                       '${ingredient['name']} added to groceries')),
                             );
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Failed to add ingredient to groceries')),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Failed to add ingredient to groceries')),
+                              );
+                            }
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -388,7 +390,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                             quantity,
                           );
 
-                          if (success) {
+                          if (success && context.mounted) {
                             Navigator.pop(context); // Close the dialog
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -396,11 +398,13 @@ class IngredientSearchDelegate extends SearchDelegate {
                                       '${ingredient['name']} added to fridge')),
                             );
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Failed to add ingredient to fridge')),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Failed to add ingredient to fridge')),
+                              );
+                            }
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
