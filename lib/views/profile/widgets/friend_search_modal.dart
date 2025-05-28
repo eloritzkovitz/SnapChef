@@ -64,14 +64,15 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       _isLoading = true;
       _error = null;
     });
+    
+    // Exclude current user from results
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final currentUserId = userViewModel.user?.id;
+
     try {
       final users = await Provider.of<FriendViewModel>(context, listen: false)
           .searchUsers(_searchQuery);
-
-      // Exclude current user from results
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      final currentUserId = userViewModel.user?.id;
-
+      
       setState(() {
         _results = users.where((u) => u.id != currentUserId).toList();
       });

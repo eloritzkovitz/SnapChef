@@ -82,13 +82,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     IconButton(
                       icon: const Icon(Icons.check, color: Colors.green),
                       onPressed: () async {
+                         final notificationsViewModel =
+                            Provider.of<NotificationsViewModel>(context,
+                                listen: false);
                         await Provider.of<FriendViewModel>(context,
                                 listen: false)
                             .respondToRequest(req.id, true, req.to);
-                        // Add notification for new friendship (to current user)
-                        final notificationsViewModel =
-                            Provider.of<NotificationsViewModel>(context,
-                                listen: false);
+                        // Add notification for new friendship (to current user)                       
                         await notificationsViewModel.addNotification(
                           FriendNotification(
                             id: await notificationsViewModel
