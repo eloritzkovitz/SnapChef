@@ -11,7 +11,8 @@ class ShareNotification extends AppNotification {
   final DateTime scheduledTime;
   final String? friendName;
   final String? recipeName;
-  final String userId;
+  final String senderId;
+  final String recipientId;
 
   ShareNotification({
     required this.id,
@@ -20,7 +21,8 @@ class ShareNotification extends AppNotification {
     required this.scheduledTime,
     this.friendName,
     this.recipeName,
-    required this.userId,
+    required this.senderId,
+    required this.recipientId,
   });
 
   @override
@@ -32,7 +34,8 @@ class ShareNotification extends AppNotification {
     'scheduledTime': scheduledTime.toIso8601String(),
     'friendName': friendName,
     'recipeName': recipeName,
-    'userId': userId,
+    'senderId': senderId,
+    'recipientId': recipientId,    
   };
 
   static ShareNotification fromJson(Map<String, dynamic> json) {
@@ -43,7 +46,8 @@ class ShareNotification extends AppNotification {
       scheduledTime: DateTime.parse(json['scheduledTime'] ?? json['createdAt']),
       friendName: json['friendName'] as String?,
       recipeName: json['recipeName'] as String?,
-      userId: json['userId'] ?? '',
+      senderId: json['senderId'] ?? '',
+      recipientId: json['recipientId'] ?? '',      
     );
   }
 }

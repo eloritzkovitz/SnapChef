@@ -5,6 +5,9 @@ import 'friend_requests_screen.dart';
 import '../../viewmodels/notifications_viewmodel.dart';
 import '../../models/notifications/friend_notification.dart';
 import '../../models/notifications/share_notification.dart';
+import '../../models/user.dart';
+import '../../utils/image_util.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -16,6 +19,8 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications',
@@ -73,16 +78,87 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 final notif = notifications[index];
                 IconData icon;
                 Color color;
-                if (notif is FriendNotification) {
-                  icon = Icons.person_add_alt_1;
-                  color = Colors.green;
-                } else if (notif is ShareNotification) {
+                Widget leadingWidget;
+
+                if (notif is ShareNotification) {
                   icon = Icons.restaurant_menu;
                   color = Colors.orange;
+                  // Use senderId to get the sender's profile
+                  User? sender;
+                  try {
+                    sender = userViewModel.friends
+                        .firstWhere((u) => u.id == notif.senderId);
+                  } catch (_) {
+                    sender = null;
+                  }
+                  if (sender != null &&
+                      sender.profilePicture != null &&
+                      sender.profilePicture!.isNotEmpty) {
+                    leadingWidget = CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: NetworkImage(
+                        ImageUtil().getFullImageUrl(sender.profilePicture!),
+                      ),
+                    );
+                  } else {
+                    leadingWidget = CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/default_profile.png',
+                          fit: BoxFit.cover,
+                          width: 36,
+                          height: 36,
+                        ),
+                      ),
+                    );
+                  }
+                } else if (notif is FriendNotification) {
+                  icon = Icons.person_add_alt_1;
+                  color = Colors.green;
+                  User? friend;
+                  try {
+                    friend = userViewModel.friends
+                        .firstWhere((u) => u.fullName == notif.friendName);
+                  } catch (_) {
+                    friend = null;
+                  }
+                  if (friend != null &&
+                      friend.profilePicture != null &&
+                      friend.profilePicture!.isNotEmpty) {
+                    leadingWidget = CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: NetworkImage(
+                        ImageUtil().getFullImageUrl(friend.profilePicture!),
+                      ),
+                    );
+                  } else {
+                    leadingWidget = CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/default_profile.png',
+                          fit: BoxFit.cover,
+                          width: 36,
+                          height: 36,
+                        ),
+                      ),
+                    );
+                  }
                 } else {
                   icon = Icons.notifications;
                   color = Colors.blueGrey;
+                  leadingWidget = CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey[200],
+                    child: Icon(icon, color: color, size: 20),
+                  );
                 }
+
                 return Card(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -95,7 +171,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(icon, color: color, size: 32),
+                        leadingWidget,
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -124,7 +200,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${notif.scheduledTime.hour.toString().padLeft(2, '0')}:${notif.scheduledTime.minute.toString().padLeft(2, '0')}',
+                          '${notif.scheduledTime.toLocal().hour.toString().padLeft(2, '0')}:${notif.scheduledTime.toLocal().minute.toString().padLeft(2, '0')}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,

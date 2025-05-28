@@ -341,7 +341,8 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
           scheduledTime: DateTime.now(),
           friendName: userViewModel.user?.fullName ?? "",
           recipeName: _recipe.title,
-          userId: friendId,
+          senderId: userViewModel.user?.id ?? '',
+          recipientId: friendId,          
         ),
       );
 

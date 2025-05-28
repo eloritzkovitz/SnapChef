@@ -4,6 +4,8 @@ import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/services/notification_service.dart';
 import 'package:snapchef/services/backend_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
@@ -43,25 +45,39 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 
   // Sync backend and local notifications
-  Future<void> syncNotifications() async {
+  Future<void> syncNotifications({BuildContext? context}) async {
     _isLoading = true;
     notifyListeners();
 
     // Fetch from backend
     final backendNotifications = await _backendService.fetchNotifications();
 
+    // Get the current user's id (recipient)
+    String? userId;
+    if (context != null) {
+      userId = Provider.of<UserViewModel>(context, listen: false).user?.id;
+    }
+
+    // Filter notifications for the current user (recipientId)
+    final filteredNotifications = userId == null
+        ? backendNotifications
+        : backendNotifications.where((notif) {
+            // Assumes notif has a recipientId property
+            return notif.toJson()['recipientId'] == userId;
+          }).toList();
+
     // Cancel all scheduled notifications in the plugin to avoid duplicates
     await _notificationService.notificationsPlugin.cancelAll();
 
     // Schedule only backend notifications locally
-    for (final notif in backendNotifications) {
+    for (final notif in filteredNotifications) {
       await _notificationService.scheduleNotification(notif);
     }
 
     // Overwrite local storage with backend notifications
-    await _notificationService.saveStoredNotifications(backendNotifications);
+    await _notificationService.saveStoredNotifications(filteredNotifications);
 
-    _notifications = backendNotifications;
+    _notifications = filteredNotifications;
     _isLoading = false;
     notifyListeners();
   }
