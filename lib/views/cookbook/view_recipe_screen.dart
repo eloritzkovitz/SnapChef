@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
+import '../../models/user.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -170,43 +171,131 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
 
   // Show share recipe dialog to select a friend
   Future<void> _showShareWithFriendDialog(BuildContext parentContext) async {
-    // Fetch friends from your viewmodel/service
-    final friends =
-        await Provider.of<UserViewModel>(parentContext, listen: false).getFriends();
-    String? selectedFriendId;
+    final userViewModel =
+        Provider.of<UserViewModel>(parentContext, listen: false);
+    List<User> friends = await userViewModel.getFriends();
+    List<User> filteredFriends = List.from(friends);
 
-    await showDialog(
+    showModalBottomSheet(
       context: parentContext,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Share with Friend'),
-        content: DropdownButtonFormField<String>(
-          items: friends.map<DropdownMenuItem<String>>((friend) {
-            return DropdownMenuItem<String>(
-              value: friend.id,
-              child: Text(friend.fullName),
-            );
-          }).toList(),
-          onChanged: (value) {
-            selectedFriendId = value;
-          },
-          decoration: const InputDecoration(labelText: 'Select Friend'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (selectedFriendId != null) {
-                Navigator.pop(dialogContext);
-                await _shareRecipe(parentContext, selectedFriendId!);
-              }
-            },
-            child: const Text('Share'),
-          ),
-        ],
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void _filterFriends(String query) {
+              setModalState(() {
+                filteredFriends = friends
+                    .where((friend) => friend.fullName
+                        .toLowerCase()
+                        .contains(query.toLowerCase()))
+                    .toList();
+              });
+            }
+
+            return Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: SizedBox(
+                height: 400,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Container(
+                      width: 60,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Search friends...',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                        ),
+                        onChanged: _filterFriends,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: filteredFriends.isEmpty
+                          ? const Center(child: Text('No friends found'))
+                          : ListView.builder(
+                              itemCount: filteredFriends.length,
+                              itemBuilder: (context, index) {
+                                final friend = filteredFriends[index];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.grey[200],
+                                    backgroundImage: (friend.profilePicture != null &&
+                                            friend.profilePicture!.isNotEmpty)
+                                        ? NetworkImage(ImageUtil()
+                                            .getFullImageUrl(friend.profilePicture!))
+                                        : const AssetImage(
+                                                'assets/images/default_profile.png')
+                                            as ImageProvider,
+                                  ),
+                                  title: Text(friend.fullName),
+                                  onTap: () async {
+                                    // Show confirmation dialog before sharing
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text('Share Recipe'),
+                                        content: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 20,
+                                              backgroundColor: Colors.grey[200],
+                                              backgroundImage: (friend.profilePicture != null &&
+                                                      friend.profilePicture!.isNotEmpty)
+                                                  ? NetworkImage(ImageUtil().getFullImageUrl(friend.profilePicture!))
+                                                  : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text('Share this recipe with ${friend.fullName}?'),
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            child: const Text('Share'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirmed == true) {
+                                      Navigator.pop(context); // Close the bottom sheet
+                                      await _shareRecipe(parentContext, friend.id);
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
