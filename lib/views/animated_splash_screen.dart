@@ -34,13 +34,13 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     );
 
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 950),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
     // Fade controller for fade out effect
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 50),
+      duration: const Duration(milliseconds: 0),
       vsync: this,
     );
     _fadeAnimation =
@@ -138,7 +138,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     await Future.wait([
       animationFuture,
       dataFuture,
-      Future.delayed(const Duration(seconds: 2)),
+      Future.delayed(const Duration(milliseconds: 500)),
     ]);
 
     // Fade out after animation and data loading
@@ -151,6 +151,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
+
+    if (!mounted) return;
 
     Navigator.of(context).pushReplacementNamed(
       isLoggedIn ? '/main' : '/login',
