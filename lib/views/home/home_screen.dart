@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'widgets/favorites_gallery.dart';
+import 'widgets/quick_actions.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../utils/ui_util.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,8 +18,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: DefaultTextStyle(
           style: const TextStyle(
-            fontFamily:
-                'BerlinSansFBDemi',
+            fontFamily: 'BerlinSansFBDemi',
             fontWeight: FontWeight.bold,
             fontSize: 32,
             color: primaryColor,
@@ -36,13 +38,13 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: primaryColor,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, $userName!',
+              '${UIUtil().getGreeting()}, $userName!',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -53,6 +55,11 @@ class HomeScreen extends StatelessWidget {
               'Welcome back to SnapChef! Let’s get cooking.',
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
+            const SizedBox(height: 16),
+            const QuickActions(),
+            const SizedBox(height: 32),
+            // Favorite Recipes Carousel Section
+            const FavoritesGallery(),
           ],
         ),
       ),

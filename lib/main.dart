@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
@@ -101,12 +102,13 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => authViewModel),
-        ChangeNotifierProvider(create: (_) => userViewModel),
+        ChangeNotifierProvider(create: (_) => userViewModel),        
         ChangeNotifierProvider(create: (_) => fridgeViewModel),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
         ChangeNotifierProvider(create: (_) => friendViewModel),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
+        Provider<IngredientService>(create: (_) => IngredientService()),
       ],
       child: MaterialApp(
         theme: appTheme,
