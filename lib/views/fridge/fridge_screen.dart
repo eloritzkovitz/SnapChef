@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'groceries_list.dart';
-import 'widgets/ingredient_reminder_dialog.dart';
 import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
-import 'widgets/fridge_filter_sort_sheet.dart';
+import './widgets/fridge_filter_sort_sheet.dart';
+import './widgets/ingredient_reminder_dialog.dart';
+import '../../common/snapchef_appbar.dart';
 import '../../models/notifications/ingredient_reminder.dart';
 import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -43,11 +44,10 @@ class _FridgeScreenState extends State<FridgeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  AppBar(
+                  SnapChefAppBar(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
-                    elevation: 0,
-                    automaticallyImplyLeading: false,
+                    elevation: 0,                    
                     title: const Text(
                       'Groceries',
                       style: TextStyle(
@@ -158,7 +158,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title:
             const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/views/notifications/upcoming_alerts_screen.dart';
 import 'friend_requests_screen.dart';
-import '../../viewmodels/notifications_viewmodel.dart';
+import '../../common/snapchef_appbar.dart';
 import '../../models/notifications/friend_notification.dart';
 import '../../models/notifications/share_notification.dart';
 import '../../models/user.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -22,12 +23,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title: const Text('Notifications',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        foregroundColor: Colors.black,        
         actions: [
           IconButton(
             icon: const Icon(Icons.people),
