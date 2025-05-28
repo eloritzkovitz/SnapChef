@@ -79,10 +79,8 @@ final ThemeData appTheme = ThemeData(
     foregroundColor: Colors.white,
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
-    style: OutlinedButton.styleFrom(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
-      iconColor: Colors.white,
+    style: OutlinedButton.styleFrom(      
+      iconColor: primaryColor,
       side: BorderSide(color: primaryColor),
     ),
   ),
