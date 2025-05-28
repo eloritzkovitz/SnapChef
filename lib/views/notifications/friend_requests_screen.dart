@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/friend_viewmodel.dart';
 import '../../models/friend_request.dart';
+import '../../viewmodels/friend_viewmodel.dart';
+import '../../utils/image_util.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -20,7 +21,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   }
 
   void _loadFriendRequests() {
-    final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
+    final friendViewModel =
+        Provider.of<FriendViewModel>(context, listen: false);
     _friendRequestsFuture = friendViewModel.fetchFriendRequests();
     setState(() {}); // Ensure the FutureBuilder rebuilds with the new future
   }
@@ -29,7 +31,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friend Requests', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Friend Requests',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -43,7 +46,10 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
           if (snapshot.hasError) {
             return const Center(child: Text('Error loading friend requests'));
           }
-          final requests = snapshot.data ?? [];
+          // Only show requests with status 'pending'
+          final requests = (snapshot.data ?? [])
+              .where((req) => req.status == 'pending')
+              .toList();
           if (requests.isEmpty) {
             return const Center(child: Text('No friend requests.'));
           }
@@ -55,9 +61,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               final user = req.from;
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: user.profilePicture != null
-                      ? NetworkImage(user.profilePicture!)
-                      : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: (user.profilePicture != null &&
+                          user.profilePicture!.isNotEmpty)
+                      ? NetworkImage(
+                          ImageUtil().getFullImageUrl(user.profilePicture!))
+                      : const AssetImage('assets/images/default_profile.png')
+                          as ImageProvider,
                 ),
                 title: Text(user.fullName),
                 subtitle: Text(user.email),
@@ -67,10 +77,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     IconButton(
                       icon: const Icon(Icons.check, color: Colors.green),
                       onPressed: () async {
-                        await Provider.of<FriendViewModel>(context, listen: false)
+                        await Provider.of<FriendViewModel>(context,
+                                listen: false)
                             .respondToRequest(req.id, true, req.to);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Friend request accepted')),
+                          const SnackBar(
+                              content: Text('Friend request accepted')),
                         );
                         _loadFriendRequests();
                       },
@@ -78,10 +90,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
                       onPressed: () async {
-                        await Provider.of<FriendViewModel>(context, listen: false)
+                        await Provider.of<FriendViewModel>(context,
+                                listen: false)
                             .respondToRequest(req.id, false, req.to);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Friend request declined')),
+                          const SnackBar(
+                              content: Text('Friend request declined')),
                         );
                         _loadFriendRequests();
                       },
