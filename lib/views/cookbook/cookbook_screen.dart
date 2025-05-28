@@ -21,6 +21,7 @@ class CookbookScreen extends StatefulWidget {
 
 class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
   final String serverUrl = dotenv.env['SERVER_IP'] ?? '';
+    bool showOnlyFavorites = false;
 
   String getFullImageUrl(String imageUrl) {
     if (imageUrl.startsWith('http')) return imageUrl;
@@ -75,6 +76,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
+          // Filter & Sort button
           IconButton(
             icon: const Icon(Icons.tune, color: Colors.black),
             tooltip: 'Filter & Sort',
@@ -88,6 +90,19 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             },
           ),
           IconButton(
+            icon: Icon(
+              showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
+              color: showOnlyFavorites ? Colors.black : Colors.black,
+            ),
+            tooltip: showOnlyFavorites ? 'Show All Recipes' : 'Show Favorites Only',
+            onPressed: () {
+              setState(() {
+                showOnlyFavorites = !showOnlyFavorites;
+              });
+            },
+          ),
+          // Search button
+          IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
               showSearch(
@@ -96,6 +111,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
           ),
+          // Shared recipes button
           IconButton(
             icon: const Icon(Icons.people_alt_outlined, color: Colors.black),
             tooltip: 'Shared Recipes',
@@ -118,21 +134,29 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Consumer<CookbookViewModel>(
         builder: (context, cookbookViewModel, child) {
+          final recipes = showOnlyFavorites
+              ? cookbookViewModel.filteredRecipes
+                  .where((r) => r.isFavorite)
+                  .toList()
+              : cookbookViewModel.filteredRecipes;
+
           if (cookbookViewModel.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (cookbookViewModel.filteredRecipes.isEmpty) {
-            return const Center(
+          if (recipes.isEmpty) {
+            return Center(
               child: Text(
-                'No recipes in your cookbook.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                showOnlyFavorites
+                    ? 'No favorite recipes.'
+                    : 'No recipes in your cookbook.',
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
               ),
             );
           }
 
           return ReorderableListView.builder(
-            itemCount: cookbookViewModel.filteredRecipes.length,
+            itemCount: recipes.length,
             onReorder: (oldIndex, newIndex) async {
               await cookbookViewModel.reorderRecipe(
                 oldIndex,
@@ -150,7 +174,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
             itemBuilder: (context, index) {
-              final recipe = cookbookViewModel.filteredRecipes[index];
+              final recipe = recipes[index];
               return RecipeCard(
                 key: ValueKey(recipe.id),
                 recipe: recipe,

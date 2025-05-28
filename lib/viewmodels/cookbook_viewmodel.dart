@@ -67,6 +67,7 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
+              isFavorite: item['isFavorite'] ?? false,
               source: item['source'] == 'ai'
                   ? RecipeSource.ai
                   : item['source'] == 'shared'
@@ -125,6 +126,7 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
+        'isFavorite': false,
         'source': source == RecipeSource.ai
             ? 'ai'
             : source == RecipeSource.shared
@@ -150,6 +152,7 @@ class CookbookViewModel extends ChangeNotifier {
             instructions: instructions,
             imageURL: imageURL ?? '',
             rating: rating,
+            isFavorite: false,
             source: source,
           ),
         );
