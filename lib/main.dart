@@ -13,6 +13,7 @@ import 'utils/firebase_messaging_util.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
+import 'viewmodels/ingredient_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
 import 'viewmodels/recipe_viewmodel.dart';
 import 'viewmodels/cookbook_viewmodel.dart';
@@ -62,7 +63,7 @@ Future<void> main() async {
     log("Error loading .env file: $e");
   }
 
-  // Initialize the AuthViewModel
+  // Initialize the viewmodels
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
   userViewModel.listenForFcmTokenRefresh();
@@ -102,13 +103,18 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => authViewModel),
-        ChangeNotifierProvider(create: (_) => userViewModel),        
+        ChangeNotifierProvider(create: (_) => userViewModel),
         ChangeNotifierProvider(create: (_) => fridgeViewModel),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
         ChangeNotifierProvider(create: (_) => friendViewModel),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
         Provider<IngredientService>(create: (_) => IngredientService()),
+        ChangeNotifierProvider(
+          create: (context) => IngredientViewModel(
+            Provider.of<IngredientService>(context, listen: false),
+          ),
+        ),
       ],
       child: MaterialApp(
         theme: appTheme,

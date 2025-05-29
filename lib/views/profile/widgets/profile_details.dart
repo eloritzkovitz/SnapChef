@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/theme/colors.dart';
 import '../../../models/user.dart';
-import '../../../services/ingredient_service.dart';
 import '../../../utils/image_util.dart';
 import '../../../utils/ui_util.dart';
+import '../../../viewmodels/ingredient_viewmodel.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 
 class ProfileDetails extends StatefulWidget {
@@ -34,6 +34,16 @@ class _ProfileDetailsState extends State<ProfileDetails> {
   void initState() {
     super.initState();
     _fetchStats();
+
+    // Fetch ingredients only once when the widget is first created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ingredientViewModel =
+          Provider.of<IngredientViewModel>(context, listen: false);
+      if (ingredientViewModel.ingredients == null &&
+          !ingredientViewModel.loading) {
+        ingredientViewModel.fetchIngredients();
+      }
+    });
   }
 
   // Fetch user statistics and update the state
@@ -47,23 +57,18 @@ class _ProfileDetailsState extends State<ProfileDetails> {
     }
   }
 
-  // Fetch ingredient imageURL based on the ingredient name
-  Future<String?> fetchIngredientImageUrl(String name) async {
-    final ingredientService = IngredientService();
-    final capitalizedName = UIUtil().capitalize(name);
-    final results = await ingredientService.searchIngredients(name: capitalizedName);    
-    if (results.isNotEmpty && results[0]['imageURL'] != null) {      
-      return results[0]['imageURL'] as String;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final int friendCount = widget.user.friends.length;
     final userStats = Provider.of<UserViewModel>(context).userStats;
+    final ingredientViewModel = Provider.of<IngredientViewModel>(context);
 
     if (_loading || userStats == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (ingredientViewModel.ingredients == null ||
+        ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -73,6 +78,23 @@ class _ProfileDetailsState extends State<ProfileDetails> {
     final int friendCountStat = userStats['friendCount'] ?? friendCount;
     final List<dynamic> mostPopularIngredients =
         userStats['mostPopularIngredients'] ?? [];
+    final ingredientMap = ingredientViewModel.ingredientMap ?? {};
+
+    // Function to get the image URL for an ingredient by its name
+    String? getIngredientImageUrl(
+        String name, Map<String, dynamic> ingredientMap) {
+      final lowerName = name.trim().toLowerCase();
+
+      // Only exact match
+      final match = ingredientMap[lowerName];
+      if (match != null &&
+          match['imageURL'] != null &&
+          match['imageURL'].toString().isNotEmpty) {
+        return match['imageURL'] as String;
+      }
+
+      return null;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,62 +321,46 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                       children: mostPopularIngredients.map<Widget>((item) {
                         final name = UIUtil().capitalize(item['name'] ?? '');
                         final count = item['count'] ?? 0;
+                        final imageURL = getIngredientImageUrl(
+                            item['name'] ?? '', ingredientMap);
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Column(
                             children: [
-                              FutureBuilder<String?>(
-                                future: fetchIngredientImageUrl(item['name']),
-                                builder: (context, snapshot) {
-                                  final imageURL = snapshot.data ?? '';
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const SizedBox(
-                                      width: 50,
-                                      height: 50,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    );
-                                  }
-                                  return imageURL.isNotEmpty
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(25),
-                                          child: Image.network(
-                                            ImageUtil()
-                                                .getFullImageUrl(imageURL),
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    Container(
-                                              width: 50,
-                                              height: 50,
-                                              color: Colors.orange[50],
-                                              child: const Icon(
-                                                  Icons.image_not_supported,
-                                                  size: 32,
-                                                  color: Colors.orange),
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
+                              imageURL != null && imageURL.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(25),
+                                      child: Image.network(
+                                        ImageUtil().getFullImageUrl(imageURL),
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
                                           width: 50,
                                           height: 50,
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                          ),
+                                          color: Colors.orange[50],
                                           child: const Icon(
                                               Icons.image_not_supported,
                                               size: 32,
                                               color: Colors.orange),
-                                        );
-                                },
-                              ),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[50],
+                                        borderRadius: BorderRadius.circular(25),
+                                      ),
+                                      child: const Icon(
+                                          Icons.image_not_supported,
+                                          size: 32,
+                                          color: Colors.orange),
+                                    ),
                               const SizedBox(height: 6),
                               Text(
                                 name,
