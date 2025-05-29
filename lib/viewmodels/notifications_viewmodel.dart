@@ -5,6 +5,8 @@ import 'package:snapchef/services/notification_service.dart';
 import 'package:snapchef/services/backend_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:snapchef/utils/token_util.dart';
+import 'package:provider/provider.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
@@ -44,23 +46,29 @@ class NotificationsViewModel extends ChangeNotifier {
   Future<void> _initialize() async {
     await _notificationService.initNotification();
     await syncNotifications();
-    await _connectWebSocketAndListen();
   }
 
-  // Connect to WebSocket and listen for real-time notifications
-  Future<void> _connectWebSocketAndListen() async {
+  // Connect to WebSocket and listen for real-time notifications using context
+  Future<void> connectWebSocketAndListenWithContext(
+      BuildContext context) async {
     final userToken = await TokenUtil.getAccessToken();
     if (userToken == null) return;
 
-    _backendService.connectToWebSocket(userToken);
+    if (context.mounted) {
+      // Get userId from the UserViewModel using Provider and the given context
+      final userId =
+          Provider.of<UserViewModel>(context, listen: false).user?.id;
+      if (userId == null) return;
 
-    _wsSubscription = _backendService.notificationStream?.listen((notif) async {
-      // Optionally, show a local notification
-      await _notificationService.showNotification(notif.title, notif.body);
-      // Add to the list and notify listeners
-      _notifications.insert(0, notif);
-      notifyListeners();
-    });
+      _backendService.connectToWebSocket(userToken, userId);
+
+      _wsSubscription =
+          _backendService.notificationStream?.listen((notif) async {       
+        await _notificationService.showNotification(notif.title, notif.body);       
+        _notifications.insert(0, notif);
+        notifyListeners();
+      });
+    }
   }
 
   // Sync backend and local notifications (for initial load or manual refresh)
@@ -99,7 +107,8 @@ class NotificationsViewModel extends ChangeNotifier {
   // Edit an existing notification
   Future<void> editNotification(
       String id, AppNotification updatedNotification) async {
-    final backendNotif = await _backendService.updateNotification(id, updatedNotification);
+    final backendNotif =
+        await _backendService.updateNotification(id, updatedNotification);
     await _notificationService.editNotification(id, backendNotif);
   }
 

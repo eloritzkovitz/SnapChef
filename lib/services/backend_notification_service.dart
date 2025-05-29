@@ -1,17 +1,21 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../models/notifications/app_notification.dart';
 import '../utils/token_util.dart';
 
 class BackendNotificationService {
   final String baseUrl;
-  WebSocketChannel? _channel;
+  io.Socket? _socket;
 
   // Stream for real-time notifications
   Stream<AppNotification>? notificationStream;
+  final _notificationStreamController = StreamController<AppNotification>.broadcast();
 
-  BackendNotificationService({required this.baseUrl});
+  BackendNotificationService({required this.baseUrl}) {
+    notificationStream = _notificationStreamController.stream;
+  }
 
   // --- HTTP CRUD ---
 
@@ -80,22 +84,37 @@ class BackendNotificationService {
     }
   }
 
-  // --- WebSocket Real-Time ---
+  // --- Socket.IO Real-Time ---
 
-  // Connect to WebSocket for real-time notifications
-  void connectToWebSocket(String userToken) {    
-    final wsUrl = '${baseUrl.replaceFirst('http', 'ws')}/ws/notifications?token=$userToken';
-    _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-    notificationStream = _channel!.stream.map((event) {
-      final data = jsonDecode(event);
-      return AppNotification.fromJson(data);
+  // Connect to Socket.IO for real-time notifications
+  void connectToWebSocket(String userToken, String userId) {
+    // Remove trailing slash if present
+    final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    _socket = io.io(
+      cleanBaseUrl,
+      <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+        'query': {'token': userToken},
+      },
+    );
+
+    _socket!.connect();
+
+    _socket!.onConnect((_) {
+      _socket!.emit('join', userId);
+    });
+
+    _socket!.on('notification', (data) {
+      _notificationStreamController.add(AppNotification.fromJson(data));
     });
   }
 
-  // Disconnect from WebSocket
+  // Disconnect from Socket.IO
   void disconnectWebSocket() {
-    _channel?.sink.close();
-    _channel = null;
-    notificationStream = null;
+    _socket?.disconnect();
+    _socket?.destroy();
+    _socket = null;
+    // Don't close the controller if you plan to reconnect later
   }
 }
