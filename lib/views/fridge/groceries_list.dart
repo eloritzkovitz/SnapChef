@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './ingredient_search_delegate.dart';
+import './widgets/fridge_filter_sort_sheet.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../views/fridge/widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class GroceriesList extends StatelessWidget {
   final VoidCallback? onAdd;
@@ -16,14 +19,75 @@ class GroceriesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FridgeViewModel>(
-      builder: (context, fridgeViewModel, _) {
-        final groceries = fridgeViewModel.filteredGroceries;
+    return Column(
+      children: [
+        SnapChefAppBar(
+          title: const Text(
+            'Groceries',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),                
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.tune, color: Colors.black),
+              tooltip: 'Filter & Sort',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24)),
+                  ),
+                  builder: (context) {
+                    final vm = Provider.of<FridgeViewModel>(context,
+                        listen: false);
+                    return FilterSortSheet(
+                      selectedCategory:
+                          vm.selectedGroceryCategory ?? '',
+                      selectedSort:
+                          vm.selectedGrocerySortOption ?? '',
+                      categories: vm.getGroceryCategories(),
+                      onClear: vm.clearGroceryFilters,
+                      onApply: (cat, sort) {
+                        vm.filterGroceriesByCategory(
+                            cat.isEmpty ? null : cat);
+                        vm.sortGroceries(sort.isEmpty ? null : sort);
+                      },
+                      categoryLabel: 'Category',
+                      sortLabel: 'Sort By',
+                    );
+                  },
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.black),
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: IngredientSearchDelegate(),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.black),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: Consumer<FridgeViewModel>(
+            builder: (context, fridgeViewModel, _) {
+              final groceries = fridgeViewModel.filteredGroceries;
 
-        return Column(
-          children: [
-            Expanded(
-              child: groceries.isEmpty
+              return groceries.isEmpty
                   ? const Center(
                       child: Text(
                         'No groceries in your list.',
@@ -150,11 +214,11 @@ class GroceriesList extends StatelessWidget {
                           ),
                         );
                       },
-                    ),
-            ),
-          ],
-        );
-      },
+                    );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

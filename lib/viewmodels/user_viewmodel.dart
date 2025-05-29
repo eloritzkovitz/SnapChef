@@ -15,12 +15,14 @@ class UserViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool isLoggingOut = false;
   User? _user;
+  Map<String, dynamic>? _userStats;
 
   bool get isLoading => _isLoading;
   User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;
+  Map<String, dynamic>? get userStats => _userStats;
   List<User> get friends => _user?.friends ?? [];
 
   // Fetch user data (including friends)
@@ -171,6 +173,19 @@ class UserViewModel extends ChangeNotifier {
       return userProfile;
     } catch (e) {
       return null;
+    }
+  }
+
+  // Fetch user statistics
+  Future<void> fetchUserStats({String? userId}) async {
+    try {
+      final stats = await _userService.getUserStats(userId: userId);
+      _userStats = stats;
+      notifyListeners();
+    } catch (e) {
+      _userStats = null;
+      notifyListeners();
+      rethrow;
     }
   }
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'widgets/friends_list.dart';
+import 'friends_list.dart';
 import 'widgets/profile_details.dart';
 import 'widgets/settings_menu.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -69,44 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  // Header with Close Button
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 26),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Friends',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.black),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Expanded(child: FriendsList()),
-                ],
-              ),
+              child: const FriendsList(),
             ),
           ),
         );
@@ -130,15 +94,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userViewModel = Provider.of<UserViewModel>(context);    
+    final userViewModel = Provider.of<UserViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title: const Text('Profile',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),

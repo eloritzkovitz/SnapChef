@@ -6,12 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
+import 'viewmodels/ingredient_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
 import 'viewmodels/recipe_viewmodel.dart';
 import 'viewmodels/cookbook_viewmodel.dart';
@@ -19,8 +21,8 @@ import 'viewmodels/notifications_viewmodel.dart';
 import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
-import 'views/main_screen.dart';
-import 'views/animated_splash_screen.dart';
+import 'views/main/main_screen.dart';
+import 'views/splash/animated_splash_screen.dart';
 
 // RouteObserver for navigation events
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -61,7 +63,7 @@ Future<void> main() async {
     log("Error loading .env file: $e");
   }
 
-  // Initialize the AuthViewModel
+  // Initialize the viewmodels
   final authViewModel = AuthViewModel();
   final userViewModel = UserViewModel();
   userViewModel.listenForFcmTokenRefresh();
@@ -107,6 +109,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
         ChangeNotifierProvider(create: (_) => friendViewModel),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
+        Provider<IngredientService>(create: (_) => IngredientService()),
+        ChangeNotifierProvider(
+          create: (context) => IngredientViewModel(
+            Provider.of<IngredientService>(context, listen: false),
+          ),
+        ),
       ],
       child: MaterialApp(
         theme: appTheme,

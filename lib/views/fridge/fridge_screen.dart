@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'groceries_list.dart';
-import 'widgets/ingredient_reminder_dialog.dart';
 import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
-import 'widgets/fridge_filter_sort_sheet.dart';
+import './widgets/fridge_filter_sort_sheet.dart';
+import './widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
-import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -22,6 +22,7 @@ class FridgeScreen extends StatefulWidget {
 class _FridgeScreenState extends State<FridgeScreen> {
   bool isListView = false; // State variable to toggle between views
 
+  // Open the groceries list in a sliding panel
   void _openGroceriesList(BuildContext rootContext) {
     showGeneralDialog(
       context: rootContext,
@@ -40,84 +41,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  AppBar(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    automaticallyImplyLeading: false,
-                    title: const Text(
-                      'Groceries',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.tune, color: Colors.black),
-                        tooltip: 'Filter & Sort',
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(24)),
-                            ),
-                            builder: (context) {
-                              final vm = Provider.of<FridgeViewModel>(context,
-                                  listen: false);
-                              return FilterSortSheet(
-                                selectedCategory:
-                                    vm.selectedGroceryCategory ?? '',
-                                selectedSort:
-                                    vm.selectedGrocerySortOption ?? '',
-                                categories: vm.getGroceryCategories(),
-                                onClear: vm.clearGroceryFilters,
-                                onApply: (cat, sort) {
-                                  vm.filterGroceriesByCategory(
-                                      cat.isEmpty ? null : cat);
-                                  vm.sortGroceries(sort.isEmpty ? null : sort);
-                                },
-                                categoryLabel: 'Category',
-                                sortLabel: 'Sort By',
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      // Search Button
-                      IconButton(
-                        icon: const Icon(Icons.search, color: Colors.black),
-                        onPressed: () {
-                          showSearch(
-                            context: context,
-                            delegate: IngredientSearchDelegate(
-                              ingredientService: IngredientService(),
-                            ),
-                          );
-                        },
-                      ),
-                      // Close Button
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.black),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  ),
-                  // The groceries list
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: GroceriesList(),
-                  ),
-                ],
-              ),
+              child: const GroceriesList(),
             ),
           ),
         );
@@ -139,11 +63,64 @@ class _FridgeScreenState extends State<FridgeScreen> {
     );
   }
 
+  // Show delete confirmation dialog
+  void _showDeleteConfirmationDialog(BuildContext context, dynamic ingredient,
+      String fridgeId, FridgeViewModel viewModel) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Ingredient'),
+          content:
+              const Text('Are you sure you want to delete this ingredient?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                viewModel.deleteFridgeItem(fridgeId, ingredient.id);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text('${ingredient.name} has been deleted')),
+                );
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show expiry alert dialog
+  void _showExpiryAlertDialog(BuildContext context, dynamic ingredient) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return IngredientReminderDialog(
+          ingredient: ingredient,
+          type: ReminderType.expiry,
+          onSetAlert: (DateTime alertDateTime) {
+            // Handle the expiry alert logic here
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Expiry alert set for ${ingredient.name}')),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final fridgeId = userViewModel.fridgeId;
-    final ingredientService = IngredientService();
+    final fridgeId = userViewModel.fridgeId;    
 
     // Check if the user is null
     if (userViewModel.user == null) {
@@ -158,7 +135,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title:
             const Text('Fridge', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
@@ -211,8 +188,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: IngredientSearchDelegate(
-                    ingredientService: ingredientService),
+                delegate: IngredientSearchDelegate(),
               );
             },
           ),
@@ -278,59 +254,5 @@ class _FridgeScreenState extends State<FridgeScreen> {
       floatingActionButton: ActionButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
-  }
-
-  // Show delete confirmation dialog
-  void _showDeleteConfirmationDialog(BuildContext context, dynamic ingredient,
-      String fridgeId, FridgeViewModel viewModel) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Ingredient'),
-          content:
-              const Text('Are you sure you want to delete this ingredient?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                viewModel.deleteFridgeItem(fridgeId, ingredient.id);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('${ingredient.name} has been deleted')),
-                );
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Show expiry alert dialog
-  void _showExpiryAlertDialog(BuildContext context, dynamic ingredient) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return IngredientReminderDialog(
-          ingredient: ingredient,
-          type: ReminderType.expiry,
-          onSetAlert: (DateTime alertDateTime) {
-            // Handle the expiry alert logic here
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text('Expiry alert set for ${ingredient.name}')),
-            );
-          },
-        );
-      },
-    );
-  }
+  }  
 }

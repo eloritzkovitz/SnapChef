@@ -67,6 +67,7 @@ class CookbookViewModel extends ChangeNotifier {
               rating: item['rating'] != null
                   ? (item['rating'] as num).toDouble()
                   : null,
+              isFavorite: item['isFavorite'] ?? false,
               source: item['source'] == 'ai'
                   ? RecipeSource.ai
                   : item['source'] == 'shared'
@@ -125,6 +126,7 @@ class CookbookViewModel extends ChangeNotifier {
         'instructions': instructions,
         'imageURL': imageURL,
         'rating': rating,
+        'isFavorite': false,
         'source': source == RecipeSource.ai
             ? 'ai'
             : source == RecipeSource.shared
@@ -150,6 +152,7 @@ class CookbookViewModel extends ChangeNotifier {
             instructions: instructions,
             imageURL: imageURL ?? '',
             rating: rating,
+            isFavorite: false,
             source: source,
           ),
         );
@@ -245,6 +248,29 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
+  // Toggle the favorite status of a recipe
+  Future<bool> toggleRecipeFavoriteStatus(
+      String cookbookId, String recipeId) async {
+    try {
+      final success = await _cookbookService.toggleRecipeFavoriteStatus(
+          cookbookId, recipeId);
+      if (success) {
+        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+        if (index != -1) {
+          _recipes[index] = _recipes[index].copyWith(
+              isFavorite: !_recipes[index].isFavorite);
+          _applyFiltersAndSorting();
+          notifyListeners();
+        }
+      }
+      return success;
+    } catch (e) {
+      log('Error toggling favorite status: $e');
+      return false;
+    }
+  }
+
+  // Reorder a recipe in the cookbook
   Future<void> reorderRecipe(
       int oldIndex, int newIndex, String cookbookId) async {
     if (oldIndex < newIndex) {

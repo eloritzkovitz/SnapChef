@@ -4,12 +4,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class FirebaseMessagingUtil {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
-  // Background message handler
+  /// Background message handler for Firebase Messaging.
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     log('Handling a background message: ${message.messageId}');
   }
 
-  // Request notification permissions
+  /// Requests notification permissions from the user.
   static Future<void> requestNotificationPermissions() async {
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
@@ -30,7 +30,7 @@ class FirebaseMessagingUtil {
     }
   }
 
-  // Get FCM token
+  /// Gets the FCM token.
   static Future<String?> getDeviceToken() async {
     try {
       final token = await _messaging.getToken();
@@ -42,7 +42,7 @@ class FirebaseMessagingUtil {
     }
   }
 
-  // Listen for foreground messages
+  /// Listens for foreground messages.
   static void listenForForegroundMessages() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       log('Received a message while in the foreground!');

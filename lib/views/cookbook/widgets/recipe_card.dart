@@ -23,10 +23,10 @@ class RecipeCard extends StatelessWidget {
 
     // Choose icon and tooltip based on recipe source
     final sourceIcon = recipe.source == RecipeSource.ai
-    ? Icon(Icons.smart_toy, size: 18, color: primaryColor)
-    : recipe.source == RecipeSource.shared
-        ? Icon(Icons.people_alt, size: 18, color: primaryColor)
-        : Icon(Icons.person, size: 18, color: primaryColor);
+        ? Icon(Icons.smart_toy, size: 18, color: primaryColor)
+        : recipe.source == RecipeSource.shared
+            ? Icon(Icons.people_alt, size: 18, color: primaryColor)
+            : Icon(Icons.person, size: 18, color: primaryColor);
 
     final sourceTooltip = recipe.source == RecipeSource.ai
         ? 'AI Generated'
@@ -58,21 +58,51 @@ class RecipeCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Square image with rounded corners
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: recipe.imageURL != null && recipe.imageURL!.isNotEmpty
-                    ? Image.network(
-                        ImageUtil().getFullImageUrl(recipe.imageURL),
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.image_not_supported,
-                              size: 80, color: Colors.grey);
-                        },
-                      )
-                    : const Icon(Icons.image, size: 80, color: Colors.grey),
+              // Image with source and favorite indicator
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: recipe.imageURL != null &&
+                            recipe.imageURL!.isNotEmpty
+                        ? Image.network(
+                            ImageUtil().getFullImageUrl(recipe.imageURL),
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.image_not_supported,
+                                  size: 80, color: Colors.grey);
+                            },
+                          )
+                        : const Icon(Icons.image, size: 80, color: Colors.grey),
+                  ),
+                  // Source icon
+                  Positioned(
+                    top: -6,
+                    left: -6,
+                    child: Tooltip(
+                      message: sourceTooltip,
+                      child: CircleAvatar(
+                        radius: 13,
+                        backgroundColor: Colors.white,
+                        child: sourceIcon,
+                      ),
+                    ),
+                  ),
+                  // Favorite heart
+                  if (recipe.isFavorite)
+                    Positioned(
+                      top: -6,
+                      right: -6,
+                      child: CircleAvatar(
+                        radius: 13,
+                        backgroundColor: Colors.white,
+                        child:
+                            Icon(Icons.favorite, color: Colors.red, size: 18),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 16),
               // Details
@@ -88,12 +118,7 @@ class RecipeCard extends StatelessWidget {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Tooltip(
-                          message: sourceTooltip,
-                          child: sourceIcon,
-                        ),
+                        ),                       
                       ],
                     ),
                     const SizedBox(height: 4),
