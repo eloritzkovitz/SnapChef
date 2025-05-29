@@ -154,4 +154,24 @@ class UserService {
       throw Exception('Failed to fetch user profile: ${response.statusCode}');
     }
   }
+
+  // Fetch user statistics
+  Future<Map<String, dynamic>> getUserStats({String? userId}) async {
+    final url = Uri.parse('$baseUrl/api/users/$userId/stats');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else if (response.statusCode == 401) {
+      throw Exception('401');
+    } else {
+      throw Exception('Failed to fetch user stats: ${response.statusCode}');
+    }
+  }
 }

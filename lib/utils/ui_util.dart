@@ -6,6 +6,15 @@ class UIUtil {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
+  
+  /// Formats a string to capitalize the first letter in each word.
+  String capitalize(String s) {
+    return s
+        .split(' ')
+        .map((word) =>
+            word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
+        .join(' ');
+  }
 
   /// Get a greeting based on the current time of day.
   String getGreeting() {
@@ -16,6 +25,17 @@ class UIUtil {
       return 'Good afternoon';
     } else {
       return 'Good evening';
+    }
+  }  
+
+  /// Formats a raw date string to a more readable format.
+  static String formatDate(String? rawDate) {
+    if (rawDate == null || rawDate.isEmpty) return '';
+    try {
+      final date = DateTime.parse(rawDate);
+      return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+    } catch (e) {
+      return rawDate;
     }
   }
 }
