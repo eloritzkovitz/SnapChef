@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
+import 'package:snapchef/views/notifications/widgets/alert_list_item.dart';
 import 'package:snapchef/theme/colors.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UpcomingAlertsScreen extends StatelessWidget {
   const UpcomingAlertsScreen({super.key});
@@ -92,98 +93,14 @@ class UpcomingAlertsScreen extends StatelessWidget {
                         child: ListView.builder(
                           itemCount: filtered.length,
                           itemBuilder: (context, index) {
-                            final notification = filtered[index];
-                            final isExpiry = notification
-                                    is IngredientReminder &&
-                                notification.typeEnum == ReminderType.expiry;
-                            final isGrocery = notification
-                                    is IngredientReminder &&
-                                notification.typeEnum == ReminderType.grocery;
-
-                            return ListTile(
-                              title: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 12.0),
-                                    child: notification is IngredientReminder
-                                        ? FaIcon(
-                                            FontAwesomeIcons.appleAlt,
-                                            color: primaryColor,
-                                            size: 32,
-                                          )
-                                        : const Icon(Icons.notifications,
-                                            color: Colors.grey, size: 32),
-                                  ),
-                                  Expanded(
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            notification is IngredientReminder
-                                                ? notification.ingredientName
-                                                : notification.title,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        if (isExpiry)
-                                          const Padding(
-                                            padding: EdgeInsets.only(left: 8.0),
-                                            child: Chip(
-                                              label: Text('Expiry',
-                                                  style: TextStyle(
-                                                      color: Colors.white)),
-                                              backgroundColor: Colors.orange,
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                            ),
-                                          ),
-                                        if (isGrocery)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 8.0),
-                                            child: Chip(
-                                              label: const Text('Grocery',
-                                                  style: TextStyle(
-                                                      color: Colors.white)),
-                                              backgroundColor:
-                                                  Colors.deepOrange,
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Text(
-                                'Scheduled for: ${DateFormat.yMMMd().add_jm().format(notification.scheduledTime.toLocal())}',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              isThreeLine: true,
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
-                                      _editNotification(
-                                          context, notification, viewModel);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () {
-                                      _confirmDelete(
-                                          context, notification.id, viewModel);
-                                    },
-                                  ),
-                                ],
-                              ),
+                            final notification =
+                                filtered[index] as IngredientReminder;
+                            return AlertListItem(
+                              notification: notification,
+                              onEdit: () => _editNotification(
+                                  context, notification, viewModel),
+                              onDelete: () => _confirmDelete(
+                                  context, notification.id, viewModel),
                             );
                           },
                         ),
