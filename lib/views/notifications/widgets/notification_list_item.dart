@@ -112,8 +112,7 @@ class NotificationListItem extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        color: Colors.red,
+        padding: const EdgeInsets.symmetric(horizontal: 24),        
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: confirmDismiss,
