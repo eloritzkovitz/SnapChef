@@ -24,9 +24,7 @@ class QuickActions extends StatelessWidget {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: IngredientSearchDelegate(
-                  ingredientService: Provider.of(context, listen: false),
-                ),
+                delegate: IngredientSearchDelegate(),                
               );
             },
             backgroundColor: Colors.grey[100],

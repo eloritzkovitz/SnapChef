@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../services/ingredient_service.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
 
 class IngredientSearchDelegate extends SearchDelegate {
-  final IngredientService ingredientService;
-
-  IngredientSearchDelegate({required this.ingredientService});
-
-  // Cache the list of all ingredients
-  List<dynamic>? allIngredients;
-
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
         icon: const Icon(Icons.clear),
         onPressed: () {
-          query = ''; // Clear the search query
+          query = '';
         },
       ),
     ];
@@ -30,31 +23,35 @@ class IngredientSearchDelegate extends SearchDelegate {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        close(context, null); // Close the search bar
+        close(context, null);
       },
     );
   }
 
   @override
   Widget buildResults(BuildContext context) {
+    final ingredientViewModel = Provider.of<IngredientViewModel>(context);
+    final allIngredients = ingredientViewModel.ingredients;
+
+    if (ingredientViewModel.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (allIngredients == null) {
+      return const Center(child: Text('No ingredients found'));
+    }
     if (query.isEmpty) {
-      return const Center(
-        child: Text('Please enter a search term'),
-      );
+      return const Center(child: Text('Please enter a search term'));
     }
 
-    // Filter the cached list of ingredients based on the query
-    final filteredResults = allIngredients?.where((ingredient) {
+    final filteredResults = allIngredients.where((ingredient) {
       final name = ingredient['name'].toString().toLowerCase();
       final category = ingredient['category'].toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
 
-    if (filteredResults == null || filteredResults.isEmpty) {
-      return const Center(
-        child: Text('No ingredients found'),
-      );
+    if (filteredResults.isEmpty) {
+      return const Center(child: Text('No ingredients found'));
     }
 
     return ListView.builder(
@@ -98,50 +95,28 @@ class IngredientSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    final ingredientViewModel = Provider.of<IngredientViewModel>(context);
+    final allIngredients = ingredientViewModel.ingredients;
+
+    if (ingredientViewModel.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (allIngredients == null) {
-      // Fetch all ingredients if not already loaded
-      return FutureBuilder<List<dynamic>>(
-        future: ingredientService.getAllIngredients(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text('No ingredients available'),
-            );
-          }
-
-          // Cache the fetched ingredients
-          allIngredients = snapshot.data!;
-          return const Center(
-            child: Text('Start typing to search for ingredients'),
-          );
-        },
-      );
+      return const Center(child: Text('No ingredients available'));
     }
-
     if (query.isEmpty) {
-      return const Center(
-        child: Text('Start typing to search for ingredients'),
-      );
+      return const Center(child: Text('Start typing to search for ingredients'));
     }
 
-    // Filter the cached list of ingredients based on the query
-    final filteredSuggestions = allIngredients?.where((ingredient) {
+    final filteredSuggestions = allIngredients.where((ingredient) {
       final name = ingredient['name'].toString().toLowerCase();
       final category = ingredient['category'].toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
 
-    if (filteredSuggestions == null || filteredSuggestions.isEmpty) {
-      return const Center(
-        child: Text('No suggestions available'),
-      );
+    if (filteredSuggestions.isEmpty) {
+      return const Center(child: Text('No suggestions available'));
     }
 
     return ListView.builder(
@@ -184,7 +159,6 @@ class IngredientSearchDelegate extends SearchDelegate {
     );
   }
 
-  // Show dialog to add ingredient to fridge or groceries
   void _showAddToFridgeDialog(BuildContext context, dynamic ingredient) {
     int quantity = 1;
 
@@ -193,8 +167,7 @@ class IngredientSearchDelegate extends SearchDelegate {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             backgroundColor: Colors.white,
             title: Text(
               'Add ${ingredient['name']}',
@@ -295,12 +268,10 @@ class IngredientSearchDelegate extends SearchDelegate {
             ),
             actions: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Add to Groceries button
                     ElevatedButton.icon(
                       icon: const Icon(Icons.shopping_cart),
                       label: const Text('Add to Groceries'),
@@ -333,7 +304,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                           );
 
                           if (success && context.mounted) {
-                            Navigator.pop(context); // Close the dialog
+                            Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
@@ -358,7 +329,6 @@ class IngredientSearchDelegate extends SearchDelegate {
                       },
                     ),
                     const SizedBox(height: 12),
-                    // Add to Fridge button
                     ElevatedButton.icon(
                       icon: const Icon(Icons.kitchen),
                       label: const Text('Add to Fridge'),
@@ -391,7 +361,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                           );
 
                           if (success && context.mounted) {
-                            Navigator.pop(context); // Close the dialog
+                            Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
@@ -418,10 +388,9 @@ class IngredientSearchDelegate extends SearchDelegate {
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context); // Close the dialog
+                        Navigator.pop(context);
                       },
-                      child:
-                          Text('Cancel', style: TextStyle(color: primaryColor)),
+                      child: Text('Cancel', style: TextStyle(color: primaryColor)),
                     ),
                   ],
                 ),

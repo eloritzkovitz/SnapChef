@@ -7,11 +7,10 @@ import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
 import './widgets/ingredient_reminder_dialog.dart';
-import '../../widgets/snapchef_appbar.dart';
 import '../../models/notifications/ingredient_reminder.dart';
-import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class FridgeScreen extends StatefulWidget {
   const FridgeScreen({super.key});
@@ -121,8 +120,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final fridgeId = userViewModel.fridgeId;
-    final ingredientService = IngredientService();
+    final fridgeId = userViewModel.fridgeId;    
 
     // Check if the user is null
     if (userViewModel.user == null) {
@@ -190,8 +188,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: IngredientSearchDelegate(
-                    ingredientService: ingredientService),
+                delegate: IngredientSearchDelegate(),
               );
             },
           ),

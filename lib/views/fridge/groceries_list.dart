@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './ingredient_search_delegate.dart';
+import './widgets/fridge_filter_sort_sheet.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../views/fridge/widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
 import '../../widgets/snapchef_appbar.dart';
-import './widgets/fridge_filter_sort_sheet.dart';
-import './ingredient_search_delegate.dart';
-import '../../services/ingredient_service.dart';
 
 class GroceriesList extends StatelessWidget {
   final VoidCallback? onAdd;
@@ -70,9 +69,7 @@ class GroceriesList extends StatelessWidget {
               onPressed: () {
                 showSearch(
                   context: context,
-                  delegate: IngredientSearchDelegate(
-                    ingredientService: IngredientService(),
-                  ),
+                  delegate: IngredientSearchDelegate(),
                 );
               },
             ),
