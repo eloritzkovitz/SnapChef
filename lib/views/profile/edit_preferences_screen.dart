@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../theme/colors.dart';
+import '../../common/snapchef_appbar.dart';
 import '../../constants/dietary_preferences.dart';
+import '../../theme/colors.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class EditPreferencesScreen extends StatefulWidget {
   const EditPreferencesScreen({super.key});
@@ -66,12 +67,9 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title: const Text('Edit Preferences',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+            style: TextStyle(fontWeight: FontWeight.bold)),               
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

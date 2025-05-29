@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/user_viewmodel.dart';
+import '../../common/snapchef_appbar.dart';
 import '../../utils/image_util.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -74,12 +75,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title: const Text('Edit Profile',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
