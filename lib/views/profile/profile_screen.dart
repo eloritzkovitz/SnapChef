@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'widgets/friends_list.dart';
 import 'widgets/profile_details.dart';
 import 'widgets/settings_menu.dart';
+import '../../common/snapchef_appbar.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -133,12 +134,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userViewModel = Provider.of<UserViewModel>(context);    
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SnapChefAppBar(
         title: const Text('Profile',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
