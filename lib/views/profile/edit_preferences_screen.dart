@@ -72,7 +72,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),               
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
