@@ -6,6 +6,7 @@ abstract class AppNotification {
   String get id;
   String get title;
   String get body;
+  String get type;
   DateTime get scheduledTime;
 
   Map<String, dynamic> toJson();

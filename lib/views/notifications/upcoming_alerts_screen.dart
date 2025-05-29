@@ -48,9 +48,9 @@ class UpcomingAlertsScreen extends StatelessWidget {
                     ? ingredientReminders
                     : ingredientReminders
                         .where((n) =>
-                            n is IngredientReminder && n.type == selectedType)
+                            n is IngredientReminder &&
+                            n.typeEnum == selectedType)
                         .toList();
-
                 return Column(
                   children: [
                     Padding(
@@ -95,10 +95,10 @@ class UpcomingAlertsScreen extends StatelessWidget {
                             final notification = filtered[index];
                             final isExpiry =
                                 notification is IngredientReminder &&
-                                    notification.type == ReminderType.expiry;
+                                    notification.typeEnum == ReminderType.expiry;
                             final isGrocery =
                                 notification is IngredientReminder &&
-                                    notification.type == ReminderType.grocery;
+                                    notification.typeEnum == ReminderType.grocery;
 
                             return ListTile(
                               title: Row(
@@ -206,7 +206,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Theme(
-          data: Theme.of(context).copyWith(            
+          data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
                   primary: primaryColor,
                   onPrimary: Colors.white,
@@ -256,13 +256,13 @@ class UpcomingAlertsScreen extends StatelessWidget {
                     if (notification is IngredientReminder)
                       Chip(
                         label: Text(
-                          notification.type == ReminderType.expiry
+                          notification.typeEnum == ReminderType.expiry
                               ? 'Expiry'
                               : 'Grocery',
                           style: const TextStyle(color: Colors.white),
                         ),
                         backgroundColor:
-                            notification.type == ReminderType.expiry
+                            notification.typeEnum == ReminderType.expiry
                                 ? Colors.orange
                                 : Colors.deepOrange,
                         visualDensity: VisualDensity.compact,
@@ -395,8 +395,8 @@ class UpcomingAlertsScreen extends StatelessWidget {
                             : notification.title,
                         body: notification.body,
                         scheduledTime: selectedDateTime,
-                        type: notification is IngredientReminder
-                            ? notification.type
+                        typeEnum: notification is IngredientReminder
+                            ? (notification.type as ReminderType)
                             : ReminderType.expiry,
                         recipientId: userViewModel.user?.id ??
                             '', // Ensure recipientId is set

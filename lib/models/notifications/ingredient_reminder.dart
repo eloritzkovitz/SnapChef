@@ -12,7 +12,7 @@ class IngredientReminder implements AppNotification {
   final String body;
   @override
   final DateTime scheduledTime;
-  final ReminderType type;
+  final ReminderType typeEnum;
   final String recipientId;
 
   IngredientReminder({
@@ -21,9 +21,12 @@ class IngredientReminder implements AppNotification {
     required this.title,
     required this.body,
     required this.scheduledTime,
-    required this.type,
+    required this.typeEnum,
     required this.recipientId,
   });
+
+  @override
+  String get type => typeEnum.name;
 
   @override
   Map<String, dynamic> toJson() => {
@@ -32,7 +35,7 @@ class IngredientReminder implements AppNotification {
         'title': title,
         'body': body,
         'scheduledTime': scheduledTime.toIso8601String(),
-        'type': type.name,
+        'type': typeEnum.name,
         'recipientId': recipientId,
       };
 
@@ -58,7 +61,7 @@ class IngredientReminder implements AppNotification {
       title: json['title'] ?? 'Ingredient Reminder',
       body: json['body'] ?? '',
       scheduledTime: DateTime.parse(rawScheduledTime),
-      type: ReminderType.values.firstWhere((e) => e.name == rawType),
+      typeEnum: ReminderType.values.firstWhere((e) => e.name == rawType),
       recipientId: json['recipientId'] ?? '',
     );
   }

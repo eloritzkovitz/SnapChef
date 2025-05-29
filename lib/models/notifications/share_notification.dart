@@ -6,13 +6,16 @@ class ShareNotification extends AppNotification {
   @override
   final String title;
   @override
-  final String body;
+  final String body;  
   @override
   final DateTime scheduledTime;
   final String? friendName;
   final String? recipeName;
   final String senderId;
   final String recipientId;
+
+  @override
+  String get type => 'share';
 
   ShareNotification({
     required this.id,

@@ -6,11 +6,14 @@ class FriendNotification extends AppNotification {
   @override
   final String title;
   @override
-  final String body;
+  final String body;  
   @override
   final DateTime scheduledTime;
   final String friendName;
   final String userId;
+
+  @override
+  String get type => 'friend';
 
   FriendNotification({
     required this.id,
@@ -29,7 +32,7 @@ class FriendNotification extends AppNotification {
         'body': body,
         'scheduledTime': scheduledTime.toIso8601String(),
         'friendName': friendName,
-        'userId': userId, // <-- Include in JSON
+        'userId': userId,
       };
 
   static FriendNotification fromJson(Map<String, dynamic> json) {

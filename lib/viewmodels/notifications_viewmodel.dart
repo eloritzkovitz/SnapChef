@@ -18,12 +18,27 @@ class NotificationsViewModel extends ChangeNotifier {
   StreamSubscription<AppNotification>? _wsSubscription;
   Timer? _refreshTimer;
 
-  List<AppNotification> get notifications => _notifications;
+  // Alerts: only future expiry/grocery notifications
+  List<AppNotification> get alerts => _notifications
+      .where((n) =>
+          (n.type == 'expiry' || n.type == 'grocery') &&
+          n.scheduledTime.isAfter(DateTime.now()))
+      .toList();
+
+  // Notifications: all others, plus expired alerts
+  List<AppNotification> get notifications => _notifications
+      .where((n) =>
+          n.type != 'expiry' && n.type != 'grocery' ||
+          ((n.type == 'expiry' || n.type == 'grocery') &&
+              n.scheduledTime.isBefore(DateTime.now())))
+      .toList();
+
   bool get isLoading => _isLoading;
 
   NotificationsViewModel() {
     _initialize();
     _startAutoRefresh();
+    _startAutoCleanup();
   }
 
   // Start a periodic timer to refresh notifications every 5 minutes
@@ -31,6 +46,24 @@ class NotificationsViewModel extends ChangeNotifier {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
       syncNotifications();
+    });
+  }
+
+  // Periodically move expired alerts to notifications and remove from alerts
+  void _startAutoCleanup() {
+    Timer.periodic(const Duration(minutes: 1), (_) async {
+      final now = DateTime.now();
+      final expiredAlerts = _notifications
+          .where((n) =>
+              (n.type == 'expiry' || n.type == 'grocery') &&
+              n.scheduledTime.isBefore(now))
+          .toList();
+
+      for (final alert in expiredAlerts) {
+        await deleteNotification(alert.id);
+      }
+
+      notifyListeners();
     });
   }
 
@@ -63,10 +96,13 @@ class NotificationsViewModel extends ChangeNotifier {
       _backendService.connectToWebSocket(userToken, userId);
 
       _wsSubscription =
-          _backendService.notificationStream?.listen((notif) async {       
-        await _notificationService.showNotification(notif.title, notif.body);       
-        _notifications.insert(0, notif);
-        notifyListeners();
+          _backendService.notificationStream?.listen((notif) async {
+        await _notificationService.showNotification(notif.title, notif.body);
+        // Prevent duplicates
+        if (!_notifications.any((n) => n.id == notif.id)) {
+          _notifications.insert(0, notif);
+          notifyListeners();
+        }
       });
     }
   }

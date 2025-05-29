@@ -228,7 +228,7 @@ class _IngredientReminderState extends State<IngredientReminderDialog> {
                         ? '${widget.ingredient.name} is about to expire! Make sure to use it!'
                         : '${widget.ingredient.name} is on your grocery list!',
                     scheduledTime: alertDateTime,
-                    type: widget.type,
+                    typeEnum: widget.type,
                     recipientId: userViewModel.user?.id ?? '',
                   ),
                 );
