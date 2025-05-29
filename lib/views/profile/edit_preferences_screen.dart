@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../constants/dietary_preferences.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';

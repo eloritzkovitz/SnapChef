@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/user_viewmodel.dart';
 

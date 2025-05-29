@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'widgets/friends_list.dart';
 import 'widgets/profile_details.dart';
 import 'widgets/settings_menu.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {

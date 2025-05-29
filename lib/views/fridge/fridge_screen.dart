@@ -7,7 +7,7 @@ import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
 import './widgets/ingredient_reminder_dialog.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../models/notifications/ingredient_reminder.dart';
 import '../../services/ingredient_service.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -44,10 +44,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  SnapChefAppBar(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 0,                    
+                  SnapChefAppBar( 
                     title: const Text(
                       'Groceries',
                       style: TextStyle(

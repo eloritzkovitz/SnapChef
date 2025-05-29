@@ -7,7 +7,7 @@ import 'shared_recipes_screen.dart';
 import 'view_recipe_screen.dart';
 import './widgets/cookbook_filter_sort_sheet.dart';
 import './widgets/recipe_card.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../main.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -72,9 +72,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Cookbook',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,        
+            style: TextStyle(fontWeight: FontWeight.bold)),           
         actions: [
           // Filter & Sort button
           IconButton(

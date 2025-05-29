@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/views/notifications/upcoming_alerts_screen.dart';
 import 'friend_requests_screen.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../models/notifications/friend_notification.dart';
 import '../../models/notifications/share_notification.dart';
 import '../../models/user.dart';
@@ -25,9 +25,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Notifications',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,        
+            style: TextStyle(fontWeight: FontWeight.bold)),          
         actions: [
           IconButton(
             icon: const Icon(Icons.people),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'view_shared_recipe_screen.dart';
 import './widgets/recipe_card.dart';
-import '../../common/snapchef_appbar.dart';
+import '../../widgets/snapchef_appbar.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 
 class SharedRecipesScreen extends StatefulWidget {
@@ -32,9 +32,7 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Shared Recipes',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,        
+            style: TextStyle(fontWeight: FontWeight.bold)),               
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
