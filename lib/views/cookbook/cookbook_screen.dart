@@ -23,12 +23,7 @@ class CookbookScreen extends StatefulWidget {
 class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
   final String serverUrl = dotenv.env['SERVER_IP'] ?? '';
     bool showOnlyFavorites = false;
-
-  String getFullImageUrl(String imageUrl) {
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return '$serverUrl$imageUrl';
-  }
-
+  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -55,6 +50,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
     _fetchRecipes();
   }
 
+  // Fetch recipes from the server
   void _fetchRecipes() {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     final cookbookViewModel =
@@ -87,6 +83,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               );
             },
           ),
+          // Show favorites button
           IconButton(
             icon: Icon(
               showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
