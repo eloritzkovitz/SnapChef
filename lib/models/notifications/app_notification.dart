@@ -15,6 +15,7 @@ abstract class AppNotification {
     switch (json['type']) {
       case 'expiry':
       case 'grocery':
+      case 'notice':
         return IngredientReminder.fromJson(json);
       case 'friend':
         return FriendNotification.fromJson(json);

@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:snapchef/utils/token_util.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
+import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
@@ -17,6 +18,7 @@ class NotificationsViewModel extends ChangeNotifier {
   bool _isLoading = true;
   StreamSubscription<AppNotification>? _wsSubscription;
   Timer? _refreshTimer;
+  Timer? _cleanupTimer; // <-- Add this line
 
   // Alerts: only future expiry/grocery notifications
   List<AppNotification> get alerts => _notifications
@@ -51,7 +53,8 @@ class NotificationsViewModel extends ChangeNotifier {
 
   // Periodically move expired alerts to notifications and remove from alerts
   void _startAutoCleanup() {
-    Timer.periodic(const Duration(minutes: 1), (_) async {
+    _cleanupTimer?.cancel(); // Cancel previous timer if any
+    _cleanupTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
       final now = DateTime.now();
       final expiredAlerts = _notifications
           .where((n) =>
@@ -60,16 +63,37 @@ class NotificationsViewModel extends ChangeNotifier {
           .toList();
 
       for (final alert in expiredAlerts) {
-        await deleteNotification(alert.id);
+        // Promote to a persistent notification of type 'notice'
+        final notice = IngredientReminder(
+          id: await generateUniqueNotificationId(),
+          ingredientName: (alert as IngredientReminder).ingredientName,
+          title: alert.title,
+          body: alert.body,
+          scheduledTime: now,
+          typeEnum: ReminderType.notice,
+          recipientId: alert.recipientId,
+        );
+        await addNotification(notice);
+
+        // Try to remove the expired alert
+        try {
+          await deleteNotification(alert.id);
+        } catch (e) {
+          debugPrint('Failed to delete alert ${alert.id}: $e');
+        }
       }
 
-      notifyListeners();
+      // Only notify if not disposed
+      if (hasListeners) {
+        notifyListeners();
+      }
     });
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _cleanupTimer?.cancel();
     _wsSubscription?.cancel();
     _backendService.disconnectWebSocket();
     super.dispose();
@@ -137,7 +161,9 @@ class NotificationsViewModel extends ChangeNotifier {
 
   // Add a new notification
   Future<void> addNotification(AppNotification notification) async {
-    await _backendService.createNotification(notification);
+    final created = await _backendService.createNotification(notification);
+    _notifications.insert(0, created);
+    notifyListeners();
   }
 
   // Edit an existing notification
@@ -151,6 +177,7 @@ class NotificationsViewModel extends ChangeNotifier {
   // Delete a notification
   Future<void> deleteNotification(String id) async {
     await _backendService.deleteNotification(id);
-    await _notificationService.removeNotification(id);
+    _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
   }
 }

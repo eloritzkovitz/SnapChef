@@ -1,6 +1,6 @@
 import 'app_notification.dart';
 
-enum ReminderType { expiry, grocery }
+enum ReminderType { expiry, grocery, notice }
 
 class IngredientReminder implements AppNotification {
   @override
@@ -45,7 +45,7 @@ class IngredientReminder implements AppNotification {
     final id = rawId.toString();
 
     final rawType = json['type'];
-    if (rawType != 'expiry' && rawType != 'grocery') {
+    if (rawType != 'expiry' && rawType != 'grocery' && rawType != 'notice') {
       throw Exception(
           'Unsupported notification type for IngredientReminder: $rawType');
     }

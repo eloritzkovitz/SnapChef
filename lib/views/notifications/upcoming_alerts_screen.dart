@@ -34,7 +34,7 @@ class UpcomingAlertsScreen extends StatelessWidget {
             }
 
             // Only show IngredientReminder for the current user
-            final ingredientReminders = viewModel.notifications
+            final ingredientReminders = viewModel.alerts
                 .where((n) =>
                     n is IngredientReminder &&
                     (userId == null || (n).recipientId == userId))
@@ -93,12 +93,12 @@ class UpcomingAlertsScreen extends StatelessWidget {
                           itemCount: filtered.length,
                           itemBuilder: (context, index) {
                             final notification = filtered[index];
-                            final isExpiry =
-                                notification is IngredientReminder &&
-                                    notification.typeEnum == ReminderType.expiry;
-                            final isGrocery =
-                                notification is IngredientReminder &&
-                                    notification.typeEnum == ReminderType.grocery;
+                            final isExpiry = notification
+                                    is IngredientReminder &&
+                                notification.typeEnum == ReminderType.expiry;
+                            final isGrocery = notification
+                                    is IngredientReminder &&
+                                notification.typeEnum == ReminderType.grocery;
 
                             return ListTile(
                               title: Row(
