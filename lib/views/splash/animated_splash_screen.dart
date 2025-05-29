@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
-import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
+import '../../../viewmodels/fridge_viewmodel.dart';
+import '../../../viewmodels/cookbook_viewmodel.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});

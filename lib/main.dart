@@ -21,7 +21,7 @@ import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main_screen.dart';
-import 'views/animated_splash_screen.dart';
+import 'views/splash/animated_splash_screen.dart';
 
 // RouteObserver for navigation events
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
