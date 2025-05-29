@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'public_profile_screen.dart';
+import 'widgets/friend_card.dart';
 import 'widgets/friend_search_modal.dart';
-import '../../utils/image_util.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class FriendsList extends StatefulWidget {
@@ -39,6 +39,44 @@ class _FriendsListState extends State<FriendsList> {
         builder: (_) => PublicProfileScreen(user: user),
       ),
     );
+  }
+
+  // Shows a confirmation dialog to remove a friend
+  Future<void> _showRemoveFriendDialog(BuildContext context, dynamic friend) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Friend'),
+        content: Text('Are you sure you want to remove ${friend.fullName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      try {
+        await Provider.of<UserViewModel>(context, listen: false)
+            .removeFriend(friend.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${friend.fullName} removed from friends.')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to remove friend: $e')),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -79,7 +117,7 @@ class _FriendsListState extends State<FriendsList> {
       ),
       body: Column(
         children: [
-          Material(           
+          Material(
             color: Colors.white,
             child: Column(
               children: [
@@ -107,12 +145,11 @@ class _FriendsListState extends State<FriendsList> {
                       },
                     ),
                   ),
-                ),                
+                ),
                 const Divider(
                   height: 1,
                   thickness: 1,
-                  color:
-                      Color(0x14000000),
+                  color: Color(0x14000000),
                 ),
               ],
             ),
@@ -161,169 +198,12 @@ class _FriendsListState extends State<FriendsList> {
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final friend = filteredFriends[index];
-                                  return GestureDetector(
-                                    onTap: () =>
+                                  return FriendCard(
+                                    friend: friend,
+                                    onViewProfile: () =>
                                         _openPublicProfile(context, friend),
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 16),
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withAlpha(10),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 32,
-                                            backgroundColor: Colors.grey[200],
-                                            backgroundImage: (friend
-                                                            .profilePicture !=
-                                                        null &&
-                                                    friend.profilePicture!
-                                                        .isNotEmpty)
-                                                ? NetworkImage(ImageUtil()
-                                                    .getFullImageUrl(
-                                                        friend.profilePicture!))
-                                                : const AssetImage(
-                                                        'assets/images/default_profile.png')
-                                                    as ImageProvider,
-                                            child: (friend.profilePicture ==
-                                                        null ||
-                                                    friend.profilePicture!
-                                                        .isEmpty)
-                                                ? Image.asset(
-                                                    'assets/images/default_profile.png',
-                                                    fit: BoxFit.cover)
-                                                : null,
-                                          ),
-                                          const SizedBox(width: 18),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  friend.fullName,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  friend.email,
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          PopupMenuButton<String>(
-                                            icon: const Icon(Icons.more_vert),
-                                            onSelected: (value) async {
-                                              if (value == 'view') {
-                                                _openPublicProfile(
-                                                    context, friend);
-                                              } else if (value == 'remove') {
-                                                final confirmed =
-                                                    await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    title: const Text(
-                                                        'Remove Friend'),
-                                                    content: Text(
-                                                        'Are you sure you want to remove ${friend.fullName}?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.of(ctx)
-                                                                .pop(false),
-                                                        child: const Text(
-                                                            'Cancel'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.of(ctx)
-                                                                .pop(true),
-                                                        child: const Text(
-                                                            'Remove',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .red)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                                if (confirmed == true &&
-                                                    context.mounted) {
-                                                  try {
-                                                    await Provider.of<
-                                                                UserViewModel>(
-                                                            context,
-                                                            listen: false)
-                                                        .removeFriend(
-                                                            friend.id);
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                              context)
-                                                          .showSnackBar(
-                                                        SnackBar(
-                                                            content: Text(
-                                                                '${friend.fullName} removed from friends.')),
-                                                      );
-                                                    }
-                                                  } catch (e) {
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                              context)
-                                                          .showSnackBar(
-                                                        SnackBar(
-                                                            content: Text(
-                                                                'Failed to remove friend: $e')),
-                                                      );
-                                                    }
-                                                  }
-                                                }
-                                              }
-                                            },
-                                            itemBuilder: (context) => [
-                                              PopupMenuItem(
-                                                value: 'view',
-                                                child: Row(
-                                                  children: const [
-                                                    Icon(Icons.person,
-                                                        color: Colors.black),
-                                                    SizedBox(width: 8),
-                                                    Text('View Profile'),
-                                                  ],
-                                                ),
-                                              ),
-                                              const PopupMenuItem(
-                                                value: 'remove',
-                                                child: Row(
-                                                  children: [
-                                                    Icon(Icons.person_remove,
-                                                        color: Colors.black),
-                                                    SizedBox(width: 8),
-                                                    Text('Remove Friend'),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                    onRemove: () =>
+                                        _showRemoveFriendDialog(context, friend),
                                   );
                                 },
                               ),
