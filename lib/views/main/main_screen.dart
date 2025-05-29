@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/main_viewmodel.dart';
-import '../viewmodels/fridge_viewmodel.dart';
-import '../viewmodels/cookbook_viewmodel.dart';
-import '../viewmodels/user_viewmodel.dart';
-import '../views/home/home_screen.dart';
-import '../views/fridge/fridge_screen.dart';
-import '../views/cookbook/cookbook_screen.dart';
-import '../views/profile/profile_screen.dart';
-import '../views/notifications/notifications_screen.dart';
+import '../../viewmodels/main_viewmodel.dart';
+import '../../viewmodels/fridge_viewmodel.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../home/home_screen.dart';
+import '../fridge/fridge_screen.dart';
+import '../cookbook/cookbook_screen.dart';
+import '../profile/profile_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
