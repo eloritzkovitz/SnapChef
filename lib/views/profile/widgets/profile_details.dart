@@ -28,48 +28,18 @@ class ProfileDetails extends StatefulWidget {
 }
 
 class _ProfileDetailsState extends State<ProfileDetails> {
-  bool _loading = true;
-
   @override
-  void initState() {
-    super.initState();
-    _fetchStats();
-
-    // Fetch ingredients only once when the widget is first created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ingredientViewModel =
-          Provider.of<IngredientViewModel>(context, listen: false);
-      if (ingredientViewModel.ingredients == null &&
-          !ingredientViewModel.loading) {
-        ingredientViewModel.fetchIngredients();
-      }
-    });
-  }
-
-  // Fetch user statistics and update the state
-  Future<void> _fetchStats() async {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Fetch stats every time the screen is shown
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    await userViewModel.fetchUserStats(userId: widget.user.id);
-    if (mounted) {
-      setState(() {
-        _loading = false;
-      });
-    }
-  }
+    userViewModel.fetchUserStats(userId: widget.user.id);
 
-  // Call this method after any friend change to refresh stats
-  Future<void> refreshStats() async {
-    setState(() {
-      _loading = true;
-    });
-    await _fetchStats();
-  }
-
-  @override
-  void didUpdateWidget(covariant ProfileDetails oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.user.id != widget.user.id) {
-      _fetchStats();
+    final ingredientViewModel =
+        Provider.of<IngredientViewModel>(context, listen: false);
+    if (ingredientViewModel.ingredients == null &&
+        !ingredientViewModel.loading) {
+      ingredientViewModel.fetchIngredients();
     }
   }
 
@@ -79,7 +49,7 @@ class _ProfileDetailsState extends State<ProfileDetails> {
     final userStats = Provider.of<UserViewModel>(context).userStats;
     final ingredientViewModel = Provider.of<IngredientViewModel>(context);
 
-    if (_loading || userStats == null) {
+    if (userStats == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
