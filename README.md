@@ -20,16 +20,16 @@ SnapChef is a mobile application designed to create customized recipes based on 
 ### 👩‍🍳 **Cooking Assistance**
 - 🗣️ **Voice Guidance:** Follow cooking steps with text and voice instructions for hands-free help.
 - 🥡 **Storage Tips:** Learn how to store meals and leftovers to maximize freshness.
+- 🛒 **Groceries:** Organize your groceries easily and keep them in sync.
 
 ### 📙 **Your Personal Cookbook**
 - ❤️ **Save Recipes:** Create a personal collection of your favorite recipes.
-- ⭐ **Rate and Review:** Share your thoughts and photos of the recipes you’ve tried.
+- ⭐ **Personal Recipes:** Add your own personal recipes or ideas.
 - 🔗 **Share:** Share recipes and meal ideas with friends in-app.
 
 ### 🔔 **Notifications and Updates**
-- ⏰ **Expiration:** Set and receive alerts for expiring ingredients.
-- 📣 **Recipe Reminders:** Get notified about saved or bookmarked recipes.
-- 👫 **Friend Activity:** Stay updated on what your friends are cooking and sharing.
+- ⏰ **Scheduled Reminders:** Set and receive alerts for expiring ingredients or grocery items.
+- 📢 **Friend Activity:** Stay updated on friend requests and recipe sharing.
 - 📰 **App Updates:** Receive news about new features and updates.
 
 ### 🔐 **User Management**
@@ -46,14 +46,16 @@ SnapChef is a mobile application designed to create customized recipes based on 
 
 ### 📱 Frontend
 - **Flutter** for building a cross-platform mobile application.
+- **Floor** for local persistence.
 
-### 🤖 AI Features
-- **Computer Vision** for ingredient recognition.
-- **OCR** for receipt text extraction.
-- **AI Recipe Generator** for personalized recipe creation.
+### 🤖 Third-party Services
+- **Cloud Vision & ML Kit** for ingredient recognition.
+- **Google Generative AI** for personalized recipe creation.
+- **Vertex AI + Stable Diffusion** for generated recipe images.
+- **Firebase Cloud Messaging** for push notifications.
 
 ## 📖 API Documentation
-[Visit the SnapChef API server](https://github.com/Elor-Itz/SnapChef-API)
+[Visit the SnapChef API documentation](https://snapchef-app.vercel.app/api)
 
 ## 👤 Authors
 - [Elor Itzkovitz](https://github.com/Elor-Itz)
