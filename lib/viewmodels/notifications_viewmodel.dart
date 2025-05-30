@@ -160,10 +160,14 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 
   // Add a new notification
-  Future<void> addNotification(AppNotification notification) async {
+  Future<void> addNotification(AppNotification notification,
+      [String? userId]) async {
     final created = await _backendService.createNotification(notification);
-    _notifications.insert(0, created);
-    notifyListeners();
+    // Only add to local list if userId is null
+    if (userId == null) {
+      _notifications.insert(0, created);
+      notifyListeners();
+    }
   }
 
   // Edit an existing notification

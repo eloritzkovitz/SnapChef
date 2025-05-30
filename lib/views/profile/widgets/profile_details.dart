@@ -57,6 +57,22 @@ class _ProfileDetailsState extends State<ProfileDetails> {
     }
   }
 
+  // Call this method after any friend change to refresh stats
+  Future<void> refreshStats() async {
+    setState(() {
+      _loading = true;
+    });
+    await _fetchStats();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileDetails oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.id != widget.user.id) {
+      _fetchStats();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final int friendCount = widget.user.friends.length;

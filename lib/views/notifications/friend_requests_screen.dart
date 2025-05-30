@@ -345,6 +345,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                             senderId: currentUser.id,
                             recipientId: user.id,
                           ),
+                          currentUser.id,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
