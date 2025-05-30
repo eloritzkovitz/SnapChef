@@ -299,7 +299,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 4),                
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -341,7 +341,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                 'You and ${user.fullName} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: user.fullName,
-                            userId: currentUser.id,
+                            senderId: currentUser.id,
+                            recipientId: user.id,
                           ),
                         );
                         // Add notification for the other user (the one who sent the request)
@@ -355,7 +356,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                 'You and ${currentUser.fullName} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: currentUser.fullName,
-                            userId: user.id,
+                            senderId: user.id,
+                            recipientId: currentUser.id,
                           ),
                         );
                         if (context.mounted) {
