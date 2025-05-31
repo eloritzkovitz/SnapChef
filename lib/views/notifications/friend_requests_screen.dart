@@ -299,7 +299,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 4),                
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -331,19 +331,6 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         await Provider.of<FriendViewModel>(context,
                                 listen: false)
                             .respondToRequest(req.id, true, currentUser.id);
-                        // Add notification for new friendship (to current user)
-                        await notificationsViewModel.addNotification(
-                          FriendNotification(
-                            id: await notificationsViewModel
-                                .generateUniqueNotificationId(),
-                            title: 'You are now friends with ${user.fullName}',
-                            body:
-                                'You and ${user.fullName} can now share recipes!',
-                            scheduledTime: DateTime.now(),
-                            friendName: user.fullName,
-                            userId: currentUser.id,
-                          ),
-                        );
                         // Add notification for the other user (the one who sent the request)
                         await notificationsViewModel.addNotification(
                           FriendNotification(
@@ -355,8 +342,10 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                 'You and ${currentUser.fullName} can now share recipes!',
                             scheduledTime: DateTime.now(),
                             friendName: currentUser.fullName,
-                            userId: user.id,
+                            senderId: currentUser.id,
+                            recipientId: user.id,
                           ),
+                          currentUser.id,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -26,8 +26,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // No need to get userViewModel here, NotificationListItem will use Provider
+  Widget build(BuildContext context) {   
 
     return Scaffold(
       appBar: SnapChefAppBar(
