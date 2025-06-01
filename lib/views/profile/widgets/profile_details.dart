@@ -39,7 +39,9 @@ class _ProfileDetailsState extends State<ProfileDetails> {
         Provider.of<IngredientViewModel>(context, listen: false);
     if (ingredientViewModel.ingredients == null &&
         !ingredientViewModel.loading) {
-      ingredientViewModel.fetchIngredients();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ingredientViewModel.fetchIngredients();
+      });
     }
   }
 
