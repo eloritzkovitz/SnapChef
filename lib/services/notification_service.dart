@@ -43,9 +43,9 @@ class NotificationService {
   NotificationDetails notificationDetails() {
     return NotificationDetails(
       android: AndroidNotificationDetails(
-        'ingredient_alerts_channel',
-        'Ingredient Alerts',
-        channelDescription: 'Notifications for ingredient reminders',
+        'snapchef_channel',
+        'SnapChef Notifications',
+        channelDescription: 'Notifications for the SnapChef app',
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
@@ -116,16 +116,13 @@ class NotificationService {
       }
 
       await notificationsPlugin.zonedSchedule(
-        notification.id.hashCode, // Use hashCode for int id
+        notification.id.hashCode,
         customTitle ?? notification.title,
         notification.body,
         tzScheduledTime,
         notificationDetails(),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
-
-      // Removed: notifications.add(notification);
-      // Removed: await _saveStoredNotifications(notifications);
     } catch (e) {
       debugPrint('Error scheduling notification: $e');
     }
