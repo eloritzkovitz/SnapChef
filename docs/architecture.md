@@ -1,4 +1,4 @@
-# Architecture
+# Architecture Overview
 
 This document provides a high-level overview of the SnapChef application's architecture, design patterns, and major components.
 

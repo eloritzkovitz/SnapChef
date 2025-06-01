@@ -5,9 +5,9 @@
 SnapChef is a mobile application designed to create customized recipes based on available products at home. The application will make use of AI to identify various ingredients (from a taken photo, a scanned receipt or a barcode), and then create cooking recipes based on the given data and other preferences. In addition, the application will provide guidance throughout the process and allow its users to save and rate their recipes, as well as share them with their friends.
 
 ## Table of Contents
-- [Features](#-features)
-- [Technologies Used](#️-technology-stack)
-- [Documentation](#api-documentation)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Documentation](#documentation)
 - [Authors](#authors)
 
 ## Features
@@ -66,7 +66,9 @@ SnapChef is a mobile application designed to create customized recipes based on 
 - **Firebase Cloud Messaging** — Push notifications
 
 ## Documentation
-For a detailed documentation of the API and its endpoints, visit the [SnapChef API documentation](https://snapchef-app.vercel.app/api)
+- [Architecture Overview](docs/architecture.md)
+- [Data Models](docs/models.md)
+- [API Reference](https://snapchef-app.vercel.app/api)
 
 ## Authors
 - [Elor Itzkovitz](https://github.com/Elor-Itz)
