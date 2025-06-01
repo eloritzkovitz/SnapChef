@@ -19,11 +19,7 @@ class FavoritesGallery extends StatelessWidget {
       builder: (context, cookbookViewModel, _) {
         final favoriteRecipes = cookbookViewModel.filteredRecipes
             .where((r) => r.isFavorite)
-            .toList();
-
-        if (favoriteRecipes.isEmpty) {
-          return const SizedBox();
-        }
+            .toList();        
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -41,98 +37,117 @@ class FavoritesGallery extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                CarouselSlider.builder(
-                  itemCount: favoriteRecipes.length,
-                  options: CarouselOptions(
-                    height: cardSize + 146,
-                    enlargeCenterPage: true,
-                    enableInfiniteScroll: true,
-                    viewportFraction: 1.0,
-                    autoPlay: false,
-                  ),
-                  itemBuilder: (context, index, realIdx) {
-                    final recipe = favoriteRecipes[index];
-                    return SizedBox(
-                      width: cardSize,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ViewRecipeScreen(
-                                recipe: recipe,
-                                cookbookId: userViewModel.cookbookId ?? '',
-                              ),
-                            ),
-                          );
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: recipe.imageURL != null &&
-                                      recipe.imageURL!.isNotEmpty
-                                  ? Image.network(
-                                      ImageUtil().getFullImageUrl(
-                                          recipe.imageURL),
-                                      width: cardSize,
-                                      height: cardSize,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Container(
-                                          width: cardSize,
-                                          height: cardSize,
-                                          color: Colors.grey[200],
-                                          child: const Icon(
-                                              Icons.image_not_supported,
-                                              size: 60,
-                                              color: Colors.grey),
-                                        );
-                                      },
-                                    )
-                                  : Container(
-                                      width: cardSize,
-                                      height: cardSize,
-                                      color: Colors.grey[200],
-                                      child: const Icon(Icons.image,
-                                          size: 60, color: Colors.grey),
-                                    ),
-                            ),
-                            const SizedBox(height: 12),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0),
-                              child: Text(
-                                recipe.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            RatingBarIndicator(
-                              rating: (recipe.rating?.toDouble() ?? 0.0),
-                              itemBuilder: (context, _) => const Icon(
-                                  Icons.star,
-                                  color: primaryColor),
-                              itemCount: 5,
-                              itemSize: 32.0,
-                              unratedColor: Colors.grey[300],
-                              direction: Axis.horizontal,
-                            ),
-                          ],
-                        ),
+                if (favoriteRecipes.isEmpty)
+                  Container(
+                    width: cardSize,
+                    height: cardSize,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Text(
+                      'You have no favorite recipes yet.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
                       ),
-                    );
-                  },
-                ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else
+                  CarouselSlider.builder(
+                    itemCount: favoriteRecipes.length,
+                    options: CarouselOptions(
+                      height: cardSize + 146,
+                      enlargeCenterPage: true,
+                      enableInfiniteScroll: true,
+                      viewportFraction: 1.0,
+                      autoPlay: false,
+                    ),
+                    itemBuilder: (context, index, realIdx) {
+                      final recipe = favoriteRecipes[index];
+                      return SizedBox(
+                        width: cardSize,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ViewRecipeScreen(
+                                  recipe: recipe,
+                                  cookbookId: userViewModel.cookbookId ?? '',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: recipe.imageURL != null &&
+                                        recipe.imageURL!.isNotEmpty
+                                    ? Image.network(
+                                        ImageUtil().getFullImageUrl(
+                                            recipe.imageURL),
+                                        width: cardSize,
+                                        height: cardSize,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Container(
+                                            width: cardSize,
+                                            height: cardSize,
+                                            color: Colors.grey[200],
+                                            child: const Icon(
+                                                Icons.image_not_supported,
+                                                size: 60,
+                                                color: Colors.grey),
+                                          );
+                                        },
+                                      )
+                                    : Container(
+                                        width: cardSize,
+                                        height: cardSize,
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.image,
+                                            size: 60, color: Colors.grey),
+                                      ),
+                              ),
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0),
+                                child: Text(
+                                  recipe.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 17,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              RatingBarIndicator(
+                                rating: (recipe.rating?.toDouble() ?? 0.0),
+                                itemBuilder: (context, _) => const Icon(
+                                    Icons.star,
+                                    color: primaryColor),
+                                itemCount: 5,
+                                itemSize: 32.0,
+                                unratedColor: Colors.grey[300],
+                                direction: Axis.horizontal,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
               ],
             );
           },
