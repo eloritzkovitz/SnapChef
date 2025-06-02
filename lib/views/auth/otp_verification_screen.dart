@@ -57,7 +57,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     try {
       await authViewModel.resendOTP(widget.email);
       _startTimer();
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP resent! Please check your email.')),
         );
@@ -77,14 +77,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Email'),
-        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const Center(
+              child: Text(
+                'Verify Email',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+            ),
             const SizedBox(height: 24),
             const Text(
               'Enter the OTP sent to your email.',
@@ -96,9 +103,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               controller: otpController,
               decoration: InputDecoration(
                 labelText: 'OTP',
+                labelStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey[200],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: const Icon(Icons.lock, color: Colors.grey),
                 errorText: _error,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               keyboardType: TextInputType.number,
             ),
