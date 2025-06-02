@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 import '../services/image_service.dart';
 import '../services/fridge_service.dart';
+import '../viewmodels/ingredient_viewmodel.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
@@ -33,7 +34,8 @@ class FridgeViewModel extends ChangeNotifier {
 
   // --- Fridge logic ---
 
-  Future<void> fetchFridgeIngredients(String fridgeId) async {
+  Future<void> fetchFridgeIngredients(
+      String fridgeId, IngredientViewModel ingredientViewModel) async {
     _isLoading = true;
     notifyListeners();
 
@@ -56,6 +58,9 @@ class FridgeViewModel extends ChangeNotifier {
         );
       }
 
+      // Update imageURLs using IngredientViewModel
+      updateFridgeIngredientImageURLs(ingredientViewModel);
+
       _applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching fridge ingredients: $e');
@@ -65,9 +70,31 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Update ingredient image URLs based on the IngredientViewModel
+  void updateFridgeIngredientImageURLs(
+      IngredientViewModel ingredientViewModel) {
+    final allIngredients = ingredientViewModel.ingredients;
+    if (allIngredients == null) return;
+
+    // Build a map of id -> imageURL for fast lookup
+    final imageUrlMap = {
+      for (final ing in allIngredients)
+        if (ing['id'] != null && ing['imageURL'] != null)
+          ing['id'] as String: ing['imageURL'] as String
+    };
+
+    for (final ingredient in _ingredients) {
+      if (imageUrlMap.containsKey(ingredient.id)) {
+        ingredient.imageURL = imageUrlMap[ingredient.id]!;
+      }
+    }
+    notifyListeners();
+  }
+
   // --- Grocery logic ---
 
-  Future<void> fetchGroceries(String fridgeId) async {
+  Future<void> fetchGroceries(
+      String fridgeId, IngredientViewModel ingredientViewModel) async {
     try {
       final items = await _fridgeService.fetchGroceries(fridgeId);
       _groceries.clear();
@@ -78,10 +105,35 @@ class FridgeViewModel extends ChangeNotifier {
             imageURL: item['imageURL'] ?? '',
             count: item['quantity'] ?? 1,
           )));
+
+      // Update imageURLs using IngredientViewModel
+      updateFridgeIngredientImageURLs(ingredientViewModel);
+      
       _applyGroceryFiltersAndSorting();
     } catch (e) {
       log('Error fetching groceries: $e');
     }
+  }
+
+  // Update grocery item image URLs based on the IngredientViewModel
+  void updateGroceryIngredientImageURLs(
+      IngredientViewModel ingredientViewModel) {
+    final allIngredients = ingredientViewModel.ingredients;
+    if (allIngredients == null) return;
+
+    // Build a map of id -> imageURL for fast lookup
+    final imageUrlMap = {
+      for (final ing in allIngredients)
+        if (ing['id'] != null && ing['imageURL'] != null)
+          ing['id'] as String: ing['imageURL'] as String
+    };
+
+    for (final grocery in _groceries) {
+      if (imageUrlMap.containsKey(grocery.id)) {
+        grocery.imageURL = imageUrlMap[grocery.id]!;
+      }
+    }
+    notifyListeners();
   }
 
   // --- Fridge add/update/delete ---
@@ -373,7 +425,7 @@ class FridgeViewModel extends ChangeNotifier {
   }
 
   // --- Generic filtering and sorting logic ---
-  
+
   List<Ingredient> _applyGenericFiltersAndSorting({
     required List<Ingredient> source,
     required String filter,
@@ -383,15 +435,17 @@ class FridgeViewModel extends ChangeNotifier {
     var result = List<Ingredient>.from(source);
 
     if (category != null && category.isNotEmpty) {
-      result = result.where((ingredient) =>
-        ingredient.category.toLowerCase() == category.toLowerCase()
-      ).toList();
+      result = result
+          .where((ingredient) =>
+              ingredient.category.toLowerCase() == category.toLowerCase())
+          .toList();
     }
 
     if (filter.isNotEmpty) {
-      result = result.where((ingredient) =>
-        ingredient.name.toLowerCase().contains(filter.toLowerCase())
-      ).toList();
+      result = result
+          .where((ingredient) =>
+              ingredient.name.toLowerCase().contains(filter.toLowerCase()))
+          .toList();
     }
 
     if (sortOption == 'Name') {

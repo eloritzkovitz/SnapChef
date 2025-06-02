@@ -5,6 +5,7 @@ import '../../viewmodels/main_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
 import '../home/home_screen.dart';
 import '../fridge/fridge_screen.dart';
 import '../cookbook/cookbook_screen.dart';
@@ -40,14 +41,17 @@ class _MainScreenState extends State<MainScreen> {
 
     // Initialize fridge ingredients
     if (!_hasInitializedFridge) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         final userViewModel = context.read<UserViewModel>();
         final fridgeViewModel = context.read<FridgeViewModel>();
+        final ingredientViewModel = Provider.of<IngredientViewModel>(context, listen: false);
+        
 
         final fridgeId = userViewModel.fridgeId;
         if (fridgeId != null) {
-          fridgeViewModel.fetchFridgeIngredients(fridgeId);
-          fridgeViewModel.fetchGroceries(fridgeId);
+          await ingredientViewModel.fetchIngredients();
+          fridgeViewModel.fetchFridgeIngredients(fridgeId, ingredientViewModel);
+          fridgeViewModel.fetchGroceries(fridgeId, ingredientViewModel);
         }
       });
 
