@@ -73,25 +73,31 @@ class UserService {
     }
   }
 
-  // Update user preferences
+  // Update user preferences 
   Future<void> updateUserPreferences({
     required List<String> allergies,
     required Map<String, bool> dietaryPreferences,
+    required Map<String, bool>? notificationPreferences,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
 
     final url = Uri.parse('$baseUrl/api/users/me/preferences');
+    final Map<String, dynamic> body = {
+      'allergies': allergies,
+      'dietaryPreferences': dietaryPreferences,
+    };
+    if (notificationPreferences != null) {
+      body['notificationPreferences'] = notificationPreferences;
+    }
+
     final response = await http.put(
       url,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
-      body: jsonEncode({
-        'allergies': allergies,
-        'dietaryPreferences': dietaryPreferences,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode != 200) {
