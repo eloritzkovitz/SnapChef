@@ -75,27 +75,23 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   // Signup
-  Future<void> signup(String firstName, String lastName, String email,
-      String password, BuildContext context) async {
+  Future<bool> signup(
+    String firstName,
+    String lastName,
+    String email,
+    String password,
+    BuildContext context,
+  ) async {
     _setLoading(true);
     try {
       await _authService.signup(firstName, lastName, email, password);
-
-      // Show success message
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User created successfully!'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      // Navigate to the login screen
-      if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
+      // Optionally show a success message here
+      return true;
     } catch (e) {
-      // Show error message
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      if (context.mounted) {
+        UIUtil.showError(context, e.toString());
+      }
+      return false;
     } finally {
       _setLoading(false);
     }

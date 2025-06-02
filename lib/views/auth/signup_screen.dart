@@ -146,15 +146,24 @@ class SignupScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              authViewModel.signup(
+                              final success = await authViewModel.signup(
                                 firstNameController.text,
                                 lastNameController.text,
                                 emailController.text,
                                 passwordController.text,
                                 context,
                               );
+                              if (success == true && context.mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OtpVerificationScreen(
+                                        email: emailController.text),
+                                  ),
+                                );
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -173,13 +182,7 @@ class SignupScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            OtpVerificationScreen(email: emailController.text),
-                      ),
-                    );
+                    Navigator.pushReplacementNamed(context, '/login');
                   },
                   child: Text(
                     'Already have an account?',
