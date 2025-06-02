@@ -20,6 +20,8 @@ import 'viewmodels/cookbook_viewmodel.dart';
 import 'viewmodels/notifications_viewmodel.dart';
 import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
+import 'views/auth/reset_password_screen.dart';
+import 'views/auth/confirm_reset_screen.dart';
 import 'views/auth/signup_screen.dart';
 import 'views/main/main_screen.dart';
 import 'views/splash/animated_splash_screen.dart';
@@ -123,6 +125,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/login': (context) => LoginScreen(),
           '/signup': (context) => SignupScreen(),
+          '/reset-password': (context) => const ResetPasswordScreen(),
+          '/confirm-reset': (context) => const ConfirmResetScreen(),
           '/main': (context) => const MainScreen(),
         },
       ),

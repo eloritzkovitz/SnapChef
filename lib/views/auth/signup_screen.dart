@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'otp_verification_screen.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -19,11 +20,11 @@ class SignupScreen extends StatelessWidget {
     final primaryColor = Theme.of(context).primaryColor;
 
     SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -44,7 +45,7 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 30),             
+                const SizedBox(height: 30),
                 TextFormField(
                   controller: firstNameController,
                   decoration: InputDecoration(
@@ -65,7 +66,7 @@ class SignupScreen extends StatelessWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),             
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: lastNameController,
                   decoration: InputDecoration(
@@ -77,7 +78,8 @@ class SignupScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.person_outline, color: Colors.grey),
+                    prefixIcon:
+                        const Icon(Icons.person_outline, color: Colors.grey),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -86,7 +88,7 @@ class SignupScreen extends StatelessWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),             
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: emailController,
                   decoration: InputDecoration(
@@ -112,7 +114,7 @@ class SignupScreen extends StatelessWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),              
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: passwordController,
                   decoration: InputDecoration(
@@ -144,15 +146,24 @@ class SignupScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              authViewModel.signup(
+                              final success = await authViewModel.signup(
                                 firstNameController.text,
                                 lastNameController.text,
                                 emailController.text,
                                 passwordController.text,
                                 context,
                               );
+                              if (success == true && context.mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OtpVerificationScreen(
+                                        email: emailController.text),
+                                  ),
+                                );
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
