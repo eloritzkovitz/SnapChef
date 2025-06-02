@@ -132,4 +132,33 @@ class AuthService {
       throw Exception('Failed to resend OTP: ${response.body}');
     }
   }
+
+  // Request password reset (send reset code to email)
+  Future<void> requestPasswordReset(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/request-password-reset'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to request password reset: ${response.body}');
+    }
+  }
+
+  // Confirm password reset (with code/OTP and new password)
+  Future<void> confirmPasswordReset(
+      String email, String otp, String newPassword) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/confirm-password-reset'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'otp': otp,
+        'newPassword': newPassword,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset password: ${response.body}');
+    }
+  }
 }

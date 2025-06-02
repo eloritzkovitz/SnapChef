@@ -17,14 +17,14 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);   
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
 
     SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  ); 
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     return Scaffold(
       body: Padding(
@@ -130,7 +130,8 @@ class LoginScreen extends StatelessWidget {
                   Buttons.Google,
                   text: "Sign in with Google",
                   onPressed: () async {
-                    await authViewModel.googleSignIn(context, userViewModel.fetchUserData);
+                    await authViewModel.googleSignIn(
+                        context, userViewModel.fetchUserData);
                   },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -144,6 +145,19 @@ class LoginScreen extends StatelessWidget {
                 },
                 child: Text(
                   'Don\'t have an account?',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/reset-password');
+                },
+                child: Text(
+                  'Forgot your password?',
                   style: TextStyle(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,

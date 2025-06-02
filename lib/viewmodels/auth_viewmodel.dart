@@ -160,4 +160,42 @@ class AuthViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  // Request password reset
+  Future<void> requestPasswordReset(String email, BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.requestPasswordReset(email);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Reset code sent! Please check your email.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) UIUtil.showError(context, e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Confirm password reset
+  Future<void> confirmPasswordReset(String email, String otp,
+      String newPassword, BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.confirmPasswordReset(email, otp, newPassword);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Password reset successful! Please log in.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      if (context.mounted) UIUtil.showError(context, e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
 }
