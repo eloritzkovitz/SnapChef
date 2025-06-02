@@ -17,12 +17,13 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
+      await TokenUtil.saveTokens(
+          data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
       throw Exception('Google Sign-In failed');
     }
-  }  
+  }
 
   // Login
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -34,7 +35,8 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
+      await TokenUtil.saveTokens(
+          data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
       throw Exception('Login failed');
@@ -60,7 +62,7 @@ class AuthService {
     } else {
       throw Exception('Signup failed');
     }
-  }  
+  }
 
   // Logout
   Future<void> logout() async {
@@ -76,7 +78,7 @@ class AuthService {
     }
 
     await prefs.clear();
-  }  
+  }
 
   // Refresh tokens
   Future<void> refreshTokens() async {
@@ -95,12 +97,39 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      await TokenUtil.saveTokens(data['accessToken'], data['refreshToken'], data['_id']);
+      await TokenUtil.saveTokens(
+          data['accessToken'], data['refreshToken'], data['_id']);
     } else {
       // Clear tokens if refresh fails
       await prefs.remove('accessToken');
       await prefs.remove('refreshToken');
       throw Exception('Failed to refresh tokens: ${response.body}');
+    }
+  }
+
+  // Send OTP for email verification
+  Future<void> verifyOTP(String email, String otp) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/verify-otp'),
+      body: jsonEncode({'email': email, 'otp': otp}),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('OTP verification failed: ${response.body}');
+    }
+  }
+
+  // Resend OTP
+  Future<void> resendOTP(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/resend-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to resend OTP: ${response.body}');
     }
   }
 }

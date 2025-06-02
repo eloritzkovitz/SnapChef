@@ -8,7 +8,7 @@ class AuthViewModel extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   bool _isLoading = false;
-  bool isLoggingOut = false;  
+  bool isLoggingOut = false;
 
   bool get isLoading => _isLoading;
 
@@ -42,18 +42,20 @@ class AuthViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, 'Google Sign-In failed: $e');
+      if (context.mounted) {
+        UIUtil.showError(context, 'Google Sign-In failed: $e');
+      }
     } finally {
       _setLoading(false);
     }
-  }   
+  }
 
   // Login
   Future<void> login(
-      String email,
-      String password,
-      BuildContext context,
-      Future<void> Function() fetchUserProfile,
+    String email,
+    String password,
+    BuildContext context,
+    Future<void> Function() fetchUserProfile,
   ) async {
     _setLoading(true);
     try {
@@ -82,11 +84,11 @@ class AuthViewModel extends ChangeNotifier {
       // Show success message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User created successfully!'),
-          duration: Duration(seconds: 3),
-        ),
-      );
+          const SnackBar(
+            content: Text('User created successfully!'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
 
       // Navigate to the login screen
@@ -97,19 +99,19 @@ class AuthViewModel extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }  
+  }
 
   // Logout
   Future<void> logout(BuildContext context) async {
     try {
-      await _authService.logout();     
+      await _authService.logout();
       notifyListeners();
       if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     }
   }
-  
+
   // Refresh Tokens
   Future<void> refreshTokens() async {
     try {
@@ -117,7 +119,7 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Failed to refresh tokens: $e');
     }
-  }  
+  }
 
   // Set the loading state
   void _setLoading(bool value) {
@@ -129,5 +131,33 @@ class AuthViewModel extends ChangeNotifier {
   void setLoggingOut(bool value) {
     isLoggingOut = value;
     notifyListeners();
-  }  
+  }
+
+  // Verify OTP
+  Future<void> verifyOTP(String email, String otp, BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.verifyOTP(email, otp);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email verified! Please log in.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      if (context.mounted) UIUtil.showError(context, e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Resend OTP
+  Future<void> resendOTP(String email) async {
+    _setLoading(true);
+    try {
+      await _authService.resendOTP(email);
+    } finally {
+      _setLoading(false);
+    }
+  }
 }
