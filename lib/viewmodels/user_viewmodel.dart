@@ -101,18 +101,29 @@ class UserViewModel extends ChangeNotifier {
 
   // Update User Preferences
   Future<void> updateUserPreferences({
-    required List<String> allergies,
-    required Map<String, bool> dietaryPreferences,
+    List<String>? allergies,
+    Map<String, bool>? dietaryPreferences,
+    Map<String, bool>? notificationPreferences,
   }) async {
     if (_user == null) throw Exception('User not loaded');
+
+    final updatedAllergies = allergies ?? _user!.preferences?.allergies ?? [];
+    final updatedDietary =
+        dietaryPreferences ?? _user!.preferences?.dietaryPreferences ?? {};
+    final updatedNotifications =
+        notificationPreferences ?? _user!.preferences?.notificationPreferences ?? {};
+
     await _userService.updateUserPreferences(
-      allergies: allergies,
-      dietaryPreferences: dietaryPreferences,
+      allergies: updatedAllergies,
+      dietaryPreferences: updatedDietary,
+      notificationPreferences: updatedNotifications,
     );
+
     _user = _user!.copyWith(
       preferences: Preferences(
-        allergies: allergies,
-        dietaryPreferences: dietaryPreferences,
+        allergies: updatedAllergies,
+        dietaryPreferences: updatedDietary,
+        notificationPreferences: updatedNotifications,
       ),
     );
     notifyListeners();

@@ -45,12 +45,12 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
 
   // Parses the markdown-like input into a Recipe object
   Recipe parsePersonalRecipe(String input) {
-    final lines = input.split('\n').map((l) => l.trim()).toList();
+    final lines = input.split('\n').map((l) => l.trimRight()).toList();
     String title = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
         : 'User-made Recipe';
     String description = _descriptionController.text.trim();
-    List<String> instructions = [];
+    List<String> instructions = List.from(lines);
     List<Ingredient> ingredients = [];
     String mealType = _selectedMealType ?? '';
     String cuisineType = _selectedCuisine ?? '';
@@ -63,34 +63,6 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
         : 0;
     String imageURL = '';
     double? rating;
-    bool inIngredients = false;
-    bool inInstructions = false;
-
-    for (final line in lines) {
-      if (line.isEmpty) continue;
-      if (line.toLowerCase().contains('ingredients')) {
-        inIngredients = true;
-        inInstructions = false;
-        continue;
-      }
-      if (line.toLowerCase().contains('instructions')) {
-        inIngredients = false;
-        inInstructions = true;
-        continue;
-      }
-      if (inIngredients && line.startsWith('*')) {
-        ingredients.add(Ingredient(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          name: line.replaceFirst('*', '').trim(),
-          category: '',
-          imageURL: '',
-          count: 1,
-        ));
-      }
-      if (inInstructions && line.startsWith('*')) {
-        instructions.add(line.replaceFirst('*', '').trim());
-      }
-    }
 
     return Recipe(
       id: DateTime.now().toString(),
@@ -145,8 +117,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     if (mounted) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe added!')),
-      );
+          const SnackBar(content: Text('Recipe added!')),
+        );
       }
       if (context.mounted) Navigator.pop(context);
     }
@@ -158,7 +130,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     final availableHeight = MediaQuery.of(context).size.height -
         viewInsets.bottom -
         kToolbarHeight -
-        32; // 32 for padding
+        32;
 
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
@@ -227,7 +199,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       labelText: 'Meal Type',
                                       border: const OutlineInputBorder(),
                                       focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: primaryColor),
+                                        borderSide:
+                                            BorderSide(color: primaryColor),
                                       ),
                                     ),
                                     items: mealTypes
@@ -251,7 +224,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       labelText: 'Cuisine',
                                       border: const OutlineInputBorder(),
                                       focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: primaryColor),
+                                        borderSide:
+                                            BorderSide(color: primaryColor),
                                       ),
                                     ),
                                     items: cuisines
@@ -279,7 +253,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       labelText: 'Difficulty',
                                       border: const OutlineInputBorder(),
                                       focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: primaryColor),
+                                        borderSide:
+                                            BorderSide(color: primaryColor),
                                       ),
                                     ),
                                     items: difficulties
@@ -288,8 +263,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                               child: Text(type),
                                             ))
                                         .toList(),
-                                    onChanged: (val) =>
-                                        setState(() => _selectedDifficulty = val),
+                                    onChanged: (val) => setState(
+                                        () => _selectedDifficulty = val),
                                     isExpanded: true,
                                     isDense: true,
                                     iconEnabledColor: primaryColor,
@@ -304,7 +279,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       labelText: 'Prep Time (min)',
                                       border: const OutlineInputBorder(),
                                       focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: primaryColor),
+                                        borderSide:
+                                            BorderSide(color: primaryColor),
                                       ),
                                     ),
                                   ),
@@ -318,7 +294,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       labelText: 'Cooking Time (min)',
                                       border: const OutlineInputBorder(),
                                       focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: primaryColor),
+                                        borderSide:
+                                            BorderSide(color: primaryColor),
                                       ),
                                     ),
                                   ),
@@ -338,7 +315,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                               ),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade400),
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Scrollbar(
@@ -365,7 +343,8 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                       fontSize: 15,
                                     ),
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
                                         return 'Please enter your recipe.';
                                       }
                                       return null;
@@ -390,11 +369,16 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                             width: 18,
                                             height: 18,
                                             child: CircularProgressIndicator(
-                                                strokeWidth: 2, color: Colors.white),
+                                                strokeWidth: 2,
+                                                color: Colors.white),
                                           )
                                         : const Icon(Icons.save),
-                                    label: Text(_isSaving ? 'Saving...' : 'Save Recipe'),
-                                    onPressed: _isSaving ? null : () => _saveRecipe(context),
+                                    label: Text(_isSaving
+                                        ? 'Saving...'
+                                        : 'Save Recipe'),
+                                    onPressed: _isSaving
+                                        ? null
+                                        : () => _saveRecipe(context),
                                   ),
                                 ),
                               ),
@@ -420,8 +404,10 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                         strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Icon(Icons.save),
-                            label: Text(_isSaving ? 'Saving...' : 'Save Recipe'),
-                            onPressed: _isSaving ? null : () => _saveRecipe(context),
+                            label:
+                                Text(_isSaving ? 'Saving...' : 'Save Recipe'),
+                            onPressed:
+                                _isSaving ? null : () => _saveRecipe(context),
                           ),
                         ),
                       ),

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../viewmodels/user_viewmodel.dart';
-import '../../../viewmodels/fridge_viewmodel.dart';
 import '../../../viewmodels/cookbook_viewmodel.dart';
+import '../../../viewmodels/fridge_viewmodel.dart';
+import '../../../viewmodels/ingredient_viewmodel.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -94,6 +95,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
   Future<void> _runSplashSequence() async {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final ingredientViewModel =
+        Provider.of<IngredientViewModel>(context, listen: false);
     final fridgeViewModel =
         Provider.of<FridgeViewModel>(context, listen: false);
     final cookbookViewModel =
@@ -120,7 +123,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
             final cookbookId = userViewModel.cookbookId;
             final futures = <Future>[];
             if (fridgeId != null) {
-              futures.add(fridgeViewModel.fetchFridgeIngredients(fridgeId));
+              futures.add(fridgeViewModel.fetchFridgeIngredients(fridgeId, ingredientViewModel));
             }
             if (cookbookId != null) {
               futures.add(cookbookViewModel.fetchCookbookRecipes(cookbookId));

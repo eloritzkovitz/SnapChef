@@ -39,7 +39,9 @@ class _ProfileDetailsState extends State<ProfileDetails> {
         Provider.of<IngredientViewModel>(context, listen: false);
     if (ingredientViewModel.ingredients == null &&
         !ingredientViewModel.loading) {
-      ingredientViewModel.fetchIngredients();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ingredientViewModel.fetchIngredients();
+      });
     }
   }
 
@@ -271,103 +273,118 @@ class _ProfileDetailsState extends State<ProfileDetails> {
         const SizedBox(height: 32),
 
         // --- Popular Ingredients Section ---
-        if (mostPopularIngredients.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Most Popular Ingredients',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.black87,
-                  ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Most Popular Ingredients',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: Colors.black87,
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: mostPopularIngredients.map<Widget>((item) {
-                        final name = UIUtil().capitalize(item['name'] ?? '');
-                        final count = item['count'] ?? 0;
-                        final imageURL = getIngredientImageUrl(
-                            item['name'] ?? '', ingredientMap);
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: mostPopularIngredients.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No popular ingredients yet.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: mostPopularIngredients.map<Widget>((item) {
+                            final name =
+                                UIUtil().capitalize(item['name'] ?? '');
+                            final count = item['count'] ?? 0;
+                            final imageURL = getIngredientImageUrl(
+                                item['name'] ?? '', ingredientMap);
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            children: [
-                              imageURL != null && imageURL.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(25),
-                                      child: Image.network(
-                                        ImageUtil().getFullImageUrl(imageURL),
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.contain,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                Container(
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: Column(
+                                children: [
+                                  imageURL != null && imageURL.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          child: Image.network(
+                                            ImageUtil()
+                                                .getFullImageUrl(imageURL),
+                                            width: 50,
+                                            height: 50,
+                                            fit: BoxFit.contain,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Container(
+                                              width: 50,
+                                              height: 50,
+                                              color: Colors.orange[50],
+                                              child: const Icon(
+                                                  Icons.image_not_supported,
+                                                  size: 32,
+                                                  color: Colors.orange),
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
                                           width: 50,
                                           height: 50,
-                                          color: Colors.orange[50],
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange[50],
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                          ),
                                           child: const Icon(
                                               Icons.image_not_supported,
                                               size: 32,
                                               color: Colors.orange),
                                         ),
-                                      ),
-                                    )
-                                  : Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange[50],
-                                        borderRadius: BorderRadius.circular(25),
-                                      ),
-                                      child: const Icon(
-                                          Icons.image_not_supported,
-                                          size: 32,
-                                          color: Colors.orange),
-                                    ),
-                              const SizedBox(height: 6),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    '($count)',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                '($count)',
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+              ),
+            ],
           ),
+        ),
         const SizedBox(height: 32),
       ],
     );

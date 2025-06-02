@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../edit_profile_screen.dart';
 import '../edit_preferences_screen.dart';
+import '../edit_notification_preferences_screen.dart';
 
 class SettingsMenu extends StatelessWidget {
   const SettingsMenu({super.key});
@@ -79,7 +80,7 @@ class SettingsMenu extends StatelessWidget {
                 text: 'Notifications',
                 onTap: () {
                   Navigator.pop(context);     
-                  // Notifications             
+                  _openSlidingScreen(context, const EditNotificationPreferencesScreen());            
                 },
               ),
               const Divider(),

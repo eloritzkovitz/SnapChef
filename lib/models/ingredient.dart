@@ -2,7 +2,7 @@ class Ingredient {
   final String id;
   final String name;
   final String category;
-  final String imageURL;
+  String imageURL;
   int count;
 
   Ingredient({

@@ -91,7 +91,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     final fridgeViewModel = Provider.of<FridgeViewModel>(context);
 
     final preferences = userViewModel.user?.preferences ??
-        Preferences(allergies: [], dietaryPreferences: {});
+        Preferences(allergies: [], dietaryPreferences: {}, notificationPreferences: {});
 
     return PopScope(
       canPop: true,
@@ -186,7 +186,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                       .text.isNotEmpty
                                   ? int.tryParse(_cookingTimeController.text)
                                   : null,
-                              preferences: preferences.toJson(),
+                              preferences: preferences.toRecipeJson(),
                             );
                             if (recipeViewModel.recipe.isNotEmpty && context.mounted) {
                               Navigator.push(
