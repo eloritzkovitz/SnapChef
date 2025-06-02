@@ -74,6 +74,7 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8.0),
+                              color: Colors.white,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8.0, vertical: 4.0),
