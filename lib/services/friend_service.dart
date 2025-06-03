@@ -86,7 +86,7 @@ class FriendService {
 
   // Cancel friend request
   Future<void> cancelSentRequest(String requestId) async {
-    final url = Uri.parse('$baseUrl/api/users/friends/requests/$requestId');
+    final url = Uri.parse('$baseUrl/api/users/friends/requests/$requestId/cancel');
     final response = await http.delete(
       url,
       headers: {
