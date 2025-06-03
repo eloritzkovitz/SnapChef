@@ -277,8 +277,9 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                   icon: const Icon(Icons.close, color: Colors.red),
                   tooltip: 'Cancel request',
                   onPressed: () async {
-                    await friendViewModel.respondToRequest(
-                        req.id, false, currentUser.id, userViewModel);
+                    // Use the cancel endpoint for sent requests
+                    await friendViewModel.cancelFriendRequest(
+                        req.id, currentUser.id, userViewModel);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
