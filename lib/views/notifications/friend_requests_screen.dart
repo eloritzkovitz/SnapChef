@@ -16,25 +16,45 @@ class FriendRequestsScreen extends StatefulWidget {
 }
 
 class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
-  late Future<List<FriendRequest>> _friendRequestsFuture;
   bool showSentByMe = false;
+  final Map<String, User?> _userCache = {};
+  bool _loadingUsers = false;
 
   @override
   void initState() {
     super.initState();
-    _loadFriendRequests();
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    if (userViewModel.user != null) {
+      Provider.of<FriendViewModel>(context, listen: false)
+          .getAllFriendRequests(userViewModel.user!.id)
+          .then((_) => _preloadSentUsers());
+    }
   }
 
-  void _loadFriendRequests() {
+  @override
+  void didUpdateWidget(covariant FriendRequestsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the widget is rebuilt and the list changes, reload user cache if needed
+    _preloadSentUsers();
+  }
+
+  Future<void> _preloadSentUsers() async {
+    setState(() => _loadingUsers = true);
     final friendViewModel =
         Provider.of<FriendViewModel>(context, listen: false);
-    _friendRequestsFuture = friendViewModel.fetchFriendRequests();
-    if (mounted) setState(() {});
-  }
-
-  Future<User?> _getUserById(BuildContext context, String userId) async {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    return await userViewModel.fetchUserProfile(userId);
+    final sentRequests = friendViewModel.sentRequests
+        .where((req) => req.status == 'pending')
+        .toList();
+    final missingUserIds = sentRequests
+        .map((req) => req.to)
+        .where((id) => !_userCache.containsKey(id))
+        .toSet();
+    for (final userId in missingUserIds) {
+      final user = await userViewModel.fetchUserProfile(userId);
+      _userCache[userId] = user;
+    }
+    setState(() => _loadingUsers = false);
   }
 
   @override
@@ -47,12 +67,19 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
         foregroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Consumer<UserViewModel>(
-        builder: (context, userViewModel, _) {
+      body: Consumer2<UserViewModel, FriendViewModel>(
+        builder: (context, userViewModel, friendViewModel, _) {
           final currentUser = userViewModel.user;
           if (currentUser == null) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          final requests = showSentByMe
+              ? friendViewModel.sentRequests
+                  .where((req) => req.status == 'pending')
+                  .toList()
+              : friendViewModel.pendingRequests;
+
           return Column(
             children: [
               Padding(
@@ -76,6 +103,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                       onSelected: (selected) {
                         if (!showSentByMe && selected) {
                           setState(() => showSentByMe = true);
+                          _preloadSentUsers();
                         }
                       },
                     ),
@@ -83,87 +111,57 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                 ),
               ),
               Expanded(
-                child: FutureBuilder<List<FriendRequest>>(
-                  future: _friendRequestsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(
-                          child: Text('Error loading friend requests'));
-                    }
-                    final allRequests = snapshot.data ?? [];
-
-                    // Filter requests based on toggle
-                    final requests = showSentByMe
-                        ? allRequests
-                            .where((req) =>
-                                req.status == 'pending' &&
-                                req.from.id == currentUser.id)
-                            .toList()
-                        : allRequests
-                            .where((req) =>
-                                req.status == 'pending' &&
-                                req.to == currentUser.id)
-                            .toList();
-
-                    if (requests.isEmpty) {
-                      return Center(
-                        child: Text(
-                          showSentByMe
-                              ? 'You have not sent any friend requests.'
-                              : 'No friend requests.',
-                          style:
-                              const TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      );
-                    }
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: requests.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final req = requests[index];
-
-                        // For requests sent by me, fetch the "to" user by ID.
-                        // For requests to me, use the "from" user object.
-                        if (showSentByMe) {
-                          return FutureBuilder<User?>(
-                            future: _getUserById(context, req.to),
-                            builder: (context, userSnapshot) {
-                              if (userSnapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return _buildCardSkeleton();
-                              }
-                              final user = userSnapshot.data;
-                              if (user == null) {
-                                return _buildCardError();
-                              }
-                              return _buildRequestCard(
-                                context: context,
-                                user: user,
-                                req: req,
-                                showSentByMe: true,
-                                currentUser: currentUser,
-                              );
-                            },
-                          );
-                        } else {
-                          // Requests to me: use req.from (already a User)
-                          return _buildRequestCard(
-                            context: context,
-                            user: req.from,
-                            req: req,
-                            showSentByMe: false,
-                            currentUser: currentUser,
-                          );
-                        }
-                      },
-                    );
-                  },
-                ),
+                child: friendViewModel.isLoading || _loadingUsers
+                    ? const Center(child: CircularProgressIndicator())
+                    : friendViewModel.error != null
+                        ? Center(
+                            child: Text(friendViewModel.error!,
+                                style: const TextStyle(color: Colors.red)))
+                        : requests.isEmpty
+                            ? Center(
+                                child: Text(
+                                  showSentByMe
+                                      ? 'You have not sent any friend requests.'
+                                      : 'No friend requests.',
+                                  style: const TextStyle(
+                                      fontSize: 18, color: Colors.grey),
+                                ),
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: requests.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final req = requests[index];
+                                  if (showSentByMe) {
+                                    final user = _userCache[req.to];
+                                    if (user == null) {
+                                      // Should not happen after preload, but fallback
+                                      return _buildCardSkeleton();
+                                    }
+                                    return _buildRequestCard(
+                                      context: context,
+                                      user: user,
+                                      req: req,
+                                      showSentByMe: true,
+                                      currentUser: currentUser,
+                                      friendViewModel: friendViewModel,
+                                      userViewModel: userViewModel,
+                                    );
+                                  } else {
+                                    return _buildRequestCard(
+                                      context: context,
+                                      user: req.from,
+                                      req: req,
+                                      showSentByMe: false,
+                                      currentUser: currentUser,
+                                      friendViewModel: friendViewModel,
+                                      userViewModel: userViewModel,
+                                    );
+                                  }
+                                },
+                              ),
               ),
             ],
           );
@@ -181,7 +179,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -223,43 +221,14 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     );
   }
 
-  Widget _buildCardError() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: const [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: Colors.grey,
-            child: Icon(Icons.error),
-          ),
-          SizedBox(width: 18),
-          Expanded(
-            child: Text('User not found'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildRequestCard({
     required BuildContext context,
     required User user,
     required FriendRequest req,
     required bool showSentByMe,
     required User currentUser,
+    required FriendViewModel friendViewModel,
+    required UserViewModel userViewModel,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0),
@@ -269,7 +238,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -308,15 +277,20 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                   icon: const Icon(Icons.close, color: Colors.red),
                   tooltip: 'Cancel request',
                   onPressed: () async {
-                    await Provider.of<FriendViewModel>(context, listen: false)
-                        .respondToRequest(req.id, false, currentUser.id);
+                    await friendViewModel.respondToRequest(
+                        req.id, false, currentUser.id, userViewModel);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content: Text('Friend request cancelled')),
                       );
                     }
-                    _loadFriendRequests();
+                    // Refresh requests and user cache
+                    if (context.mounted) {
+                      await Provider.of<FriendViewModel>(context, listen: false)
+                          .getAllFriendRequests(currentUser.id);
+                    }
+                    await _preloadSentUsers();
                   },
                 )
               : Row(
@@ -328,10 +302,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                         final notificationsViewModel =
                             Provider.of<NotificationsViewModel>(context,
                                 listen: false);
-                        await Provider.of<FriendViewModel>(context,
-                                listen: false)
-                            .respondToRequest(req.id, true, currentUser.id);
-                        // Add notification for the other user (the one who sent the request)
+                        await friendViewModel.respondToRequest(
+                            req.id, true, currentUser.id, userViewModel);
                         await notificationsViewModel.addNotification(
                           FriendNotification(
                             id: await notificationsViewModel
@@ -353,22 +325,33 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                 content: Text('Friend request accepted')),
                           );
                         }
-                        _loadFriendRequests();
+                        // Refresh requests and user cache
+                        if (context.mounted) {
+                          await Provider.of<FriendViewModel>(context,
+                                  listen: false)
+                              .getAllFriendRequests(currentUser.id);
+                        }
+                        await _preloadSentUsers();
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
                       onPressed: () async {
-                        await Provider.of<FriendViewModel>(context,
-                                listen: false)
-                            .respondToRequest(req.id, false, currentUser.id);
+                        await friendViewModel.respondToRequest(
+                            req.id, false, currentUser.id, userViewModel);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Friend request declined')),
                           );
                         }
-                        _loadFriendRequests();
+                        // Refresh requests and user cache
+                        if (context.mounted) {
+                          await Provider.of<FriendViewModel>(context,
+                                  listen: false)
+                              .getAllFriendRequests(currentUser.id);
+                          await _preloadSentUsers();
+                        }
                       },
                     ),
                   ],

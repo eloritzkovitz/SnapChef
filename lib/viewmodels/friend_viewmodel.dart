@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/friend_request.dart';
 import '../models/user.dart';
 import '../services/friend_service.dart';
+import 'user_viewmodel.dart';
 
 class FriendViewModel extends ChangeNotifier {
   final FriendService _friendService = FriendService();
@@ -67,11 +68,12 @@ class FriendViewModel extends ChangeNotifier {
   }
 
   // Send a friend request
-  Future<String?> sendFriendRequest(String userId, String currentUserId) async {
+  Future<String?> sendFriendRequest(String userId, String currentUserId, UserViewModel userViewModel) async {
     try {
       final message = await _friendService.sendFriendRequest(userId);
       // Refresh sent/received requests after sending
       await getAllFriendRequests(currentUserId);
+      await userViewModel.fetchUserData();
       return message;
     } catch (e) {
       _error = e.toString();
@@ -82,11 +84,12 @@ class FriendViewModel extends ChangeNotifier {
 
   // Accept or decline a friend request
   Future<void> respondToRequest(
-      String requestId, bool accept, String currentUserId) async {
+      String requestId, bool accept, String currentUserId, UserViewModel userViewModel) async {
     _setLoading(true);
     try {
       await _friendService.respondToRequest(requestId, accept);
       await getAllFriendRequests(currentUserId);
+      await userViewModel.fetchUserData();
       _error = null;
     } catch (e) {
       _error = e.toString();
