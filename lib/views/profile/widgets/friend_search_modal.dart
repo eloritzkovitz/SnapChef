@@ -100,8 +100,9 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       if (currentUserId == null) {
         throw Exception('Current user ID is null');
       }
+      // Pass userViewModel to sendFriendRequest so it updates user data too
       message = await Provider.of<FriendViewModel>(context, listen: false)
-          .sendFriendRequest(userId, currentUserId);
+          .sendFriendRequest(userId, currentUserId, userViewModel);
       if (message == null || message.isEmpty) {
         message = 'Friend request sent!';
       }

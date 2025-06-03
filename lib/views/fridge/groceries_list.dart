@@ -24,13 +24,31 @@ class GroceriesList extends StatelessWidget {
         SnapChefAppBar(
           title: const Text(
             'Groceries',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
+            style: TextStyle(                      
               fontWeight: FontWeight.bold,
             ),
-          ),                
+          ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.kitchen_outlined, color: Colors.black),
+              tooltip: 'Add all to fridge',
+              onPressed: () async {
+                final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
+                final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+                final fridgeId = userViewModel.fridgeId;
+                final groceries = fridgeViewModel.filteredGroceries;
+                if (fridgeId != null && fridgeId.isNotEmpty && groceries.isNotEmpty) {
+                  for (final ingredient in groceries) {
+                    await fridgeViewModel.addGroceryToFridge(fridgeId, ingredient);
+                  }
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('All groceries moved to fridge!')),
+                    );
+                  }
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.tune, color: Colors.black),
               tooltip: 'Filter & Sort',
@@ -177,7 +195,7 @@ class GroceriesList extends StatelessWidget {
                                     },
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.kitchen,
+                                    icon: const Icon(Icons.kitchen_outlined,
                                         color: primaryColor),
                                     tooltip: 'Move to Fridge',
                                     onPressed: () async {
