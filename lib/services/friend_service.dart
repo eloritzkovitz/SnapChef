@@ -19,7 +19,7 @@ class FriendService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);      
+      final data = jsonDecode(response.body);
       final friendsList = data['friends'] as List<dynamic>;
       return friendsList.map((json) => User.fromJson(json)).toList();
     } else {
@@ -58,7 +58,7 @@ class FriendService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);      
+      final data = jsonDecode(response.body);
       final usersList = data as List<dynamic>;
       return usersList.map((json) => User.fromJson(json)).toList();
     } else {
@@ -81,6 +81,20 @@ class FriendService {
       return data['message'] as String?;
     } else {
       throw Exception('Failed to send friend request: ${response.body}');
+    }
+  }
+
+  // Cancel friend request
+  Future<void> cancelSentRequest(String requestId) async {
+    final url = Uri.parse('$baseUrl/api/users/friends/requests/$requestId');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${await TokenUtil.getAccessToken()}',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel friend request: ${response.body}');
     }
   }
 

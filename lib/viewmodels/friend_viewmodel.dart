@@ -68,7 +68,8 @@ class FriendViewModel extends ChangeNotifier {
   }
 
   // Send a friend request
-  Future<String?> sendFriendRequest(String userId, String currentUserId, UserViewModel userViewModel) async {
+  Future<String?> sendFriendRequest(
+      String userId, String currentUserId, UserViewModel userViewModel) async {
     try {
       final message = await _friendService.sendFriendRequest(userId);
       // Refresh sent/received requests after sending
@@ -82,9 +83,24 @@ class FriendViewModel extends ChangeNotifier {
     }
   }
 
+  // Cancel a sent friend request
+  Future<void> cancelFriendRequest(String requestId, String currentUserId,
+      UserViewModel userViewModel) async {
+    _setLoading(true);
+    try {
+      await _friendService.cancelSentRequest(requestId);
+      await getAllFriendRequests(currentUserId);
+      await userViewModel.fetchUserData();
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+    }
+    _setLoading(false);
+  }
+
   // Accept or decline a friend request
-  Future<void> respondToRequest(
-      String requestId, bool accept, String currentUserId, UserViewModel userViewModel) async {
+  Future<void> respondToRequest(String requestId, bool accept,
+      String currentUserId, UserViewModel userViewModel) async {
     _setLoading(true);
     try {
       await _friendService.respondToRequest(requestId, accept);
