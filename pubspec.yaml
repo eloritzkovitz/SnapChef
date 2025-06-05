@@ -40,6 +40,9 @@ dependencies:
   carousel_slider: ^5.0.0
   socket_io_client: ^3.1.2
   connectivity_plus: ^6.1.4
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  drift: ^2.26.1
 
 flutter:
   uses-material-design: true
@@ -59,6 +62,8 @@ dev_dependencies:
   flutter_native_splash: ^2.4.6
   flutter_test:
     sdk: flutter
+  drift_dev: ^2.26.1
+  build_runner: ^2.4.15
 
 flutter_launcher_icons:
   android: true  

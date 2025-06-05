@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
@@ -113,6 +114,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => cookbookViewModel),
         ChangeNotifierProvider(create: (_) => friendViewModel),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
+        Provider<AppDatabase>(create: (_) => AppDatabase()),
         Provider<IngredientService>(create: (_) => IngredientService()),
         ChangeNotifierProvider(
           create: (context) => IngredientViewModel(
