@@ -2,22 +2,25 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
+import '../models/user.dart' as model;
+import '../models/preferences.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
 import '../services/user_service.dart';
-import '../models/user.dart' as model;
-import '../models/preferences.dart';
 import '../utils/ui_util.dart';
 import '../database/app_database.dart' as db;
+import '../providers/connectivity_provider.dart';
 
 class UserViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
   final db.AppDatabase database;
+  final ConnectivityProvider connectivityProvider;
 
-  UserViewModel(BuildContext context)
-      : database = Provider.of<db.AppDatabase>(context, listen: false);
+  UserViewModel({
+    required this.database,
+    required this.connectivityProvider,
+  });
 
   bool _isLoading = false;
   bool isLoggingOut = false;
@@ -32,10 +35,30 @@ class UserViewModel extends ChangeNotifier {
   Map<String, dynamic>? get userStats => _userStats;
   List<model.User> get friends => _user?.friends ?? [];
 
-  // Fetch user data (including friends) and store locally
+  // Fetch user data and store locally
   Future<void> fetchUserData() async {
-    try {
-      final userProfile = await _userService.getUserData();
+    _isLoading = true;
+    notifyListeners();
+
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {    
+      await _loadUserFromLocalDb().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {       
+          _user = null;
+          notifyListeners();
+        },
+      );
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    try {    
+      final userProfile = await _userService.getUserData().timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Network timeout'),
+          );
       _user = userProfile;
       notifyListeners();
 
@@ -45,11 +68,18 @@ class UserViewModel extends ChangeNotifier {
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
       await updateFcmToken(fcmToken);
-    } catch (e) {
+    } catch (e) {   
       if (e.toString().contains('401')) {
-        try {
-          await _authService.refreshTokens();
-          final userProfile = await _userService.getUserData();
+        try {      
+          await _authService.refreshTokens().timeout(
+                const Duration(seconds: 10),
+                onTimeout: () => throw Exception('Token refresh timeout'),
+              );
+          final userProfile = await _userService.getUserData().timeout(
+                const Duration(seconds: 10),
+                onTimeout: () =>
+                    throw Exception('Network timeout after refresh'),
+              );
           _user = userProfile;
           notifyListeners();
 
@@ -59,21 +89,59 @@ class UserViewModel extends ChangeNotifier {
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
           await updateFcmToken(fcmToken);
-        } catch (refreshError) {
-          _user = null;
-          notifyListeners();
-          rethrow;
+        } catch (refreshError) {       
+          await _loadUserFromLocalDb().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {            
+              _user = null;
+              notifyListeners();
+            },
+          );
         }
       } else {
-        _user = null;
-        notifyListeners();
-        rethrow;
+        await _loadUserFromLocalDb().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {         
+            _user = null;
+            notifyListeners();
+          },
+        );
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<void> _storeUserLocally(model.User user) async {  
+  // Helper: Load user from local database
+  Future<void> _loadUserFromLocalDb() async {
+    try {
+      // Option 1: Use userId from SharedPreferences if you store it
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      db.User? localUser;
+      if (userId != null && userId.isNotEmpty) {
+        localUser = await database.userDao.getUserById(userId);
+      } else {
+        // Option 2: Fallback to first user in DB
+        final users = await database.userDao.getAllUsers();
+        localUser = users.isNotEmpty ? users.first : null;
+      }
+      if (localUser != null) {
+        _user = model.User.fromDb(localUser);
+        notifyListeners();
+      } else {
+        _user = null;
+        notifyListeners();
+      }
+    } catch (dbError) {
+      _user = null;
+      notifyListeners();
+    }
+  }
 
+  // Helper: Store user data locally in the database and SharedPreferences
+  Future<void> _storeUserLocally(model.User user) async {
     // Serialize preferences if needed
     String? preferencesJson;
     if (user.preferences != null) {
@@ -90,8 +158,7 @@ class UserViewModel extends ChangeNotifier {
       cookbookId: user.cookbookId,
       fcmToken: user.fcmToken,
       profilePicture: user.profilePicture,
-      preferencesJson:
-          preferencesJson, 
+      preferencesJson: preferencesJson,
     );
 
     await database.userDao.insertUser(dbUser);

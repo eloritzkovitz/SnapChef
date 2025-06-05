@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'widgets/favorites_gallery.dart';
 import 'widgets/quick_actions.dart';
+import '../../constants/ui_constants.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../utils/ui_util.dart';
@@ -13,30 +15,42 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context);
     final userName = userViewModel.user?.firstName ?? 'User';
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
 
     return Scaffold(
-      appBar: AppBar(
-        title: DefaultTextStyle(
-          style: const TextStyle(
-            fontFamily: 'BerlinSansFBDemi',
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-            color: primaryColor,
-          ),
-          child: Row(
-            children: [
-              Image.asset(
-                'assets/images/icon_appbar.png',
-                height: 36,
-                width: 36,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(
+            kToolbarHeight + (isOffline ? kOfflineBannerHeight : 0)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isOffline) SizedBox(height: kOfflineBannerHeight),
+            AppBar(
+              title: DefaultTextStyle(
+                style: const TextStyle(
+                  fontFamily: 'BerlinSansFBDemi',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32,
+                  color: primaryColor,
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/icon_appbar.png',
+                      height: 36,
+                      width: 36,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('SnapChef'),
+                  ],
+                ),
               ),
-              const SizedBox(width: 8),
-              const Text('SnapChef'),
-            ],
-          ),
+              backgroundColor: Colors.white,
+              foregroundColor: primaryColor,
+              elevation: 0,
+            ),
+          ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: primaryColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

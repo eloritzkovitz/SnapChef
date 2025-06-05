@@ -92,10 +92,25 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
-        ChangeNotifierProvider(create: (context) => UserViewModel(context)),
-        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
+        ChangeNotifierProvider(
+          create: (context) => UserViewModel(
+            database: Provider.of<AppDatabase>(context, listen: false),
+            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => FridgeViewModel(
+            database: Provider.of<AppDatabase>(context, listen: false),
+            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
+        ChangeNotifierProvider(
+          create: (context) => CookbookViewModel(
+            database: Provider.of<AppDatabase>(context, listen: false),
+            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
         Provider<IngredientService>(create: (_) => IngredientService()),

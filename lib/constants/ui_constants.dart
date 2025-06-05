@@ -1,0 +1,1 @@
+const double kOfflineBannerHeight = 49.0;

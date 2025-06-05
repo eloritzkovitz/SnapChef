@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../database/app_database.dart' as db;
 import '../models/ingredient.dart';
+import '../providers/connectivity_provider.dart';
 import '../services/image_service.dart';
 import '../services/fridge_service.dart';
 import '../viewmodels/ingredient_viewmodel.dart';
@@ -13,6 +15,13 @@ class FridgeViewModel extends ChangeNotifier {
   List<Ingredient> filteredGroceries = [];
   List<dynamic> recognizedIngredients = [];
   final FridgeService _fridgeService = FridgeService();
+  final db.AppDatabase database;
+  final ConnectivityProvider connectivityProvider;
+
+  FridgeViewModel({
+    required this.database,
+    required this.connectivityProvider,
+  });
 
   // Fridge filters/sorts
   String _filter = '';
@@ -35,66 +44,82 @@ class FridgeViewModel extends ChangeNotifier {
   // --- Fridge logic ---
 
   Future<void> fetchFridgeIngredients(
-      String fridgeId, IngredientViewModel ingredientViewModel) async {
+      String fridgeId, IngredientViewModel ingredientViewModel) async {  
     _isLoading = true;
     notifyListeners();
 
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {
+      await _loadFridgeIngredientsFromLocalDb(fridgeId);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
-      final items = await _fridgeService.fetchFridgeItems(fridgeId);
+      final items = await _fridgeService.fetchFridgeItems(fridgeId)
+          .timeout(const Duration(seconds: 10), onTimeout: () {       
+        throw Exception('Network timeout');
+      });
 
       _ingredients.clear();
       if (items.isNotEmpty) {
         _ingredients.addAll(
-          items.map((item) {
-            return Ingredient(
-              id: item['id'],
-              name: item['name'],
-              category: item['category'],
-              imageURL:
-                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
-              count: item['quantity'],
-            );
-          }).toList(),
+          items.map((item) => Ingredient(
+                id: item['id'],
+                name: item['name'],
+                category: item['category'],
+                imageURL:
+                    item['imageURL'] ?? 'assets/images/placeholder_image.png',
+                count: item['quantity'],
+              )),
         );
+        // Store locally for offline use
+        await _storeFridgeIngredientsLocally(fridgeId, _ingredients);
       }
 
-      // Update imageURLs using IngredientViewModel
       updateFridgeIngredientImageURLs(ingredientViewModel);
-
       _applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching fridge ingredients: $e');
+      await _loadFridgeIngredientsFromLocalDb(fridgeId);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      notifyListeners();    
     }
   }
 
-  // Update ingredient image URLs based on the IngredientViewModel
-  void updateFridgeIngredientImageURLs(
-      IngredientViewModel ingredientViewModel) {
-    final allIngredients = ingredientViewModel.ingredients;
-    if (allIngredients == null) return;
+  // Add this to load from local DB
+  Future<void> _loadFridgeIngredientsFromLocalDb(String fridgeId) async {
+    final localIngredients =
+        await database.fridgeIngredientDao.getFridgeItems(fridgeId: fridgeId);
+    _ingredients.clear();
+    _ingredients
+        .addAll(localIngredients.map((dbIng) => Ingredient.fromDb(dbIng)));
+    _applyFiltersAndSorting();
+  }
 
-    // Build a map of id -> imageURL for fast lookup
-    final imageUrlMap = {
-      for (final ing in allIngredients)
-        if (ing['id'] != null && ing['imageURL'] != null)
-          ing['id'] as String: ing['imageURL'] as String
-    };
-
-    for (final ingredient in _ingredients) {
-      if (imageUrlMap.containsKey(ingredient.id)) {
-        ingredient.imageURL = imageUrlMap[ingredient.id]!;
-      }
+  // Add this to store to local DB
+  Future<void> _storeFridgeIngredientsLocally(
+      String fridgeId, List<Ingredient> ingredients) async {
+    for (final ingredient in ingredients) {
+      await database.fridgeIngredientDao.insertOrUpdateFridgeIngredient(
+        ingredient.toDbFridgeIngredient(fridgeId: fridgeId),
+      );
     }
-    notifyListeners();
   }
 
   // --- Grocery logic ---
 
   Future<void> fetchGroceries(
       String fridgeId, IngredientViewModel ingredientViewModel) async {
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {
+      await _loadGroceriesFromLocalDb(fridgeId);
+      notifyListeners();
+      return;
+    }
+
     try {
       final items = await _fridgeService.fetchGroceries(fridgeId);
       _groceries.clear();
@@ -105,18 +130,41 @@ class FridgeViewModel extends ChangeNotifier {
             imageURL: item['imageURL'] ?? '',
             count: item['quantity'] ?? 1,
           )));
+      // Store locally for offline use
+      await _storeGroceriesLocally(fridgeId, _groceries);
 
       // Update imageURLs using IngredientViewModel
       updateFridgeIngredientImageURLs(ingredientViewModel);
-      
+
       _applyGroceryFiltersAndSorting();
     } catch (e) {
       log('Error fetching groceries: $e');
+      await _loadGroceriesFromLocalDb(fridgeId);
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadGroceriesFromLocalDb(String fridgeId) async {
+    final localGroceries =
+        await database.fridgeIngredientDao.getGroceries(fridgeId: fridgeId);
+    _groceries.clear();
+    _groceries.addAll(localGroceries.map((dbIng) => Ingredient.fromDb(dbIng)));
+    _applyGroceryFiltersAndSorting();
+  }
+
+// Store groceries locally using FridgeIngredientDao
+  Future<void> _storeGroceriesLocally(
+      String fridgeId, List<Ingredient> groceries) async {
+    for (final grocery in groceries) {
+      await database.fridgeIngredientDao.insertFridgeIngredient(
+        grocery.toDbFridgeIngredient(fridgeId: fridgeId),
+      );
     }
   }
 
   // Update grocery item image URLs based on the IngredientViewModel
-  void updateGroceryIngredientImageURLs(
+  void updateFridgeIngredientImageURLs(
       IngredientViewModel ingredientViewModel) {
     final allIngredients = ingredientViewModel.ingredients;
     if (allIngredients == null) return;

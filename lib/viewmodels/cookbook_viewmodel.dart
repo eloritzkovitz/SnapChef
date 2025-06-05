@@ -1,8 +1,11 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import '../database/app_database.dart' as db;
+import '../database/daos/recipe_dao.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
+import '../providers/connectivity_provider.dart';
 import '../services/cookbook_service.dart';
 
 class CookbookViewModel extends ChangeNotifier {
@@ -11,6 +14,15 @@ class CookbookViewModel extends ChangeNotifier {
   List<SharedRecipe>? sharedWithMeRecipes = [];
   List<SharedRecipe>? sharedByMeRecipes = [];
   final CookbookService _cookbookService = CookbookService();
+  final db.AppDatabase database;
+  final ConnectivityProvider connectivityProvider;
+
+  CookbookViewModel({
+    required this.database,
+    required this.connectivityProvider,
+  });
+
+  RecipeDao get recipeDao => database.recipeDao;
 
   String _filter = '';
   String? _selectedCategory;
@@ -38,12 +50,24 @@ class CookbookViewModel extends ChangeNotifier {
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
   // Fetch all recipes in the cookbook
-  Future<void> fetchCookbookRecipes(String cookbookId) async {
+  Future<void> fetchCookbookRecipes(String cookbookId) async {  
     _isLoading = true;
     notifyListeners();
 
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
+      _isLoading = false;
+      notifyListeners();     
+      return;
+    }
+
     try {
-      final items = await _cookbookService.fetchCookbookRecipes(cookbookId);
+      final items = await _cookbookService
+          .fetchCookbookRecipes(cookbookId)
+          .timeout(const Duration(seconds: 10), onTimeout: () {        
+        throw Exception('Network timeout');
+      });
 
       _recipes.clear();
       if (items.isNotEmpty) {
@@ -76,14 +100,33 @@ class CookbookViewModel extends ChangeNotifier {
             );
           }).toList(),
         );
+        await _storeCookbookRecipesLocally(cookbookId, _recipes);
       }
 
       _applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching cookbook recipes: $e');
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      notifyListeners();      
+    }
+  }
+
+  // Load recipes from local DB using RecipeDao
+  Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
+    final localRecipes = await recipeDao.getCookbookRecipes(userId);
+    _recipes.clear();
+    _recipes.addAll(
+        localRecipes.map((dbRecipe) => Recipe.fromDb(dbRecipe.toJson())));
+    _applyFiltersAndSorting();
+  }
+
+// Store recipes locally using RecipeDao
+  Future<void> _storeCookbookRecipesLocally(
+      String userId, List<Recipe> recipes) async {
+    for (final recipe in recipes) {
+      await recipeDao.insertOrUpdateRecipe(recipe.toDbRecipe(userId: userId));
     }
   }
 
@@ -257,8 +300,8 @@ class CookbookViewModel extends ChangeNotifier {
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
-          _recipes[index] = _recipes[index].copyWith(
-              isFavorite: !_recipes[index].isFavorite);
+          _recipes[index] =
+              _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
           _applyFiltersAndSorting();
           notifyListeners();
         }
@@ -364,7 +407,7 @@ class CookbookViewModel extends ChangeNotifier {
       log('Error deleting recipe: $e');
       return false;
     }
-  }  
+  }
 
   // Get a list of all categories
   List<String> getCategories() {

@@ -12,6 +12,7 @@ import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/ingredient_viewmodel.dart';
+import '../../widgets/offline_banner.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -36,7 +37,8 @@ class _MainScreenState extends State<MainScreen> {
     );
     // Listen for FCM token refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserViewModel>(context, listen: false).listenForFcmTokenRefresh();
+      Provider.of<UserViewModel>(context, listen: false)
+          .listenForFcmTokenRefresh();
     });
   }
 
@@ -83,8 +85,19 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<MainViewModel>();
     final isOffline = context.watch<ConnectivityProvider>().isOffline;
+    final bannerColor = Colors.grey[500];
 
-    // Define the screens for the navigation bar
+    // Set the status bar color after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: isOffline ? bannerColor : Colors.white,
+          statusBarIconBrightness:
+              isOffline ? Brightness.light : Brightness.dark,
+        ),
+      );
+    });
+
     final screens = [
       const HomeScreen(),
       const FridgeScreen(),
@@ -93,53 +106,52 @@ class _MainScreenState extends State<MainScreen> {
       const NotificationsScreen(),
     ];
 
-    return Column(
-      children: [
-        if (isOffline)
-          MaterialBanner(
-            content: const Text(
-              'You are offline',
-              style: TextStyle(color: Colors.black87),
-            ),
-            backgroundColor: Colors.grey,
-            actions: [Container()],
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Main content
+          IndexedStack(
+            index: viewModel.selectedIndex,
+            children: screens,
           ),
-        Expanded(
-          child: Scaffold(
-            body: IndexedStack(
-              index: viewModel.selectedIndex,
-              children: screens,
-            ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 2,
-                  ),
-                ],
-              ),
-              child: BottomNavigationBar(
-                items: const <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.home), label: 'Home'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.kitchen), label: 'Fridge'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.menu_book), label: 'Cookbook'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.person), label: 'Profile'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.notifications), label: 'Notifications'),
-                ],
-                currentIndex: viewModel.selectedIndex,
-                onTap: viewModel.onItemTapped,
-                iconSize: 30,
+          // Offline banner
+          if (isOffline)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: OfflineBanner(                  
+                ),
               ),
             ),
-          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 1,
+            ),
+          ],
         ),
-      ],
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Fridge'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.menu_book), label: 'Cookbook'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.notifications), label: 'Notifications'),
+          ],
+          currentIndex: viewModel.selectedIndex,
+          onTap: viewModel.onItemTapped,
+          iconSize: 30,
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'ingredient.dart';
+import 'dart:convert';
+import '../database/app_database.dart' as db;
 
 enum RecipeSource { ai, user, shared }
 
@@ -59,6 +61,89 @@ class Recipe {
           : json['source'] == 'shared'
               ? RecipeSource.shared
               : RecipeSource.user,
+    );
+  }
+
+  // Factory to create a Recipe from a DB map
+  factory Recipe.fromDb(Map<String, dynamic> dbRecipe) {
+    return Recipe(
+      id: dbRecipe['id'] as String,
+      title: dbRecipe['title'] as String,
+      description: dbRecipe['description'] as String,
+      mealType: dbRecipe['mealType'] as String,
+      cuisineType: dbRecipe['cuisineType'] as String,
+      difficulty: dbRecipe['difficulty'] as String,
+      prepTime: dbRecipe['prepTime'] as int,
+      cookingTime: dbRecipe['cookingTime'] as int,
+      ingredients: dbRecipe['ingredients'] != null
+          ? (dbRecipe['ingredients'] as List<dynamic>)
+              .map((i) => Ingredient.fromJson(i))
+              .toList()
+          : [],
+      instructions: dbRecipe['instructions'] != null
+          ? List<String>.from(dbRecipe['instructions'])
+          : [],
+      imageURL: dbRecipe['imageURL'] as String?,
+      rating: dbRecipe['rating'] != null
+          ? (dbRecipe['rating'] as num).toDouble()
+          : null,
+      isFavorite: dbRecipe['isFavorite'] == 1 || dbRecipe['isFavorite'] == true,
+      source: dbRecipe['source'] == 'ai'
+          ? RecipeSource.ai
+          : dbRecipe['source'] == 'shared'
+              ? RecipeSource.shared
+              : RecipeSource.user,
+    );
+  }
+
+  // Convert a Recipe to a Map for saving to a database
+  Map<String, dynamic> toDbMap({required String cookbookId}) {
+    return {
+      'id': id,
+      'cookbookId': cookbookId,
+      'title': title,
+      'description': description,
+      'mealType': mealType,
+      'cuisineType': cuisineType,
+      'difficulty': difficulty,
+      'prepTime': prepTime,
+      'cookingTime': cookingTime,
+      'ingredients': ingredients.map((i) => i.toJson()).toList(),
+      'instructions': instructions,
+      'imageURL': imageURL,
+      'rating': rating,
+      'isFavorite': isFavorite ? 1 : 0,
+      'source': source == RecipeSource.ai
+          ? 'ai'
+          : source == RecipeSource.shared
+              ? 'shared'
+              : 'user',
+    };
+  }
+
+  // NEW: Convert a Recipe to a Drift RecipesCompanion for DB insert/update
+  // Convert a Recipe to a Drift DB Recipe object (db.Recipe)
+  db.Recipe toDbRecipe({required String userId}) {
+    return db.Recipe(
+      id: id,
+      userId: userId,
+      title: title,
+      description: description,
+      mealType: mealType,
+      cuisineType: cuisineType,
+      difficulty: difficulty,
+      prepTime: prepTime,
+      cookingTime: cookingTime,
+      ingredientsJson: jsonEncode(ingredients.map((i) => i.toJson()).toList()),
+      instructionsJson: jsonEncode(instructions),
+      imageURL: imageURL ?? '',
+      rating: rating,
+      isFavorite: isFavorite,
+      source: source == RecipeSource.ai
+          ? 'ai'
+          : source == RecipeSource.shared
+              ? 'shared'
+              : 'user',
     );
   }
 

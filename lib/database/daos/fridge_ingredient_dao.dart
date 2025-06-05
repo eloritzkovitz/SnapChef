@@ -28,6 +28,8 @@ class FridgeIngredientDao extends DatabaseAccessor<AppDatabase> with _$FridgeIng
       into(fridgeIngredients).insertOnConflictUpdate(ingredient);
   Future<bool> updateFridgeIngredient(Insertable<FridgeIngredient> ingredient) =>
       update(fridgeIngredients).replace(ingredient);
+  Future<int> insertOrUpdateFridgeIngredient(Insertable<FridgeIngredient> ingredient) =>
+    into(fridgeIngredients).insertOnConflictUpdate(ingredient);
   Future<int> deleteFridgeIngredient(String id) =>
       (delete(fridgeIngredients)..where((i) => i.id.equals(id))).go();
 

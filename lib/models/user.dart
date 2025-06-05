@@ -1,3 +1,5 @@
+import 'dart:convert';
+import '../database/app_database.dart' as db;
 import 'preferences.dart';
 
 class User {
@@ -54,8 +56,7 @@ class User {
       friends: (json['friends'] as List<dynamic>?)?.map((friend) {
             if (friend is Map<String, dynamic>) {
               return User.fromJson(friend);
-            } else if (friend is String) {
-              // Only ID is present, create a minimal User
+            } else if (friend is String) {             
               return User(
                 id: friend,
                 firstName: 'Unknown',
@@ -104,4 +105,24 @@ class User {
 
   // Concatenate first and last name
   String get fullName => '$firstName $lastName';
+
+  //Convert User to a Map for saving to a database
+  factory User.fromDb(db.User user) {
+    return User(
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: null,
+      profilePicture: user.profilePicture,
+      joinDate: user.joinDate,
+      fridgeId: user.fridgeId,
+      cookbookId: user.cookbookId,
+      preferences: user.preferencesJson != null
+          ? Preferences.fromJson(jsonDecode(user.preferencesJson!))
+          : null,
+      friends: const [],
+      fcmToken: user.fcmToken,
+    );
+  }
 }
