@@ -56,7 +56,7 @@ SnapChef is a mobile application designed to create customized recipes based on 
 
 ### Frontend
 - **Flutter** (Dart) — Cross-platform mobile app
-- **Floor** — Local persistence (SQLite ORM)
+- **Drift** — Local persistence (SQLite ORM)
 - **Text-to-speech** — Cooking assistance
 
 ### Third-party Services

@@ -13,6 +13,9 @@ This folder contains all the main source code for the SnapChef application. Belo
 - [`models/`](./models/)   
   Data models representing core objects (e.g., User, Recipe, Ingredient) used throughout the app.
 
+- [`providers/`](./providers/)   
+  Providers that handle global state management (e.g. connectivity) used throughhout the app.
+
 - [`services/`](./services/)    
   Classes for handling business logic, API communication, authentication, and other external services.
 
