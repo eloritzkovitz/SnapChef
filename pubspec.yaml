@@ -39,6 +39,7 @@ dependencies:
   uuid: ^4.5.1
   carousel_slider: ^5.0.0
   socket_io_client: ^3.1.2
+  connectivity_plus: ^6.1.4
 
 flutter:
   uses-material-design: true

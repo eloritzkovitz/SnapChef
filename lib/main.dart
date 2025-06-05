@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
@@ -103,6 +104,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => authViewModel),
         ChangeNotifierProvider(create: (_) => userViewModel),
