@@ -1,36 +1,46 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
 import '../services/user_service.dart';
-import '../models/user.dart';
+import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../utils/ui_util.dart';
+import '../database/app_database.dart' as db;
 
 class UserViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final db.AppDatabase database;
+
+  UserViewModel(BuildContext context)
+      : database = Provider.of<db.AppDatabase>(context, listen: false);
 
   bool _isLoading = false;
   bool isLoggingOut = false;
-  User? _user;
+  model.User? _user;
   Map<String, dynamic>? _userStats;
 
   bool get isLoading => _isLoading;
-  User? get user => _user;
+  model.User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
   String? get cookbookId => _user?.cookbookId;
   Map<String, dynamic>? get userStats => _userStats;
-  List<User> get friends => _user?.friends ?? [];
+  List<model.User> get friends => _user?.friends ?? [];
 
-  // Fetch user data (including friends)
+  // Fetch user data (including friends) and store locally
   Future<void> fetchUserData() async {
     try {
       final userProfile = await _userService.getUserData();
       _user = userProfile;
       notifyListeners();
+
+      // Store user in local DB and SharedPreferences
+      await _storeUserLocally(userProfile);
 
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -42,6 +52,9 @@ class UserViewModel extends ChangeNotifier {
           final userProfile = await _userService.getUserData();
           _user = userProfile;
           notifyListeners();
+
+          // Store user in local DB and SharedPreferences
+          await _storeUserLocally(userProfile);
 
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -59,8 +72,36 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _storeUserLocally(model.User user) async {  
+
+    // Serialize preferences if needed
+    String? preferencesJson;
+    if (user.preferences != null) {
+      preferencesJson = Preferences.toJsonString(user.preferences!);
+    }
+
+    // Create db.User instance with all relevant fields
+    final dbUser = db.User(
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fridgeId: user.fridgeId,
+      cookbookId: user.cookbookId,
+      fcmToken: user.fcmToken,
+      profilePicture: user.profilePicture,
+      preferencesJson:
+          preferencesJson, 
+    );
+
+    await database.userDao.insertUser(dbUser);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', user.id);
+  }
+
   // Get friends list
-  Future<List<User>> getFriends() async {
+  Future<List<model.User>> getFriends() async {
     await fetchUserData();
     return _user?.friends ?? [];
   }
@@ -91,6 +132,9 @@ class UserViewModel extends ChangeNotifier {
               : _user!.profilePicture,
         );
         notifyListeners();
+
+        // Store updated user locally
+        await _storeUserLocally(_user!);
       }
     } catch (e) {
       throw Exception('Failed to update profile');
@@ -110,8 +154,9 @@ class UserViewModel extends ChangeNotifier {
     final updatedAllergies = allergies ?? _user!.preferences?.allergies ?? [];
     final updatedDietary =
         dietaryPreferences ?? _user!.preferences?.dietaryPreferences ?? {};
-    final updatedNotifications =
-        notificationPreferences ?? _user!.preferences?.notificationPreferences ?? {};
+    final updatedNotifications = notificationPreferences ??
+        _user!.preferences?.notificationPreferences ??
+        {};
 
     await _userService.updateUserPreferences(
       allergies: updatedAllergies,
@@ -127,6 +172,9 @@ class UserViewModel extends ChangeNotifier {
       ),
     );
     notifyListeners();
+
+    // Store updated user locally
+    await _storeUserLocally(_user!);
   }
 
   // Update FCM Token
@@ -137,6 +185,9 @@ class UserViewModel extends ChangeNotifier {
       if (_user != null) {
         _user = _user!.copyWith(fcmToken: token);
         notifyListeners();
+
+        // Store updated user locally
+        await _storeUserLocally(_user!);
       }
     } catch (e) {
       throw Exception('Failed to update FCM token: ${e.toString()}');
@@ -157,6 +208,12 @@ class UserViewModel extends ChangeNotifier {
       await _userService.deleteUser();
       _user = null;
       notifyListeners();
+
+      // Remove user from local DB and SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('userId');
+      await database.userDao.deleteUser(_user?.id ?? '');
+
       if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
@@ -178,7 +235,7 @@ class UserViewModel extends ChangeNotifier {
   }
 
   // Fetch another user's profile by userId
-  Future<User?> fetchUserProfile(String userId) async {
+  Future<model.User?> fetchUserProfile(String userId) async {
     try {
       final userProfile = await _userService.getUserProfile(userId);
       return userProfile;

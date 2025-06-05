@@ -36,7 +36,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();  
 
   // Set navigation bar to orange before app starts
   SystemChrome.setSystemUIOverlayStyle(
@@ -67,37 +67,20 @@ Future<void> main() async {
     log("Error loading .env file: $e");
   }
 
-  // Initialize the viewmodels
-  final authViewModel = AuthViewModel();
-  final userViewModel = UserViewModel();
-  userViewModel.listenForFcmTokenRefresh();
-  final fridgeViewModel = FridgeViewModel();
-  final cookbookViewModel = CookbookViewModel();
-  final friendViewModel = FriendViewModel();
+  // Initialize local database
+  final db = AppDatabase();  
 
-  // Run the app with the login status and viewmodels
+  // Run the app
   runApp(MyApp(
-    authViewModel: authViewModel,
-    userViewModel: userViewModel,
-    fridgeViewModel: fridgeViewModel,
-    cookbookViewModel: cookbookViewModel,
-    friendViewModel: friendViewModel,
+    db: db,   
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final AuthViewModel authViewModel;
-  final UserViewModel userViewModel;
-  final FridgeViewModel fridgeViewModel;
-  final CookbookViewModel cookbookViewModel;
-  final FriendViewModel friendViewModel;
+  final AppDatabase db;  
 
   const MyApp({
-    required this.authViewModel,
-    required this.userViewModel,
-    required this.fridgeViewModel,
-    required this.cookbookViewModel,
-    required this.friendViewModel,
+    required this.db,   
     super.key,
   });
 
@@ -105,16 +88,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<AppDatabase>.value(value: db),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => MainViewModel()),
-        ChangeNotifierProvider(create: (_) => authViewModel),
-        ChangeNotifierProvider(create: (_) => userViewModel),
-        ChangeNotifierProvider(create: (_) => fridgeViewModel),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (context) => UserViewModel(context)),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => cookbookViewModel),
-        ChangeNotifierProvider(create: (_) => friendViewModel),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
-        Provider<AppDatabase>(create: (_) => AppDatabase()),
+        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
+        ChangeNotifierProvider(create: (_) => FriendViewModel()),
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
         Provider<IngredientService>(create: (_) => IngredientService()),
         ChangeNotifierProvider(
           create: (context) => IngredientViewModel(

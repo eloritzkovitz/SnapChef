@@ -34,6 +34,10 @@ class _MainScreenState extends State<MainScreen> {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
+    // Listen for FCM token refresh
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserViewModel>(context, listen: false).listenForFcmTokenRefresh();
+    });
   }
 
   @override
