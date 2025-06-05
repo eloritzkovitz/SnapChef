@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 class Recipes extends Table {
   TextColumn get id => text()();
+  TextColumn get userId => text()();
   TextColumn get title => text()();
   TextColumn get description => text()();
   TextColumn get mealType => text()();
