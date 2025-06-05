@@ -6,7 +6,7 @@ part 'notification_dao.g.dart';
 
 @DriftAccessor(tables: [Notifications])
 class NotificationDao extends DatabaseAccessor<AppDatabase> with _$NotificationDaoMixin {
-  NotificationDao(AppDatabase db) : super(db);
+  NotificationDao(super.db);
 
   // CRUD
   Future<List<Notification>> getAllNotifications() => select(notifications).get();
