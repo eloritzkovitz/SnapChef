@@ -8,6 +8,7 @@ import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
 import './widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../widgets/snapchef_appbar.dart';
@@ -134,6 +135,9 @@ class _FridgeScreenState extends State<FridgeScreen> {
       );
     }
 
+    // Check if the device or the server are offline
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
+
     return Scaffold(
       appBar: SnapChefAppBar(
         title:
@@ -251,7 +255,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
           },
         ),
       ),
-      floatingActionButton: ActionButton(),
+      floatingActionButton: ActionButton(isDisabled: isOffline),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }  

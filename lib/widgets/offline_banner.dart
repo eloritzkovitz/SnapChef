@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/colors.dart';
 
 class OfflineBanner extends StatelessWidget {
   final double height;
@@ -8,7 +9,7 @@ class OfflineBanner extends StatelessWidget {
   const OfflineBanner({
     super.key,
     this.height = 48.0,
-    this.color = Colors.grey,
+    this.color = disabledSecondaryColor,
     this.message = 'You are offline',
   });
 

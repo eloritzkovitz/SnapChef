@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 const Color primaryColor = Color(0xffff794e);
 const Color secondaryColor = Color(0xffff5722);
 
+const Color disabledColor = Color(0xff9e9e9e);
+const Color disabledSecondaryColor = Color(0xffbdbdbd);
+
 // Define a MaterialColor for the primary color
 const MaterialColor primarySwatch = MaterialColor(
   0xffff5722, // Base color

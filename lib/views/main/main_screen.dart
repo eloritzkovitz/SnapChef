@@ -7,6 +7,7 @@ import '../cookbook/cookbook_screen.dart';
 import '../profile/profile_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../../providers/connectivity_provider.dart';
+import '../../theme/colors.dart';
 import '../../viewmodels/main_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
@@ -84,14 +85,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<MainViewModel>();
-    final isOffline = context.watch<ConnectivityProvider>().isOffline;
-    final bannerColor = Colors.grey[500];
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;    
 
     // Set the status bar color after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SystemChrome.setSystemUIOverlayStyle(
         SystemUiOverlayStyle(
-          statusBarColor: isOffline ? bannerColor : Colors.white,
+          statusBarColor: isOffline ? disabledSecondaryColor : Colors.white,
           statusBarIconBrightness:
               isOffline ? Brightness.light : Brightness.dark,
         ),
