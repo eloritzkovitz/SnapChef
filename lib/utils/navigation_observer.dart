@@ -10,22 +10,28 @@ class StatusBarObserver extends NavigatorObserver {
 
   void _setStatusBar(Route? route) {
     // Check if this is the splash screen route
-    final isSplash = route?.settings.name == '/' || route?.settings.name == '/splash';
+    final isSplash =
+        route?.settings.name == '/' || route?.settings.name == '/splash';
     if (isSplash) {
       SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(
-          statusBarColor: Color(0xFFF47851),
+          statusBarColor: splashColor,
           statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: splashColor,
+          systemNavigationBarIconBrightness: Brightness.light,          
         ),
       );
       return;
     }
 
-    final isOffline = Provider.of<ConnectivityProvider>(context, listen: false).isOffline;
+    final isOffline =
+        Provider.of<ConnectivityProvider>(context, listen: false).isOffline;
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: isOffline ? disabledSecondaryColor : Colors.white,
         statusBarIconBrightness: isOffline ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Define app colors
 const Color primaryColor = Color(0xffff794e);
 const Color secondaryColor = Color(0xffff5722);
+const Color splashColor = Color(0xFFF47851);
 
 const Color disabledColor = Color(0xff9e9e9e);
 const Color disabledSecondaryColor = Color(0xffbdbdbd);
