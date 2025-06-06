@@ -65,7 +65,7 @@ class CookbookViewModel extends ChangeNotifier {
     try {
       final items = await _cookbookService
           .fetchCookbookRecipes(cookbookId)
-          .timeout(const Duration(seconds: 10), onTimeout: () {        
+          .timeout(const Duration(seconds: 3), onTimeout: () {        
         throw Exception('Network timeout');
       });
 

@@ -15,6 +15,7 @@ class FridgeViewModel extends ChangeNotifier {
   List<Ingredient> filteredGroceries = [];
   List<dynamic> recognizedIngredients = [];
   final FridgeService _fridgeService = FridgeService();
+
   final db.AppDatabase database;
   final ConnectivityProvider connectivityProvider;
 
@@ -44,7 +45,7 @@ class FridgeViewModel extends ChangeNotifier {
   // --- Fridge logic ---
 
   Future<void> fetchFridgeIngredients(
-      String fridgeId, IngredientViewModel ingredientViewModel) async {  
+      String fridgeId, IngredientViewModel ingredientViewModel) async {
     _isLoading = true;
     notifyListeners();
 
@@ -57,8 +58,9 @@ class FridgeViewModel extends ChangeNotifier {
     }
 
     try {
-      final items = await _fridgeService.fetchFridgeItems(fridgeId)
-          .timeout(const Duration(seconds: 10), onTimeout: () {       
+      final items = await _fridgeService
+          .fetchFridgeItems(fridgeId)
+          .timeout(const Duration(seconds: 3), onTimeout: () {
         throw Exception('Network timeout');
       });
 
@@ -77,15 +79,16 @@ class FridgeViewModel extends ChangeNotifier {
         // Store locally for offline use
         await _storeFridgeIngredientsLocally(fridgeId, _ingredients);
       }
-
-      updateFridgeIngredientImageURLs(ingredientViewModel);
+      
+      // Update imageURLs using IngredientViewModel
+      updateFridgeIngredientImageURLs(ingredientViewModel, fridgeId);
       _applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching fridge ingredients: $e');
       await _loadFridgeIngredientsFromLocalDb(fridgeId);
     } finally {
       _isLoading = false;
-      notifyListeners();    
+      notifyListeners();
     }
   }
 
@@ -134,7 +137,7 @@ class FridgeViewModel extends ChangeNotifier {
       await _storeGroceriesLocally(fridgeId, _groceries);
 
       // Update imageURLs using IngredientViewModel
-      updateFridgeIngredientImageURLs(ingredientViewModel);
+      updateFridgeIngredientImageURLs(ingredientViewModel, fridgeId);
 
       _applyGroceryFiltersAndSorting();
     } catch (e) {
@@ -145,6 +148,7 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
+  // Load groceries from local database
   Future<void> _loadGroceriesFromLocalDb(String fridgeId) async {
     final localGroceries =
         await database.fridgeIngredientDao.getGroceries(fridgeId: fridgeId);
@@ -153,7 +157,7 @@ class FridgeViewModel extends ChangeNotifier {
     _applyGroceryFiltersAndSorting();
   }
 
-// Store groceries locally using FridgeIngredientDao
+  // Store groceries locally using FridgeIngredientDao
   Future<void> _storeGroceriesLocally(
       String fridgeId, List<Ingredient> groceries) async {
     for (final grocery in groceries) {
@@ -163,9 +167,9 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
-  // Update grocery item image URLs based on the IngredientViewModel
-  void updateFridgeIngredientImageURLs(
-      IngredientViewModel ingredientViewModel) {
+  // Update ingredient image URLs based on IngredientViewModel
+  Future<void> updateFridgeIngredientImageURLs(
+      IngredientViewModel ingredientViewModel, String fridgeId) async {
     final allIngredients = ingredientViewModel.ingredients;
     if (allIngredients == null) return;
 
@@ -176,11 +180,42 @@ class FridgeViewModel extends ChangeNotifier {
           ing['id'] as String: ing['imageURL'] as String
     };
 
-    for (final grocery in _groceries) {
-      if (imageUrlMap.containsKey(grocery.id)) {
-        grocery.imageURL = imageUrlMap[grocery.id]!;
+    // Update fridge ingredients
+    for (final ingredient in _ingredients) {
+      final newUrl = imageUrlMap[ingredient.id];
+      if (newUrl != null && ingredient.imageURL != newUrl) {
+        ingredient.imageURL = newUrl;
+        // Persist change in backend
+        try {
+          await _fridgeService.updateFridgeItemImageURL(
+            fridgeId,
+            ingredient.id,
+            newUrl,
+          );
+        } catch (e) {
+          // Optionally log or handle error
+        }
       }
     }
+
+    // Update groceries
+    for (final grocery in _groceries) {
+      final newUrl = imageUrlMap[grocery.id];
+      if (newUrl != null && grocery.imageURL != newUrl) {
+        grocery.imageURL = newUrl;
+        // Persist change in backend
+        try {
+          await _fridgeService.updateGroceryItemImageURL(
+            fridgeId,
+            grocery.id,
+            newUrl,
+          );
+        } catch (e) {
+          log('Error updating grocery image URL: $e');          
+        }
+      }
+    }
+
     notifyListeners();
   }
 
