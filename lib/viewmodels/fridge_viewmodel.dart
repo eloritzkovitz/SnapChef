@@ -7,6 +7,7 @@ import '../providers/connectivity_provider.dart';
 import '../services/image_service.dart';
 import '../services/fridge_service.dart';
 import '../viewmodels/ingredient_viewmodel.dart';
+import '../services/sync_service.dart';
 
 class FridgeViewModel extends ChangeNotifier {
   final List<Ingredient> _ingredients = [];
@@ -14,15 +15,26 @@ class FridgeViewModel extends ChangeNotifier {
   List<Ingredient> filteredIngredients = [];
   List<Ingredient> filteredGroceries = [];
   List<dynamic> recognizedIngredients = [];
-  final FridgeService _fridgeService = FridgeService();
 
+  // Pending actions for offline sync
+  final List<Map<String, dynamic>> _pendingFridgeActions = [];
+  final List<Map<String, dynamic>> _pendingGroceryActions = [];
+  final List<Map<String, dynamic>> _pendingFridgeOrderActions = [];
+  final List<Map<String, dynamic>> _pendingGroceryOrderActions = [];
+
+  // Service instances
+  final FridgeService _fridgeService = FridgeService();
   final db.AppDatabase database;
   final ConnectivityProvider connectivityProvider;
+  final SyncManager syncManager;
 
   FridgeViewModel({
     required this.database,
     required this.connectivityProvider,
-  });
+    required this.syncManager,
+  }) {
+    syncManager.register(_syncPendingActions);
+  }
 
   // Fridge filters/sorts
   String _filter = '';
@@ -92,7 +104,7 @@ class FridgeViewModel extends ChangeNotifier {
     }
   }
 
-  // Add this to load from local DB
+  // Load from local DB
   Future<void> _loadFridgeIngredientsFromLocalDb(String fridgeId) async {
     final localIngredients =
         await database.fridgeIngredientDao.getFridgeItems(fridgeId: fridgeId);
@@ -102,7 +114,7 @@ class FridgeViewModel extends ChangeNotifier {
     _applyFiltersAndSorting();
   }
 
-  // Add this to store to local DB
+  // Store to local DB
   Future<void> _storeFridgeIngredientsLocally(
       String fridgeId, List<Ingredient> ingredients) async {
     for (final ingredient in ingredients) {
@@ -162,7 +174,7 @@ class FridgeViewModel extends ChangeNotifier {
       String fridgeId, List<Ingredient> groceries) async {
     for (final grocery in groceries) {
       await database.fridgeIngredientDao.insertFridgeIngredient(
-        grocery.toDbFridgeIngredient(fridgeId: fridgeId),
+        grocery.toDbFridgeIngredient(fridgeId: fridgeId, isInFridge: false),
       );
     }
   }
@@ -170,12 +182,11 @@ class FridgeViewModel extends ChangeNotifier {
   // Update ingredient image URLs based on IngredientViewModel
   Future<void> updateFridgeIngredientImageURLs(
       IngredientViewModel ingredientViewModel, String fridgeId) async {
-    final allIngredients = ingredientViewModel.ingredients;    
+    final allIngredients = ingredientViewModel.ingredients;
 
     // Build a map of id -> imageURL for fast lookup
     final imageUrlMap = {
-      for (final ing in allIngredients)
-        ing.id: ing.imageURL
+      for (final ing in allIngredients) ing.id: ing.imageURL
     };
 
     // Update fridge ingredients
@@ -209,7 +220,7 @@ class FridgeViewModel extends ChangeNotifier {
             newUrl,
           );
         } catch (e) {
-          log('Error updating grocery image URL: $e');          
+          log('Error updating grocery image URL: $e');
         }
       }
     }
@@ -219,16 +230,46 @@ class FridgeViewModel extends ChangeNotifier {
 
   // --- Fridge add/update/delete ---
 
+  @override
+  void dispose() {
+    syncManager.unregister(_syncPendingActions);
+    super.dispose();
+  }
+
   // Add an item to the fridge
   Future<bool> addFridgeItem(String fridgeId, String id, String name,
       String category, String? imageURL, int quantity) async {
+    final ingredient = Ingredient(
+      id: id,
+      name: name,
+      category: category,
+      imageURL: imageURL ?? '',
+      count: quantity,
+    );
     try {
+      // Always update local DB
+      await database.fridgeIngredientDao.insertOrUpdateFridgeIngredient(
+        ingredient.toDbFridgeIngredient(fridgeId: fridgeId),
+      );
       final existingIngredientIndex =
           _ingredients.indexWhere((ingredient) => ingredient.id == id);
 
       if (existingIngredientIndex != -1) {
         final existingIngredient = _ingredients[existingIngredientIndex];
         final newQuantity = existingIngredient.count + quantity;
+
+        if (connectivityProvider.isOffline) {
+          _pendingFridgeActions.add({
+            'action': 'update',
+            'fridgeId': fridgeId,
+            'itemId': existingIngredient.id,
+            'newCount': newQuantity,
+          });
+          _ingredients[existingIngredientIndex].count = newQuantity;
+          _applyFiltersAndSorting();
+          notifyListeners();
+          return true;
+        }
 
         final success = await _fridgeService.updateFridgeItem(
             fridgeId, existingIngredient.id, newQuantity);
@@ -241,6 +282,18 @@ class FridgeViewModel extends ChangeNotifier {
           return false;
         }
       } else {
+        if (connectivityProvider.isOffline) {
+          _pendingFridgeActions.add({
+            'action': 'add',
+            'fridgeId': fridgeId,
+            'ingredient': ingredient,
+          });
+          _ingredients.add(ingredient);
+          _applyFiltersAndSorting();
+          notifyListeners();
+          return true;
+        }
+
         final itemData = {
           'id': id,
           'name': name,
@@ -251,15 +304,7 @@ class FridgeViewModel extends ChangeNotifier {
 
         final success = await _fridgeService.addFridgeItem(fridgeId, itemData);
         if (success) {
-          _ingredients.add(
-            Ingredient(
-              id: id,
-              name: name,
-              category: category,
-              imageURL: imageURL ?? '',
-              count: quantity,
-            ),
-          );
+          _ingredients.add(ingredient);
           _applyFiltersAndSorting();
           return true;
         } else {
@@ -269,6 +314,11 @@ class FridgeViewModel extends ChangeNotifier {
       }
     } catch (e) {
       log('Error adding ingredient to fridge: $e');
+      _pendingFridgeActions.add({
+        'action': 'add',
+        'fridgeId': fridgeId,
+        'ingredient': ingredient,
+      });
       return false;
     } finally {
       notifyListeners();
@@ -279,29 +329,55 @@ class FridgeViewModel extends ChangeNotifier {
   Future<bool> updateFridgeItem(
       String fridgeId, String itemId, int newCount) async {
     try {
+      // Always update local DB
+      final index =
+          _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
+      if (index != -1) {
+        _ingredients[index].count = newCount;
+        await database.fridgeIngredientDao.insertOrUpdateFridgeIngredient(
+          _ingredients[index].toDbFridgeIngredient(fridgeId: fridgeId),
+        );
+        _applyFiltersAndSorting();
+      }
+
+      if (connectivityProvider.isOffline) {
+        _pendingFridgeActions.add({
+          'action': 'update',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+          'newCount': newCount,
+        });
+        notifyListeners();
+        return true;
+      }
+
       final success =
           await _fridgeService.updateFridgeItem(fridgeId, itemId, newCount);
-      if (success) {
-        final index =
-            _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
-        if (index != -1) {
-          _ingredients[index].count = newCount;
-          _applyFiltersAndSorting();
-        }
-        return true;
-      } else {
-        log('Failed to update item');
-        return false;
+      if (!success) {
+        _pendingFridgeActions.add({
+          'action': 'update',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+          'newCount': newCount,
+        });
       }
+      return success;
     } catch (e) {
       log('Error updating item: $e');
+      _pendingFridgeActions.add({
+        'action': 'update',
+        'fridgeId': fridgeId,
+        'itemId': itemId,
+        'newCount': newCount,
+      });
       return false;
     } finally {
       notifyListeners();
     }
   }
 
-  // Reorder fridge items
+  // --- Fridge reorder logic ---
+
   Future<void> reorderIngredient(
       int oldIndex, int newIndex, String fridgeId) async {
     if (oldIndex < newIndex) {
@@ -330,13 +406,21 @@ class FridgeViewModel extends ChangeNotifier {
       _ingredients.insert(newMainIndex, mainIngredient);
     }
 
-    // Save the new order to backend
-    await saveFridgeOrder(fridgeId);
+    // Save the new order
+    if (connectivityProvider.isOffline) {
+      _pendingFridgeOrderActions.add({
+        'action': 'reorder',
+        'fridgeId': fridgeId,
+        'orderedIds': _ingredients.map((i) => i.id).toList(),
+      });
+      // Optionally, persist order locally if needed
+    } else {
+      await saveFridgeOrder(fridgeId);
+    }
 
     notifyListeners();
   }
 
-  // Save the new order to backend
   Future<void> saveFridgeOrder(String fridgeId) async {
     try {
       final orderedIds = _ingredients.map((i) => i.id).toList();
@@ -349,17 +433,37 @@ class FridgeViewModel extends ChangeNotifier {
   // Delete an item from the fridge
   Future<bool> deleteFridgeItem(String fridgeId, String itemId) async {
     try {
-      final success = await _fridgeService.deleteFridgeItem(fridgeId, itemId);
-      if (success) {
-        _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
-        _applyFiltersAndSorting();
+      // Always update local DB
+      await database.fridgeIngredientDao.deleteFridgeIngredient(itemId);
+      _ingredients.removeWhere((ingredient) => ingredient.id == itemId);
+      _applyFiltersAndSorting();
+
+      if (connectivityProvider.isOffline) {
+        _pendingFridgeActions.add({
+          'action': 'delete',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+        });
+        notifyListeners();
         return true;
-      } else {
-        log('Failed to delete item');
-        return false;
       }
+
+      final success = await _fridgeService.deleteFridgeItem(fridgeId, itemId);
+      if (!success) {
+        _pendingFridgeActions.add({
+          'action': 'delete',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+        });
+      }
+      return success;
     } catch (e) {
       log('Error deleting item: $e');
+      _pendingFridgeActions.add({
+        'action': 'delete',
+        'fridgeId': fridgeId,
+        'itemId': itemId,
+      });
       return false;
     } finally {
       notifyListeners();
@@ -371,13 +475,37 @@ class FridgeViewModel extends ChangeNotifier {
   // Add an item to the grocery list
   Future<bool> addGroceryItem(String fridgeId, String id, String name,
       String category, String? imageURL, int quantity) async {
+    final ingredient = Ingredient(
+      id: id,
+      name: name,
+      category: category,
+      imageURL: imageURL ?? '',
+      count: quantity,
+    );
     try {
+      // Always update local DB
+      await database.fridgeIngredientDao.insertGroceryItem(
+        ingredient.toDbFridgeIngredient(fridgeId: fridgeId, isInFridge: false),
+      );
       final existingGroceryIndex =
           _groceries.indexWhere((grocery) => grocery.id == id);
 
       if (existingGroceryIndex != -1) {
         final existingGrocery = _groceries[existingGroceryIndex];
         final newQuantity = existingGrocery.count + quantity;
+
+        if (connectivityProvider.isOffline) {
+          _pendingGroceryActions.add({
+            'action': 'update',
+            'fridgeId': fridgeId,
+            'itemId': existingGrocery.id,
+            'newCount': newQuantity,
+          });
+          _groceries[existingGroceryIndex].count = newQuantity;
+          _applyGroceryFiltersAndSorting();
+          notifyListeners();
+          return true;
+        }
 
         final success = await _fridgeService.updateGroceryItem(
             fridgeId, existingGrocery.id, newQuantity);
@@ -390,6 +518,18 @@ class FridgeViewModel extends ChangeNotifier {
           return false;
         }
       } else {
+        if (connectivityProvider.isOffline) {
+          _pendingGroceryActions.add({
+            'action': 'add',
+            'fridgeId': fridgeId,
+            'ingredient': ingredient,
+          });
+          _groceries.add(ingredient);
+          _applyGroceryFiltersAndSorting();
+          notifyListeners();
+          return true;
+        }
+
         final itemData = {
           'id': id,
           'name': name,
@@ -400,15 +540,7 @@ class FridgeViewModel extends ChangeNotifier {
 
         final success = await _fridgeService.addGroceryItem(fridgeId, itemData);
         if (success) {
-          _groceries.add(
-            Ingredient(
-              id: id,
-              name: name,
-              category: category,
-              imageURL: imageURL ?? '',
-              count: quantity,
-            ),
-          );
+          _groceries.add(ingredient);
           _applyGroceryFiltersAndSorting();
           return true;
         } else {
@@ -418,6 +550,11 @@ class FridgeViewModel extends ChangeNotifier {
       }
     } catch (e) {
       log('Error adding grocery item: $e');
+      _pendingGroceryActions.add({
+        'action': 'add',
+        'fridgeId': fridgeId,
+        'ingredient': ingredient,
+      });
       return false;
     } finally {
       notifyListeners();
@@ -428,36 +565,63 @@ class FridgeViewModel extends ChangeNotifier {
   Future<bool> updateGroceryItem(
       String fridgeId, String itemId, int newCount) async {
     try {
+      // Always update local DB
+      final index =
+          _groceries.indexWhere((ingredient) => ingredient.id == itemId);
+      if (index != -1) {
+        _groceries[index].count = newCount;
+        await database.fridgeIngredientDao.insertFridgeIngredient(
+          _groceries[index]
+              .toDbFridgeIngredient(fridgeId: fridgeId, isInFridge: false),
+        );
+        _applyGroceryFiltersAndSorting();
+      }
+
+      if (connectivityProvider.isOffline) {
+        _pendingGroceryActions.add({
+          'action': 'update',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+          'newCount': newCount,
+        });
+        notifyListeners();
+        return true;
+      }
+
       final success =
           await _fridgeService.updateGroceryItem(fridgeId, itemId, newCount);
-      if (success) {
-        final index =
-            _groceries.indexWhere((ingredient) => ingredient.id == itemId);
-        if (index != -1) {
-          _groceries[index].count = newCount;
-          _applyGroceryFiltersAndSorting();
-        }
-        return true;
-      } else {
-        log('Failed to update grocery item');
-        return false;
+      if (!success) {
+        _pendingGroceryActions.add({
+          'action': 'update',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+          'newCount': newCount,
+        });
       }
+      return success;
     } catch (e) {
       log('Error updating grocery item: $e');
+      _pendingGroceryActions.add({
+        'action': 'update',
+        'fridgeId': fridgeId,
+        'itemId': itemId,
+        'newCount': newCount,
+      });
       return false;
     } finally {
       notifyListeners();
     }
   }
 
-  // Reorder grocery items
+  // --- Grocery reorder logic ---
+
   Future<void> reorderGroceryItem(
       int oldIndex, int newIndex, String fridgeId) async {
     if (oldIndex < newIndex) newIndex -= 1;
     final item = filteredGroceries.removeAt(oldIndex);
     filteredGroceries.insert(newIndex, item);
 
-    // Also reorder in the main groceries list if you have one
+    // Also reorder in the main groceries list
     final oldId = item.id;
     final oldMainIndex = _groceries.indexWhere((g) => g.id == oldId);
     if (oldMainIndex != -1) {
@@ -473,36 +637,191 @@ class FridgeViewModel extends ChangeNotifier {
       _groceries.insert(newMainIndex, mainItem);
     }
 
-    // Save the new order to backend if needed
-    await saveGroceriesOrder(fridgeId);
+    // Save the new order
+    if (connectivityProvider.isOffline) {
+      _pendingGroceryOrderActions.add({
+        'action': 'reorder',
+        'fridgeId': fridgeId,
+        'orderedIds': _groceries.map((g) => g.id).toList(),
+      });
+      // Optionally, persist order locally if needed
+    } else {
+      await saveGroceriesOrder(fridgeId);
+    }
 
     notifyListeners();
   }
 
-  // Save the new grocery order to the backend
   Future<void> saveGroceriesOrder(String fridgeId) async {
-    final orderedIds = _groceries.map((g) => g.id).toList();
-    await _fridgeService.saveGroceriesOrder(fridgeId, orderedIds);
+    try {
+      final orderedIds = _groceries.map((g) => g.id).toList();
+      await _fridgeService.saveGroceriesOrder(fridgeId, orderedIds);
+    } catch (e) {
+      log('Error saving groceries order: $e');
+    }
   }
 
   // Delete an item from the grocery list
   Future<bool> deleteGroceryItem(String fridgeId, String itemId) async {
     try {
-      final success = await _fridgeService.deleteGroceryItem(fridgeId, itemId);
-      if (success) {
-        _groceries.removeWhere((ingredient) => ingredient.id == itemId);
-        _applyGroceryFiltersAndSorting();
+      // Always update local DB
+      await database.fridgeIngredientDao.deleteGroceryItem(itemId);
+      _groceries.removeWhere((ingredient) => ingredient.id == itemId);
+      _applyGroceryFiltersAndSorting();
+
+      if (connectivityProvider.isOffline) {
+        _pendingGroceryActions.add({
+          'action': 'delete',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+        });
+        notifyListeners();
         return true;
-      } else {
-        log('Failed to delete grocery item');
-        return false;
       }
+
+      final success = await _fridgeService.deleteGroceryItem(fridgeId, itemId);
+      if (!success) {
+        _pendingGroceryActions.add({
+          'action': 'delete',
+          'fridgeId': fridgeId,
+          'itemId': itemId,
+        });
+      }
+      return success;
     } catch (e) {
       log('Error deleting grocery item: $e');
+      _pendingGroceryActions.add({
+        'action': 'delete',
+        'fridgeId': fridgeId,
+        'itemId': itemId,
+      });
       return false;
     } finally {
       notifyListeners();
     }
+  }
+
+  // --- Sync logic ---
+  Future<void> _syncPendingActions() async {
+    // Sync fridge actions (add/update/delete)
+    if (_pendingFridgeActions.isNotEmpty) {
+      for (final action
+          in List<Map<String, dynamic>>.from(_pendingFridgeActions)) {
+        try {
+          switch (action['action']) {
+            case 'add':
+              final ingredient = action['ingredient'] as Ingredient;
+              final fridgeId = action['fridgeId'] as String;
+              final itemData = {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'category': ingredient.category,
+                'imageURL': ingredient.imageURL,
+                'quantity': ingredient.count,
+              };
+              await _fridgeService.addFridgeItem(fridgeId, itemData);
+              break;
+            case 'update':
+              await _fridgeService.updateFridgeItem(
+                action['fridgeId'],
+                action['itemId'],
+                action['newCount'],
+              );
+              break;
+            case 'delete':
+              await _fridgeService.deleteFridgeItem(
+                action['fridgeId'],
+                action['itemId'],
+              );
+              break;
+          }
+          _pendingFridgeActions.remove(action);
+        } catch (e) {
+          log('Failed to sync fridge action: $e');
+          break;
+        }
+      }
+    }
+
+    // Sync fridge reorder actions
+    if (_pendingFridgeOrderActions.isNotEmpty) {
+      for (final action
+          in List<Map<String, dynamic>>.from(_pendingFridgeOrderActions)) {
+        try {
+          if (action['action'] == 'reorder') {
+            await _fridgeService.saveFridgeOrder(
+              action['fridgeId'],
+              List<String>.from(action['orderedIds']),
+            );
+          }
+          _pendingFridgeOrderActions.remove(action);
+        } catch (e) {
+          log('Failed to sync fridge order: $e');
+          break;
+        }
+      }
+    }
+
+    // Sync grocery actions (add/update/delete)
+    if (_pendingGroceryActions.isNotEmpty) {
+      for (final action
+          in List<Map<String, dynamic>>.from(_pendingGroceryActions)) {
+        try {
+          switch (action['action']) {
+            case 'add':
+              final ingredient = action['ingredient'] as Ingredient;
+              final fridgeId = action['fridgeId'] as String;
+              final itemData = {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'category': ingredient.category,
+                'imageURL': ingredient.imageURL,
+                'quantity': ingredient.count,
+              };
+              await _fridgeService.addGroceryItem(fridgeId, itemData);
+              break;
+            case 'update':
+              await _fridgeService.updateGroceryItem(
+                action['fridgeId'],
+                action['itemId'],
+                action['newCount'],
+              );
+              break;
+            case 'delete':
+              await _fridgeService.deleteGroceryItem(
+                action['fridgeId'],
+                action['itemId'],
+              );
+              break;
+          }
+          _pendingGroceryActions.remove(action);
+        } catch (e) {
+          log('Failed to sync grocery action: $e');
+          break;
+        }
+      }
+    }
+
+    // Sync grocery reorder actions
+    if (_pendingGroceryOrderActions.isNotEmpty) {
+      for (final action
+          in List<Map<String, dynamic>>.from(_pendingGroceryOrderActions)) {
+        try {
+          if (action['action'] == 'reorder') {
+            await _fridgeService.saveGroceriesOrder(
+              action['fridgeId'],
+              List<String>.from(action['orderedIds']),
+            );
+          }
+          _pendingGroceryOrderActions.remove(action);
+        } catch (e) {
+          log('Failed to sync groceries order: $e');
+          break;
+        }
+      }
+    }
+
+    notifyListeners();
   }
 
   // --- Generic filtering and sorting logic ---
@@ -656,15 +975,64 @@ class FridgeViewModel extends ChangeNotifier {
 
   Future<void> addGroceryToFridge(
       String fridgeId, Ingredient ingredient) async {
-    await addFridgeItem(
-      fridgeId,
-      ingredient.id,
-      ingredient.name,
-      ingredient.category,
-      ingredient.imageURL,
-      ingredient.count,
-    );
-    await deleteGroceryItem(fridgeId, ingredient.id);
+    // Check if the ingredient is already in the fridge
+    final fridgeIndex = _ingredients.indexWhere((i) => i.id == ingredient.id);
+
+    if (fridgeIndex != -1) {
+      // Already in fridge: increment count
+      final existing = _ingredients[fridgeIndex];
+      final newCount = existing.count + ingredient.count;
+
+      // Update in local DB
+      await database.fridgeIngredientDao.insertOrUpdateFridgeIngredient(
+        existing
+            .toDbFridgeIngredient(fridgeId: fridgeId, isInFridge: true)
+            .copyWith(count: newCount),
+      );
+
+      // Update in memory
+      _ingredients[fridgeIndex].count = newCount;
+    } else {
+      // Not in fridge: add as new fridge item
+      await database.fridgeIngredientDao.insertOrUpdateFridgeIngredient(
+        ingredient.toDbFridgeIngredient(fridgeId: fridgeId, isInFridge: true),
+      );
+      _ingredients.add(ingredient);
+    }
+
+    // Remove from groceries in local DB and memory
+    await database.fridgeIngredientDao.deleteGroceryItem(ingredient.id);
+    _groceries.removeWhere((g) => g.id == ingredient.id);
+
+    _applyFiltersAndSorting();
+    _applyGroceryFiltersAndSorting();
+    notifyListeners();
+
+    // Optionally, sync with backend if online
+    if (!connectivityProvider.isOffline) {
+      await addFridgeItem(
+        fridgeId,
+        ingredient.id,
+        ingredient.name,
+        ingredient.category,
+        ingredient.imageURL,
+        ingredient.count,
+      );
+      await deleteGroceryItem(fridgeId, ingredient.id);
+    } else {
+      // Add to pending actions for sync
+      _pendingFridgeActions.add({
+        'action': 'update',
+        'fridgeId': fridgeId,
+        'itemId': ingredient.id,
+        'newCount': _ingredients.firstWhere((i) => i.id == ingredient.id).count,
+      });
+      _pendingGroceryActions.add({
+        'action': 'delete',
+        'fridgeId': fridgeId,
+        'itemId': ingredient.id,
+      });
+    }
   }
 
   // --- Increase/decrease count for fridge items ---

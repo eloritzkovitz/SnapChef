@@ -22,49 +22,61 @@ class IngredientViewModel extends ChangeNotifier {
     _loading = true;
     notifyListeners();
 
-    // Fetch from backend
-    final fetchedJson = await _service.getAllIngredients();
-    final fetchedIngredients = fetchedJson
-        .map<Ingredient>((json) => Ingredient.fromJson(json))
-        .toList();
+    try {
+      // Try fetching from backend with a timeout
+      final fetchedJson = await _service
+          .getAllIngredients()
+          .timeout(const Duration(seconds: 3));
+      final fetchedIngredients = fetchedJson
+          .map<Ingredient>((json) => Ingredient.fromJson(json))
+          .toList();
 
-    // Load local ingredients from DB
-    final localIngredients = await _ingredientDao.getAllIngredients();
+      // Load local ingredients from DB
+      final localIngredients = await _ingredientDao.getAllIngredients();
 
-    // Compare by id and content
-    final localIngredientsModel = localIngredients
-        .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
-        .toList();
-    bool isDifferent = fetchedIngredients.length != localIngredients.length ||
-        !_listEqualsByContent(fetchedIngredients, localIngredientsModel);
+      // Compare by id and content
+      final localIngredientsModel = localIngredients
+          .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
+          .toList();
+      bool isDifferent = fetchedIngredients.length != localIngredients.length ||
+          !_listEqualsByContent(fetchedIngredients, localIngredientsModel);
 
-    if (isDifferent) {
-      // Remove local ingredients not in fetched list
-      final fetchedIds = fetchedIngredients.map((e) => e.id).toSet();
-      for (final local in localIngredients) {
-        if (!fetchedIds.contains(local.id)) {
-          await _ingredientDao.deleteIngredient(local.id);
+      if (isDifferent) {
+        // Remove local ingredients not in fetched list
+        final fetchedIds = fetchedIngredients.map((e) => e.id).toSet();
+        for (final local in localIngredients) {
+          if (!fetchedIds.contains(local.id)) {
+            await _ingredientDao.deleteIngredient(local.id);
+          }
         }
-      }
 
-      // Insert or update fetched ingredients
-      for (final ing in fetchedIngredients) {
-        await _ingredientDao.insertIngredient(ing.toCompanion());
-      }
+        // Insert or update fetched ingredients
+        for (final ing in fetchedIngredients) {
+          await _ingredientDao.insertIngredient(ing.toCompanion());
+        }
 
-      _ingredients = fetchedIngredients;
-      _ingredientMap = {
-        for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
-      };
-      _loading = false;
-      notifyListeners();
-    } else {     
+        _ingredients = fetchedIngredients;
+        _ingredientMap = {
+          for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
+        };
+      } else {
+        _ingredients = localIngredients
+            .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
+            .toList();
+        _ingredientMap = {
+          for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
+        };
+      }
+    } catch (e) {
+      // Fallback to local DB if backend fails or times out
+      final localIngredients = await _ingredientDao.getAllIngredients();
       _ingredients = localIngredients
           .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
           .toList();
       _ingredientMap = {
         for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
       };
+    } finally {
       _loading = false;
       notifyListeners();
     }

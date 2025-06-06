@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
+import 'services/sync_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'utils/navigation_observer.dart';
@@ -38,14 +38,6 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Set navigation bar to orange before app starts
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      systemNavigationBarColor: Color(0xFFF47851),
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
 
   // Initialize the Notification Service
   await NotificationService().initNotification();
@@ -85,43 +77,50 @@ class MyApp extends StatelessWidget {
     super.key,
   });
 
-  @override
+@override
   Widget build(BuildContext context) {
+    // Singletons/services
+    final connectivityProvider = ConnectivityProvider();
+    final syncManager = SyncManager(connectivityProvider);
+    final ingredientService = IngredientService();
+
     return MultiProvider(
       providers: [
         Provider<AppDatabase>.value(value: db),
-        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        Provider<SyncManager>.value(value: syncManager),
+        Provider<IngredientService>.value(value: ingredientService),
+        ChangeNotifierProvider<ConnectivityProvider>.value(
+            value: connectivityProvider),
+
+        // ViewModels
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(
-          create: (context) => UserViewModel(
-            database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider:
-                Provider.of<ConnectivityProvider>(context, listen: false),
+          create: (_) => UserViewModel(
+            database: db,
+            connectivityProvider: connectivityProvider,
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => FridgeViewModel(
-            database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider:
-                Provider.of<ConnectivityProvider>(context, listen: false),
+          create: (_) => FridgeViewModel(
+            database: db,
+            connectivityProvider: connectivityProvider,
+            syncManager: syncManager,
           ),
         ),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(
-          create: (context) => CookbookViewModel(
-            database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider:
-                Provider.of<ConnectivityProvider>(context, listen: false),
+          create: (_) => CookbookViewModel(
+            database: db,
+            connectivityProvider: connectivityProvider,
           ),
         ),
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
-        Provider<IngredientService>(create: (_) => IngredientService()),
         ChangeNotifierProvider(
-          create: (context) => IngredientViewModel(
-            Provider.of<IngredientService>(context, listen: false),
-            Provider.of<AppDatabase>(context, listen: false).ingredientDao,
+          create: (_) => IngredientViewModel(
+            ingredientService,
+            db.ingredientDao,
           ),
         ),
       ],

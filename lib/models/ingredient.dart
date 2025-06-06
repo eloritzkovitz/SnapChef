@@ -40,7 +40,7 @@ class Ingredient {
   }
 
   // Convert Ingredient to Drift DB object
-  db.FridgeIngredient toDbFridgeIngredient({required String fridgeId}) {
+  db.FridgeIngredient toDbFridgeIngredient({required String fridgeId, bool isInFridge = true}) {
     return db.FridgeIngredient(
       id: id,
       fridgeId: fridgeId,
@@ -48,7 +48,7 @@ class Ingredient {
       category: category,
       imageURL: imageURL,
       count: count,
-      isInFridge: true,
+      isInFridge: isInFridge,
     );
   }
 
