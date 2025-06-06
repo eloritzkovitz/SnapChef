@@ -6,7 +6,14 @@ class UIUtil {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
-  
+
+  /// Show unavailable offline message in a SnackBar.
+  void showOfflineSnackbar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Unavailable offline')),
+    );
+  }
+
   /// Formats a string to capitalize the first letter in each word.
   String capitalize(String s) {
     return s
@@ -26,7 +33,7 @@ class UIUtil {
     } else {
       return 'Good evening';
     }
-  }  
+  }
 
   /// Formats a raw date string to a more readable format.
   static String formatDate(String? rawDate) {
