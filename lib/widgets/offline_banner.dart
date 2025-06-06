@@ -23,7 +23,7 @@ class OfflineBanner extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, color: Colors.white),
+            const Icon(Icons.cloud_off, color: Colors.white),
             const SizedBox(width: 8),
             Text(
               message,
