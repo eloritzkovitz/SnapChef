@@ -36,7 +36,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();  
+  WidgetsFlutterBinding.ensureInitialized();
 
   // Set navigation bar to orange before app starts
   SystemChrome.setSystemUIOverlayStyle(
@@ -68,19 +68,19 @@ Future<void> main() async {
   }
 
   // Initialize local database
-  final db = AppDatabase();  
+  final db = AppDatabase();
 
   // Run the app
   runApp(MyApp(
-    db: db,   
+    db: db,
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final AppDatabase db;  
+  final AppDatabase db;
 
   const MyApp({
-    required this.db,   
+    required this.db,
     super.key,
   });
 
@@ -95,28 +95,32 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => UserViewModel(
             database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+            connectivityProvider:
+                Provider.of<ConnectivityProvider>(context, listen: false),
           ),
         ),
         ChangeNotifierProvider(
           create: (context) => FridgeViewModel(
             database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+            connectivityProvider:
+                Provider.of<ConnectivityProvider>(context, listen: false),
           ),
         ),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(
           create: (context) => CookbookViewModel(
             database: Provider.of<AppDatabase>(context, listen: false),
-            connectivityProvider: Provider.of<ConnectivityProvider>(context, listen: false),
+            connectivityProvider:
+                Provider.of<ConnectivityProvider>(context, listen: false),
           ),
         ),
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
         Provider<IngredientService>(create: (_) => IngredientService()),
         ChangeNotifierProvider(
           create: (context) => IngredientViewModel(
             Provider.of<IngredientService>(context, listen: false),
+            Provider.of<AppDatabase>(context, listen: false).ingredientDao,
           ),
         ),
       ],

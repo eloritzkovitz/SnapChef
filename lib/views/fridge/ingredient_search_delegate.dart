@@ -36,16 +36,13 @@ class IngredientSearchDelegate extends SearchDelegate {
     if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (allIngredients == null) {
-      return const Center(child: Text('No ingredients found'));
-    }
     if (query.isEmpty) {
       return const Center(child: Text('Please enter a search term'));
     }
 
     final filteredResults = allIngredients.where((ingredient) {
-      final name = ingredient['name'].toString().toLowerCase();
-      final category = ingredient['category'].toString().toLowerCase();
+      final name = ingredient.name.toString().toLowerCase();
+      final category = ingredient.category.toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
@@ -59,10 +56,9 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredResults[index];
         return ListTile(
-          leading: (ingredient['imageURL'] != null &&
-                  ingredient['imageURL'].toString().isNotEmpty)
+          leading: (ingredient.imageURL.toString().isNotEmpty)
               ? Image.network(
-                  ingredient['imageURL'],
+                  ingredient.imageURL,
                   width: 40,
                   height: 40,
                   fit: BoxFit.contain,
@@ -77,8 +73,8 @@ class IngredientSearchDelegate extends SearchDelegate {
                   height: 40,
                   child: Icon(Icons.image_not_supported, size: 32),
                 ),
-          title: Text(ingredient['name']),
-          subtitle: Text('Category: ${ingredient['category']}'),
+          title: Text(ingredient.name),
+          subtitle: Text('Category: ${ingredient.category}'),
           trailing: IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -100,17 +96,14 @@ class IngredientSearchDelegate extends SearchDelegate {
 
     if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
-    }
-    if (allIngredients == null) {
-      return const Center(child: Text('No ingredients available'));
-    }
+    }    
     if (query.isEmpty) {
       return const Center(child: Text('Start typing to search for ingredients'));
     }
 
     final filteredSuggestions = allIngredients.where((ingredient) {
-      final name = ingredient['name'].toString().toLowerCase();
-      final category = ingredient['category'].toString().toLowerCase();
+      final name = ingredient.name.toString().toLowerCase();
+      final category = ingredient.category.toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
@@ -124,10 +117,9 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredSuggestions[index];
         return ListTile(
-          leading: (ingredient['imageURL'] != null &&
-                  ingredient['imageURL'].toString().isNotEmpty)
+          leading: (ingredient.imageURL.toString().isNotEmpty)
               ? Image.network(
-                  ingredient['imageURL'],
+                  ingredient.imageURL,
                   width: 40,
                   height: 40,
                   fit: BoxFit.contain,
@@ -142,8 +134,8 @@ class IngredientSearchDelegate extends SearchDelegate {
                   height: 40,
                   child: Icon(Icons.image_not_supported, size: 32),
                 ),
-          title: Text(ingredient['name']),
-          subtitle: Text('Category: ${ingredient['category']}'),
+          title: Text(ingredient.name),
+          subtitle: Text('Category: ${ingredient.category}'),
           trailing: IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -151,7 +143,7 @@ class IngredientSearchDelegate extends SearchDelegate {
             },
           ),
           onTap: () {
-            query = ingredient['name'];
+            query = ingredient.name;
             showResults(context);
           },
         );

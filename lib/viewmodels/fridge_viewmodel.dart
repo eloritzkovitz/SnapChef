@@ -170,14 +170,12 @@ class FridgeViewModel extends ChangeNotifier {
   // Update ingredient image URLs based on IngredientViewModel
   Future<void> updateFridgeIngredientImageURLs(
       IngredientViewModel ingredientViewModel, String fridgeId) async {
-    final allIngredients = ingredientViewModel.ingredients;
-    if (allIngredients == null) return;
+    final allIngredients = ingredientViewModel.ingredients;    
 
     // Build a map of id -> imageURL for fast lookup
     final imageUrlMap = {
       for (final ing in allIngredients)
-        if (ing['id'] != null && ing['imageURL'] != null)
-          ing['id'] as String: ing['imageURL'] as String
+        ing.id: ing.imageURL
     };
 
     // Update fridge ingredients

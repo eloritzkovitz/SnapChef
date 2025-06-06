@@ -29,20 +29,16 @@ class ProfileDetails extends StatefulWidget {
 
 class _ProfileDetailsState extends State<ProfileDetails> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Fetch stats every time the screen is shown
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    userViewModel.fetchUserStats(userId: widget.user.id);
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      userViewModel.fetchUserStats(userId: widget.user.id);
 
-    final ingredientViewModel =
-        Provider.of<IngredientViewModel>(context, listen: false);
-    if (ingredientViewModel.ingredients == null &&
-        !ingredientViewModel.loading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ingredientViewModel.fetchIngredients();
-      });
-    }
+      final ingredientViewModel =
+          Provider.of<IngredientViewModel>(context, listen: false);
+      ingredientViewModel.fetchIngredients();
+    });
   }
 
   @override
@@ -55,8 +51,7 @@ class _ProfileDetailsState extends State<ProfileDetails> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (ingredientViewModel.ingredients == null ||
-        ingredientViewModel.loading) {
+    if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -76,9 +71,9 @@ class _ProfileDetailsState extends State<ProfileDetails> {
       // Only exact match
       final match = ingredientMap[lowerName];
       if (match != null &&
-          match['imageURL'] != null &&
-          match['imageURL'].toString().isNotEmpty) {
-        return match['imageURL'] as String;
+          match.imageURL != null &&
+          match.imageURL.toString().isNotEmpty) {
+        return match.imageURL as String;
       }
 
       return null;
@@ -173,7 +168,7 @@ class _ProfileDetailsState extends State<ProfileDetails> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withAlpha(13),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -295,7 +290,7 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

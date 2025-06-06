@@ -1,4 +1,6 @@
 import '../database/app_database.dart' as db;
+import 'package:drift/drift.dart';
+import '../database/app_database.dart';
 
 class Ingredient {
   final String id;
@@ -58,6 +60,17 @@ class Ingredient {
       category: dbIng.category ?? 'Unknown',
       imageURL: dbIng.imageURL ?? 'assets/images/placeholder_image.png',
       count: dbIng.count,      
+    );
+  } 
+}
+
+extension IngredientDbExtension on Ingredient {
+  IngredientsCompanion toCompanion() {
+    return IngredientsCompanion(
+      id: Value(id),
+      name: Value(name),
+      category: Value(category),
+      imageURL: Value(imageURL),      
     );
   }
 }
