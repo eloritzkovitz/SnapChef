@@ -79,7 +79,7 @@ class FridgeViewModel extends ChangeNotifier {
         // Store locally for offline use
         await _storeFridgeIngredientsLocally(fridgeId, _ingredients);
       }
-      
+
       // Update imageURLs using IngredientViewModel
       updateFridgeIngredientImageURLs(ingredientViewModel, fridgeId);
       _applyFiltersAndSorting();
@@ -193,7 +193,7 @@ class FridgeViewModel extends ChangeNotifier {
             newUrl,
           );
         } catch (e) {
-          // Optionally log or handle error
+          log('Error updating ingredient image URL: $e');
         }
       }
     }
