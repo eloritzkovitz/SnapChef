@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../viewmodels/user_viewmodel.dart';
+import '../../../providers/connectivity_provider.dart';
 import '../../fridge/ingredient_search_delegate.dart';
 import '../../fridge/generate_recipe_screen.dart';
 import '../../cookbook/add_recipe_screen.dart';
@@ -12,6 +13,7 @@ class QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -24,7 +26,7 @@ class QuickActions extends StatelessWidget {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: IngredientSearchDelegate(),                
+                delegate: IngredientSearchDelegate(),
               );
             },
             backgroundColor: Colors.grey[100],
@@ -33,16 +35,19 @@ class QuickActions extends StatelessWidget {
           const SizedBox(width: 12),
           // Generate recipe action
           ActionChip(
-            avatar: const Icon(Icons.auto_awesome, color: primaryColor, size: 20),
+            avatar:
+                const Icon(Icons.auto_awesome, color: primaryColor, size: 20),
             label: const Text('Generate Recipe'),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const GenerateRecipeScreen(),
-                ),
-              );
-            },
+            onPressed: isOffline
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GenerateRecipeScreen(),
+                      ),
+                    );
+                  },
             backgroundColor: Colors.grey[100],
             labelStyle: const TextStyle(color: Colors.black),
           ),
