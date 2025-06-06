@@ -24,15 +24,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
   @override
   void initState() {
-    super.initState();
-
-    // Set navigation bar to orange for splash
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Color(0xFFF47851),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    );
+    super.initState();    
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 800),

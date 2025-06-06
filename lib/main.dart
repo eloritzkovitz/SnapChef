@@ -12,6 +12,7 @@ import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
+import 'utils/navigation_observer.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
@@ -124,16 +125,20 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ],
-      child: MaterialApp(
-        theme: appTheme,
-        navigatorObservers: [routeObserver],
-        home: AnimatedSplashScreen(),
-        routes: {
-          '/login': (context) => LoginScreen(),
-          '/signup': (context) => SignupScreen(),
-          '/reset-password': (context) => const ResetPasswordScreen(),
-          '/confirm-reset': (context) => const ConfirmResetScreen(),
-          '/main': (context) => const MainScreen(),
+      child: Consumer<ConnectivityProvider>(
+        builder: (context, connectivity, child) {
+          return MaterialApp(
+            theme: appTheme,
+            navigatorObservers: [StatusBarObserver(context), routeObserver],
+            home: AnimatedSplashScreen(),
+            routes: {
+              '/login': (context) => LoginScreen(),
+              '/signup': (context) => SignupScreen(),
+              '/reset-password': (context) => const ResetPasswordScreen(),
+              '/confirm-reset': (context) => const ConfirmResetScreen(),
+              '/main': (context) => const MainScreen(),
+            },
+          );
         },
       ),
     );

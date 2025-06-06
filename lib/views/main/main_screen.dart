@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../home/home_screen.dart';
 import '../fridge/fridge_screen.dart';
@@ -7,7 +6,6 @@ import '../cookbook/cookbook_screen.dart';
 import '../profile/profile_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../../providers/connectivity_provider.dart';
-import '../../theme/colors.dart';
 import '../../viewmodels/main_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
@@ -28,14 +26,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void initState() {
-    super.initState();
-    // Set navigation bar to white for the rest of the app
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
+    super.initState();    
     // Listen for FCM token refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<UserViewModel>(context, listen: false)
@@ -85,18 +76,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<MainViewModel>();
-    final isOffline = context.watch<ConnectivityProvider>().isOffline;    
-
-    // Set the status bar color after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(
-          statusBarColor: isOffline ? disabledSecondaryColor : Colors.white,
-          statusBarIconBrightness:
-              isOffline ? Brightness.light : Brightness.dark,
-        ),
-      );
-    });
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
 
     final screens = [
       const HomeScreen(),
