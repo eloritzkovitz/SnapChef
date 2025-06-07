@@ -66,7 +66,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: isOffline
           ? const Center(
               child: Text(
-                'Notifications are not available offline.',
+                'Notifications are unavailable offline.',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             )
