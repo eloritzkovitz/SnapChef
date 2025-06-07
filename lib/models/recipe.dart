@@ -15,7 +15,7 @@ class Recipe {
   final int cookingTime;
   final List<Ingredient> ingredients;
   final List<String> instructions;
-  final String? imageURL;  
+  final String? imageURL;
   final double? rating;
   final bool isFavorite;
   final RecipeSource source;
@@ -75,13 +75,13 @@ class Recipe {
       difficulty: dbRecipe['difficulty'] as String,
       prepTime: dbRecipe['prepTime'] as int,
       cookingTime: dbRecipe['cookingTime'] as int,
-      ingredients: dbRecipe['ingredients'] != null
-          ? (dbRecipe['ingredients'] as List<dynamic>)
+      ingredients: dbRecipe['ingredientsJson'] != null
+          ? (jsonDecode(dbRecipe['ingredientsJson']) as List)
               .map((i) => Ingredient.fromJson(i))
               .toList()
           : [],
-      instructions: dbRecipe['instructions'] != null
-          ? List<String>.from(dbRecipe['instructions'])
+      instructions: dbRecipe['instructionsJson'] != null
+          ? List<String>.from(jsonDecode(dbRecipe['instructionsJson']))
           : [],
       imageURL: dbRecipe['imageURL'] as String?,
       rating: dbRecipe['rating'] != null
@@ -121,7 +121,6 @@ class Recipe {
     };
   }
 
-  // NEW: Convert a Recipe to a Drift RecipesCompanion for DB insert/update
   // Convert a Recipe to a Drift DB Recipe object (db.Recipe)
   db.Recipe toDbRecipe({required String userId}) {
     return db.Recipe(
@@ -147,7 +146,7 @@ class Recipe {
     );
   }
 
-  // Method to convert a Recipe to JSON
+  // Convert a Recipe to JSON
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
@@ -172,7 +171,7 @@ class Recipe {
     };
   }
 
-  // Method to convert a Recipe to a Map for saving to a database
+  // Convert a Recipe to a Map for saving to a database
   Recipe copyWith({
     String? id,
     String? title,
