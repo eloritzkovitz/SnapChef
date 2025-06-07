@@ -9,7 +9,7 @@ import '../providers/connectivity_provider.dart';
 import '../services/cookbook_service.dart';
 import '../mixins/sort_filter_mixin.dart';
 
-class CookbookViewModel extends ChangeNotifier with GenericFilterMixin<Recipe> {
+class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
   List<SharedRecipe>? sharedWithMeRecipes = [];
   List<SharedRecipe>? sharedByMeRecipes = [];

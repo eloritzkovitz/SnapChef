@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-mixin GenericFilterMixin<T> on ChangeNotifier {
+mixin SortFilterMixin<T> on ChangeNotifier {
   // State for filtered list
   List<T> filteredItems = [];
 

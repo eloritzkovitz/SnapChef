@@ -3,7 +3,7 @@ import '../mixins/sort_filter_mixin.dart';
 import '../models/ingredient.dart';
 
 class IngredientListController extends ChangeNotifier
-    with GenericFilterMixin<Ingredient> {
+    with SortFilterMixin<Ingredient> {
   final List<Ingredient> _source;
 
   IngredientListController(this._source);
