@@ -95,11 +95,19 @@ class _ProfileDetailsState extends State<ProfileDetails> {
               children: [
                 CircleAvatar(
                   radius: 80,
-                  backgroundImage: widget.user.profilePicture != null
-                      ? NetworkImage(ImageUtil()
-                          .getFullImageUrl(widget.user.profilePicture!))
+                  backgroundImage: (widget.user.profilePicture != null &&
+                          widget.user.profilePicture!.isNotEmpty)
+                      ? CachedNetworkImageProvider(
+                          ImageUtil()
+                              .getFullImageUrl(widget.user.profilePicture!),
+                        )
                       : const AssetImage('assets/images/default_profile.png')
                           as ImageProvider,
+                  onBackgroundImageError: (_, __) {},
+                  child: widget.user.profilePicture == null ||
+                          widget.user.profilePicture!.isEmpty
+                      ? Image.asset('assets/images/default_profile.png')
+                      : null,
                 ),
               ],
             ),
@@ -342,23 +350,22 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                                           ? ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(25),
-                                              child: CachedNetworkImage(
-                                                imageUrl: ImageUtil()
+                                              child: Image.network(
+                                                ImageUtil()
                                                     .getFullImageUrl(imageURL),
                                                 width: 50,
                                                 height: 50,
                                                 fit: BoxFit.contain,
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Container(
+                                                errorBuilder: (context, error,
+                                                        stackTrace) =>
+                                                    Container(
                                                   width: 50,
                                                   height: 50,
                                                   color: Colors.orange[50],
                                                   child: const Icon(
-                                                    Icons.image_not_supported,
-                                                    size: 32,
-                                                    color: Colors.orange,
-                                                  ),
+                                                      Icons.image_not_supported,
+                                                      size: 32,
+                                                      color: Colors.orange),
                                                 ),
                                               ),
                                             )
