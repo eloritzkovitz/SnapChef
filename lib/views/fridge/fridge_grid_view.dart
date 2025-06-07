@@ -33,8 +33,8 @@ class FridgeGridView extends StatelessWidget {
         final ingredient = ingredients[index];
         return IngredientCard(
           ingredient: ingredient,
-          onIncrease: () => viewModel.increaseCount(index, fridgeId),
-          onDecrease: () => viewModel.decreaseCount(index, fridgeId),
+          onIncrease: () => viewModel.changeCount(filteredIndex: index, fridgeId: fridgeId, delta: 1),
+          onDecrease: () => viewModel.changeCount(filteredIndex: index, fridgeId: fridgeId, delta: -1),
           onDelete: () => onDelete(ingredient),
           onSetExpiryAlert: () => onSetExpiryAlert(ingredient),
         );

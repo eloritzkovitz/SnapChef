@@ -39,6 +39,23 @@ class Ingredient {
     };
   }
 
+  // Create a copy of Ingredient with optional new values
+  Ingredient copyWith({
+    String? id,
+    String? name,
+    String? category,
+    String? imageURL,
+    int? count,
+  }) {
+    return Ingredient(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      imageURL: imageURL ?? this.imageURL,
+      count: count ?? this.count,
+    );
+  }
+
   // Convert Ingredient to Drift DB object
   db.FridgeIngredient toDbFridgeIngredient({required String fridgeId, bool isInFridge = true}) {
     return db.FridgeIngredient(

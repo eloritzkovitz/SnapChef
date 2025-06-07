@@ -7,6 +7,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
+import 'repositories/fridge_repository.dart';
+import 'services/fridge_service.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'services/sync_service.dart';
@@ -77,12 +79,17 @@ class MyApp extends StatelessWidget {
     super.key,
   });
 
-@override
+  @override
   Widget build(BuildContext context) {
     // Singletons/services
     final connectivityProvider = ConnectivityProvider();
     final syncManager = SyncManager(connectivityProvider);
     final ingredientService = IngredientService();
+    final fridgeService = FridgeService();
+    final fridgeRepository = FridgeRepository(
+      database: db,
+      fridgeService: fridgeService,
+    );
 
     return MultiProvider(
       providers: [
@@ -103,9 +110,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => FridgeViewModel(
-            database: db,
             connectivityProvider: connectivityProvider,
             syncManager: syncManager,
+            fridgeRepository: fridgeRepository,
           ),
         ),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
