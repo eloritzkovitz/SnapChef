@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
@@ -65,15 +66,20 @@ class RecipeCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: recipe.imageURL != null &&
                             recipe.imageURL!.isNotEmpty
-                        ? Image.network(
-                            ImageUtil().getFullImageUrl(recipe.imageURL),
+                        ? CachedNetworkImage(
+                            imageUrl:
+                                ImageUtil().getFullImageUrl(recipe.imageURL),
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.image_not_supported,
-                                  size: 80, color: Colors.grey);
-                            },
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorWidget: (context, url, error) => const Icon(
+                              Icons.image_not_supported,
+                              size: 80,
+                              color: Colors.grey,
+                            ),
                           )
                         : const Icon(Icons.image, size: 80, color: Colors.grey),
                   ),
@@ -118,7 +124,7 @@ class RecipeCard extends StatelessWidget {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),                       
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),

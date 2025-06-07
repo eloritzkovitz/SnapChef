@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/theme/colors.dart';
@@ -95,8 +96,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                 CircleAvatar(
                   radius: 80,
                   backgroundImage: widget.user.profilePicture != null
-                      ? NetworkImage(
-                          ImageUtil().getFullImageUrl(widget.user.profilePicture!))
+                      ? NetworkImage(ImageUtil()
+                          .getFullImageUrl(widget.user.profilePicture!))
                       : const AssetImage('assets/images/default_profile.png')
                           as ImageProvider,
                 ),
@@ -109,7 +110,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 widget.user.fullName,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 10),
@@ -129,7 +131,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                       const SizedBox(width: 6),
                       Text(
                         widget.user.email,
-                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -144,7 +147,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                       const SizedBox(width: 6),
                       Text(
                         'Joined ${UIUtil.formatDate(widget.user.joinDate)}',
-                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -168,7 +172,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
             const SizedBox(height: 12),
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -207,7 +212,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                     const SizedBox(width: 20),
                     Column(
                       children: [
-                        const Icon(Icons.menu_book, color: primaryColor, size: 28),
+                        const Icon(Icons.menu_book,
+                            color: primaryColor, size: 28),
                         const SizedBox(height: 4),
                         Text(
                           '$recipeCount',
@@ -227,7 +233,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                     const SizedBox(width: 20),
                     Column(
                       children: [
-                        const Icon(Icons.favorite, color: primaryColor, size: 28),
+                        const Icon(Icons.favorite,
+                            color: primaryColor, size: 28),
                         const SizedBox(height: 4),
                         Text(
                           '$favoriteRecipeCount',
@@ -246,10 +253,12 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                     ),
                     const SizedBox(width: 36),
                     GestureDetector(
-                      onTap: widget.friendsClickable ? widget.onFriendsTap : null,
+                      onTap:
+                          widget.friendsClickable ? widget.onFriendsTap : null,
                       child: Column(
                         children: [
-                          const Icon(Icons.group, color: Colors.blueGrey, size: 28),
+                          const Icon(Icons.group,
+                              color: Colors.blueGrey, size: 28),
                           const SizedBox(height: 4),
                           Text(
                             '$friendCountStat',
@@ -289,8 +298,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 18),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -316,7 +325,8 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                         : SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: mostPopularIngredients.map<Widget>((item) {
+                              children:
+                                  mostPopularIngredients.map<Widget>((item) {
                                 final name =
                                     UIUtil().capitalize(item['name'] ?? '');
                                 final count = item['count'] ?? 0;
@@ -332,22 +342,23 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                                           ? ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(25),
-                                              child: Image.network(
-                                                ImageUtil()
+                                              child: CachedNetworkImage(
+                                                imageUrl: ImageUtil()
                                                     .getFullImageUrl(imageURL),
                                                 width: 50,
                                                 height: 50,
                                                 fit: BoxFit.contain,
-                                                errorBuilder:
-                                                    (context, error, stackTrace) =>
+                                                errorWidget:
+                                                    (context, url, error) =>
                                                         Container(
                                                   width: 50,
                                                   height: 50,
                                                   color: Colors.orange[50],
                                                   child: const Icon(
-                                                      Icons.image_not_supported,
-                                                      size: 32,
-                                                      color: Colors.orange),
+                                                    Icons.image_not_supported,
+                                                    size: 32,
+                                                    color: Colors.orange,
+                                                  ),
                                                 ),
                                               ),
                                             )
