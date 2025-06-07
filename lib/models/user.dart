@@ -107,7 +107,7 @@ class User {
   String get fullName => '$firstName $lastName';
 
   //Convert User to a Map for saving to a database
-  factory User.fromDb(db.User user) {
+  factory User.fromDb(db.User user, {List<User> friends = const []}) {
     return User(
       id: user.id,
       firstName: user.firstName,
@@ -121,7 +121,7 @@ class User {
       preferences: user.preferencesJson != null
           ? Preferences.fromJson(jsonDecode(user.preferencesJson!))
           : null,
-      friends: const [],
+      friends: friends,
       fcmToken: user.fcmToken,
     );
   }

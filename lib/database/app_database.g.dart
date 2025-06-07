@@ -2372,15 +2372,27 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
   late final GeneratedColumn<String> friendId = GeneratedColumn<String>(
       'friend_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  static const VerificationMeta _friendNameMeta =
+      const VerificationMeta('friendName');
   @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('accepted'));
+  late final GeneratedColumn<String> friendName = GeneratedColumn<String>(
+      'friend_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _friendEmailMeta =
+      const VerificationMeta('friendEmail');
   @override
-  List<GeneratedColumn> get $columns => [id, userId, friendId, status];
+  late final GeneratedColumn<String> friendEmail = GeneratedColumn<String>(
+      'friend_email', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _friendProfilePictureMeta =
+      const VerificationMeta('friendProfilePicture');
+  @override
+  late final GeneratedColumn<String> friendProfilePicture =
+      GeneratedColumn<String>('friend_profile_picture', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, userId, friendId, friendName, friendEmail, friendProfilePicture];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2406,9 +2418,27 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
     } else if (isInserting) {
       context.missing(_friendIdMeta);
     }
-    if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    if (data.containsKey('friend_name')) {
+      context.handle(
+          _friendNameMeta,
+          friendName.isAcceptableOrUnknown(
+              data['friend_name']!, _friendNameMeta));
+    } else if (isInserting) {
+      context.missing(_friendNameMeta);
+    }
+    if (data.containsKey('friend_email')) {
+      context.handle(
+          _friendEmailMeta,
+          friendEmail.isAcceptableOrUnknown(
+              data['friend_email']!, _friendEmailMeta));
+    } else if (isInserting) {
+      context.missing(_friendEmailMeta);
+    }
+    if (data.containsKey('friend_profile_picture')) {
+      context.handle(
+          _friendProfilePictureMeta,
+          friendProfilePicture.isAcceptableOrUnknown(
+              data['friend_profile_picture']!, _friendProfilePictureMeta));
     }
     return context;
   }
@@ -2425,8 +2455,13 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
       friendId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}friend_id'])!,
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      friendName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}friend_name'])!,
+      friendEmail: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}friend_email'])!,
+      friendProfilePicture: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}friend_profile_picture']),
     );
   }
 
@@ -2440,19 +2475,27 @@ class Friend extends DataClass implements Insertable<Friend> {
   final int id;
   final String userId;
   final String friendId;
-  final String status;
+  final String friendName;
+  final String friendEmail;
+  final String? friendProfilePicture;
   const Friend(
       {required this.id,
       required this.userId,
       required this.friendId,
-      required this.status});
+      required this.friendName,
+      required this.friendEmail,
+      this.friendProfilePicture});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['user_id'] = Variable<String>(userId);
     map['friend_id'] = Variable<String>(friendId);
-    map['status'] = Variable<String>(status);
+    map['friend_name'] = Variable<String>(friendName);
+    map['friend_email'] = Variable<String>(friendEmail);
+    if (!nullToAbsent || friendProfilePicture != null) {
+      map['friend_profile_picture'] = Variable<String>(friendProfilePicture);
+    }
     return map;
   }
 
@@ -2461,7 +2504,11 @@ class Friend extends DataClass implements Insertable<Friend> {
       id: Value(id),
       userId: Value(userId),
       friendId: Value(friendId),
-      status: Value(status),
+      friendName: Value(friendName),
+      friendEmail: Value(friendEmail),
+      friendProfilePicture: friendProfilePicture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(friendProfilePicture),
     );
   }
 
@@ -2472,7 +2519,10 @@ class Friend extends DataClass implements Insertable<Friend> {
       id: serializer.fromJson<int>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
       friendId: serializer.fromJson<String>(json['friendId']),
-      status: serializer.fromJson<String>(json['status']),
+      friendName: serializer.fromJson<String>(json['friendName']),
+      friendEmail: serializer.fromJson<String>(json['friendEmail']),
+      friendProfilePicture:
+          serializer.fromJson<String?>(json['friendProfilePicture']),
     );
   }
   @override
@@ -2482,24 +2532,41 @@ class Friend extends DataClass implements Insertable<Friend> {
       'id': serializer.toJson<int>(id),
       'userId': serializer.toJson<String>(userId),
       'friendId': serializer.toJson<String>(friendId),
-      'status': serializer.toJson<String>(status),
+      'friendName': serializer.toJson<String>(friendName),
+      'friendEmail': serializer.toJson<String>(friendEmail),
+      'friendProfilePicture': serializer.toJson<String?>(friendProfilePicture),
     };
   }
 
   Friend copyWith(
-          {int? id, String? userId, String? friendId, String? status}) =>
+          {int? id,
+          String? userId,
+          String? friendId,
+          String? friendName,
+          String? friendEmail,
+          Value<String?> friendProfilePicture = const Value.absent()}) =>
       Friend(
         id: id ?? this.id,
         userId: userId ?? this.userId,
         friendId: friendId ?? this.friendId,
-        status: status ?? this.status,
+        friendName: friendName ?? this.friendName,
+        friendEmail: friendEmail ?? this.friendEmail,
+        friendProfilePicture: friendProfilePicture.present
+            ? friendProfilePicture.value
+            : this.friendProfilePicture,
       );
   Friend copyWithCompanion(FriendsCompanion data) {
     return Friend(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
       friendId: data.friendId.present ? data.friendId.value : this.friendId,
-      status: data.status.present ? data.status.value : this.status,
+      friendName:
+          data.friendName.present ? data.friendName.value : this.friendName,
+      friendEmail:
+          data.friendEmail.present ? data.friendEmail.value : this.friendEmail,
+      friendProfilePicture: data.friendProfilePicture.present
+          ? data.friendProfilePicture.value
+          : this.friendProfilePicture,
     );
   }
 
@@ -2509,13 +2576,16 @@ class Friend extends DataClass implements Insertable<Friend> {
           ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('friendId: $friendId, ')
-          ..write('status: $status')
+          ..write('friendName: $friendName, ')
+          ..write('friendEmail: $friendEmail, ')
+          ..write('friendProfilePicture: $friendProfilePicture')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, userId, friendId, status);
+  int get hashCode => Object.hash(
+      id, userId, friendId, friendName, friendEmail, friendProfilePicture);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2523,38 +2593,53 @@ class Friend extends DataClass implements Insertable<Friend> {
           other.id == this.id &&
           other.userId == this.userId &&
           other.friendId == this.friendId &&
-          other.status == this.status);
+          other.friendName == this.friendName &&
+          other.friendEmail == this.friendEmail &&
+          other.friendProfilePicture == this.friendProfilePicture);
 }
 
 class FriendsCompanion extends UpdateCompanion<Friend> {
   final Value<int> id;
   final Value<String> userId;
   final Value<String> friendId;
-  final Value<String> status;
+  final Value<String> friendName;
+  final Value<String> friendEmail;
+  final Value<String?> friendProfilePicture;
   const FriendsCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
     this.friendId = const Value.absent(),
-    this.status = const Value.absent(),
+    this.friendName = const Value.absent(),
+    this.friendEmail = const Value.absent(),
+    this.friendProfilePicture = const Value.absent(),
   });
   FriendsCompanion.insert({
     this.id = const Value.absent(),
     required String userId,
     required String friendId,
-    this.status = const Value.absent(),
+    required String friendName,
+    required String friendEmail,
+    this.friendProfilePicture = const Value.absent(),
   })  : userId = Value(userId),
-        friendId = Value(friendId);
+        friendId = Value(friendId),
+        friendName = Value(friendName),
+        friendEmail = Value(friendEmail);
   static Insertable<Friend> custom({
     Expression<int>? id,
     Expression<String>? userId,
     Expression<String>? friendId,
-    Expression<String>? status,
+    Expression<String>? friendName,
+    Expression<String>? friendEmail,
+    Expression<String>? friendProfilePicture,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
       if (friendId != null) 'friend_id': friendId,
-      if (status != null) 'status': status,
+      if (friendName != null) 'friend_name': friendName,
+      if (friendEmail != null) 'friend_email': friendEmail,
+      if (friendProfilePicture != null)
+        'friend_profile_picture': friendProfilePicture,
     });
   }
 
@@ -2562,12 +2647,16 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
       {Value<int>? id,
       Value<String>? userId,
       Value<String>? friendId,
-      Value<String>? status}) {
+      Value<String>? friendName,
+      Value<String>? friendEmail,
+      Value<String?>? friendProfilePicture}) {
     return FriendsCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       friendId: friendId ?? this.friendId,
-      status: status ?? this.status,
+      friendName: friendName ?? this.friendName,
+      friendEmail: friendEmail ?? this.friendEmail,
+      friendProfilePicture: friendProfilePicture ?? this.friendProfilePicture,
     );
   }
 
@@ -2583,8 +2672,15 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
     if (friendId.present) {
       map['friend_id'] = Variable<String>(friendId.value);
     }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
+    if (friendName.present) {
+      map['friend_name'] = Variable<String>(friendName.value);
+    }
+    if (friendEmail.present) {
+      map['friend_email'] = Variable<String>(friendEmail.value);
+    }
+    if (friendProfilePicture.present) {
+      map['friend_profile_picture'] =
+          Variable<String>(friendProfilePicture.value);
     }
     return map;
   }
@@ -2595,7 +2691,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
           ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('friendId: $friendId, ')
-          ..write('status: $status')
+          ..write('friendName: $friendName, ')
+          ..write('friendEmail: $friendEmail, ')
+          ..write('friendProfilePicture: $friendProfilePicture')
           ..write(')'))
         .toString();
   }
@@ -4197,13 +4295,17 @@ typedef $$FriendsTableCreateCompanionBuilder = FriendsCompanion Function({
   Value<int> id,
   required String userId,
   required String friendId,
-  Value<String> status,
+  required String friendName,
+  required String friendEmail,
+  Value<String?> friendProfilePicture,
 });
 typedef $$FriendsTableUpdateCompanionBuilder = FriendsCompanion Function({
   Value<int> id,
   Value<String> userId,
   Value<String> friendId,
-  Value<String> status,
+  Value<String> friendName,
+  Value<String> friendEmail,
+  Value<String?> friendProfilePicture,
 });
 
 class $$FriendsTableFilterComposer
@@ -4224,8 +4326,15 @@ class $$FriendsTableFilterComposer
   ColumnFilters<String> get friendId => $composableBuilder(
       column: $table.friendId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get friendName => $composableBuilder(
+      column: $table.friendName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get friendEmail => $composableBuilder(
+      column: $table.friendEmail, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get friendProfilePicture => $composableBuilder(
+      column: $table.friendProfilePicture,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$FriendsTableOrderingComposer
@@ -4246,8 +4355,15 @@ class $$FriendsTableOrderingComposer
   ColumnOrderings<String> get friendId => $composableBuilder(
       column: $table.friendId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get friendName => $composableBuilder(
+      column: $table.friendName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get friendEmail => $composableBuilder(
+      column: $table.friendEmail, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get friendProfilePicture => $composableBuilder(
+      column: $table.friendProfilePicture,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$FriendsTableAnnotationComposer
@@ -4268,8 +4384,14 @@ class $$FriendsTableAnnotationComposer
   GeneratedColumn<String> get friendId =>
       $composableBuilder(column: $table.friendId, builder: (column) => column);
 
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
+  GeneratedColumn<String> get friendName => $composableBuilder(
+      column: $table.friendName, builder: (column) => column);
+
+  GeneratedColumn<String> get friendEmail => $composableBuilder(
+      column: $table.friendEmail, builder: (column) => column);
+
+  GeneratedColumn<String> get friendProfilePicture => $composableBuilder(
+      column: $table.friendProfilePicture, builder: (column) => column);
 }
 
 class $$FriendsTableTableManager extends RootTableManager<
@@ -4298,25 +4420,33 @@ class $$FriendsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
             Value<String> friendId = const Value.absent(),
-            Value<String> status = const Value.absent(),
+            Value<String> friendName = const Value.absent(),
+            Value<String> friendEmail = const Value.absent(),
+            Value<String?> friendProfilePicture = const Value.absent(),
           }) =>
               FriendsCompanion(
             id: id,
             userId: userId,
             friendId: friendId,
-            status: status,
+            friendName: friendName,
+            friendEmail: friendEmail,
+            friendProfilePicture: friendProfilePicture,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String userId,
             required String friendId,
-            Value<String> status = const Value.absent(),
+            required String friendName,
+            required String friendEmail,
+            Value<String?> friendProfilePicture = const Value.absent(),
           }) =>
               FriendsCompanion.insert(
             id: id,
             userId: userId,
             friendId: friendId,
-            status: status,
+            friendName: friendName,
+            friendEmail: friendEmail,
+            friendProfilePicture: friendProfilePicture,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

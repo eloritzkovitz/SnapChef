@@ -103,7 +103,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => _openSideMenu(context),
+            onPressed: userViewModel.connectivityProvider.isOffline
+                ? null // Disable if offline
+                : () => _openSideMenu(context),
           ),
         ],
       ),

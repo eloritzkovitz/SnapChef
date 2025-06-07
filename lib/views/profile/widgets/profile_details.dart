@@ -43,248 +43,132 @@ class _ProfileDetailsState extends State<ProfileDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final int friendCount = widget.user.friends.length;
-    final userStats = Provider.of<UserViewModel>(context).userStats;
-    final ingredientViewModel = Provider.of<IngredientViewModel>(context);
+    return Consumer2<UserViewModel, IngredientViewModel>(
+      builder: (context, userViewModel, ingredientViewModel, _) {
+        final int friendCount = widget.user.friends.length;
+        final userStats = userViewModel.userStats;
 
-    if (userStats == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        if (userStats == null) {
+          return const Center(
+            child: Text(
+              'Failed to load user stats',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+        }
 
-    if (ingredientViewModel.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        if (ingredientViewModel.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    final int ingredientCount = userStats['ingredientCount'] ?? 0;
-    final int recipeCount = userStats['recipeCount'] ?? 0;
-    final int favoriteRecipeCount = userStats['favoriteRecipeCount'] ?? 0;
-    final int friendCountStat = userStats['friendCount'] ?? friendCount;
-    final List<dynamic> mostPopularIngredients =
-        userStats['mostPopularIngredients'] ?? [];
-    final ingredientMap = ingredientViewModel.ingredientMap ?? {};
+        final int ingredientCount = userStats['ingredientCount'] ?? 0;
+        final int recipeCount = userStats['recipeCount'] ?? 0;
+        final int favoriteRecipeCount = userStats['favoriteRecipeCount'] ?? 0;
+        final int friendCountStat = userStats['friendCount'] ?? friendCount;
+        final List<dynamic> mostPopularIngredients =
+            userStats['mostPopularIngredients'] ?? [];
+        final ingredientMap = ingredientViewModel.ingredientMap ?? {};
 
-    // Function to get the image URL for an ingredient by its name
-    String? getIngredientImageUrl(
-        String name, Map<String, dynamic> ingredientMap) {
-      final lowerName = name.trim().toLowerCase();
+        // Function to get the image URL for an ingredient by its name
+        String? getIngredientImageUrl(
+            String name, Map<String, dynamic> ingredientMap) {
+          final lowerName = name.trim().toLowerCase();
 
-      // Only exact match
-      final match = ingredientMap[lowerName];
-      if (match != null &&
-          match.imageURL != null &&
-          match.imageURL.toString().isNotEmpty) {
-        return match.imageURL as String;
-      }
+          // Only exact match
+          final match = ingredientMap[lowerName];
+          if (match != null &&
+              match.imageURL != null &&
+              match.imageURL.toString().isNotEmpty) {
+            return match.imageURL as String;
+          }
 
-      return null;
-    }
+          return null;
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Profile Picture
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 80,
-              backgroundImage: widget.user.profilePicture != null
-                  ? NetworkImage(
-                      ImageUtil().getFullImageUrl(widget.user.profilePicture!))
-                  : const AssetImage('assets/images/default_profile.png')
-                      as ImageProvider,
-            ),
-          ],
-        ),
-        const SizedBox(height: 30),
-
-        // User Full Name
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            widget.user.fullName,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // User Email and Join Date
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 28,
-                    child: Icon(Icons.email, color: Colors.grey, size: 20),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.user.email,
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 28,
-                    child: Icon(Icons.calendar_today,
-                        color: Colors.grey, size: 20),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Joined ${UIUtil.formatDate(widget.user.joinDate)}',
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // --- Overview Section ---
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Overview',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(13),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+            // Profile Picture
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 80,
+                  backgroundImage: widget.user.profilePicture != null
+                      ? NetworkImage(
+                          ImageUtil().getFullImageUrl(widget.user.profilePicture!))
+                      : const AssetImage('assets/images/default_profile.png')
+                          as ImageProvider,
                 ),
               ],
-              border: Border.all(color: Colors.grey[200]!),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  children: [
-                    const Icon(Icons.kitchen,
-                        color: Colors.deepOrange, size: 28),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$ingredientCount',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Ingredients',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                Column(
-                  children: [
-                    const Icon(Icons.menu_book, color: primaryColor, size: 28),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$recipeCount',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Recipes',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                Column(
-                  children: [
-                    const Icon(Icons.favorite, color: primaryColor, size: 28),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$favoriteRecipeCount',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Favorites',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 36),
-                GestureDetector(
-                  onTap: widget.friendsClickable ? widget.onFriendsTap : null,
-                  child: Column(
+            const SizedBox(height: 30),
+
+            // User Full Name
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                widget.user.fullName,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // User Email and Join Date
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      const Icon(Icons.group, color: Colors.blueGrey, size: 28),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$friendCountStat',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.black,
-                        ),
+                      const SizedBox(
+                        width: 28,
+                        child: Icon(Icons.email, color: Colors.grey, size: 20),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Friends',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.user.email,
+                        style: const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const SizedBox(
+                        width: 28,
+                        child: Icon(Icons.calendar_today,
+                            color: Colors.grey, size: 20),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Joined ${UIUtil.formatDate(widget.user.joinDate)}',
+                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-        // --- Popular Ingredients Section ---
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Most Popular Ingredients',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+            // --- Overview Section ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Overview',
+                style: const TextStyle(
                   fontSize: 24,
+                  fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -297,91 +181,215 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                   ],
                   border: Border.all(color: Colors.grey[200]!),
                 ),
-                child: mostPopularIngredients.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No popular ingredients yet.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      children: [
+                        const Icon(Icons.kitchen,
+                            color: Colors.deepOrange, size: 28),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$ingredientCount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black,
                           ),
                         ),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: mostPopularIngredients.map<Widget>((item) {
-                            final name =
-                                UIUtil().capitalize(item['name'] ?? '');
-                            final count = item['count'] ?? 0;
-                            final imageURL = getIngredientImageUrl(
-                                item['name'] ?? '', ingredientMap);
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Ingredients',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+                    Column(
+                      children: [
+                        const Icon(Icons.menu_book, color: primaryColor, size: 28),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$recipeCount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Recipes',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+                    Column(
+                      children: [
+                        const Icon(Icons.favorite, color: primaryColor, size: 28),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$favoriteRecipeCount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Favorites',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 36),
+                    GestureDetector(
+                      onTap: widget.friendsClickable ? widget.onFriendsTap : null,
+                      child: Column(
+                        children: [
+                          const Icon(Icons.group, color: Colors.blueGrey, size: 28),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$friendCountStat',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Friends',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
 
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: Column(
-                                children: [
-                                  imageURL != null && imageURL.isNotEmpty
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(25),
-                                          child: Image.network(
-                                            ImageUtil()
-                                                .getFullImageUrl(imageURL),
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    Container(
+            // --- Popular Ingredients Section ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Most Popular Ingredients',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(13),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: mostPopularIngredients.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No popular ingredients yet.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: mostPopularIngredients.map<Widget>((item) {
+                                final name =
+                                    UIUtil().capitalize(item['name'] ?? '');
+                                final count = item['count'] ?? 0;
+                                final imageURL = getIngredientImageUrl(
+                                    item['name'] ?? '', ingredientMap);
+
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Column(
+                                    children: [
+                                      imageURL != null && imageURL.isNotEmpty
+                                          ? ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              child: Image.network(
+                                                ImageUtil()
+                                                    .getFullImageUrl(imageURL),
+                                                width: 50,
+                                                height: 50,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    (context, error, stackTrace) =>
+                                                        Container(
+                                                  width: 50,
+                                                  height: 50,
+                                                  color: Colors.orange[50],
+                                                  child: const Icon(
+                                                      Icons.image_not_supported,
+                                                      size: 32,
+                                                      color: Colors.orange),
+                                                ),
+                                              ),
+                                            )
+                                          : Container(
                                               width: 50,
                                               height: 50,
-                                              color: Colors.orange[50],
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange[50],
+                                                borderRadius:
+                                                    BorderRadius.circular(25),
+                                              ),
                                               child: const Icon(
                                                   Icons.image_not_supported,
                                                   size: 32,
                                                   color: Colors.orange),
                                             ),
-                                          ),
-                                        )
-                                      : Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                          ),
-                                          child: const Icon(
-                                              Icons.image_not_supported,
-                                              size: 32,
-                                              color: Colors.orange),
-                                        ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    name,
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      Text(
+                                        '($count)',
+                                        style: const TextStyle(
+                                            fontSize: 12, color: Colors.grey),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    '($count)',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 32),
-      ],
+            ),
+            const SizedBox(height: 32),
+          ],
+        );
+      },
     );
   }
 }

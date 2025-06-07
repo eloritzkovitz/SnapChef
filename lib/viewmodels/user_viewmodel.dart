@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -40,21 +41,18 @@ class UserViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final isOffline = connectivityProvider.isOffline;
-    if (isOffline) {    
-      await _loadUserFromLocalDb().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {       
-          _user = null;
-          notifyListeners();
-        },
-      );
+    // 1. Always load local data first for instant display
+    await _loadUserFromLocalDb();
+
+    // 2. If offline, stop here (local data is already shown)
+    if (connectivityProvider.isOffline) {
       _isLoading = false;
       notifyListeners();
       return;
     }
 
-    try {    
+    // 3. If online, fetch from remote and update local data
+    try {
       final userProfile = await _userService.getUserData().timeout(
             const Duration(seconds: 10),
             onTimeout: () => throw Exception('Network timeout'),
@@ -68,9 +66,9 @@ class UserViewModel extends ChangeNotifier {
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
       await updateFcmToken(fcmToken);
-    } catch (e) {   
+    } catch (e) {
       if (e.toString().contains('401')) {
-        try {      
+        try {
           await _authService.refreshTokens().timeout(
                 const Duration(seconds: 10),
                 onTimeout: () => throw Exception('Token refresh timeout'),
@@ -89,23 +87,11 @@ class UserViewModel extends ChangeNotifier {
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
           await updateFcmToken(fcmToken);
-        } catch (refreshError) {       
-          await _loadUserFromLocalDb().timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {            
-              _user = null;
-              notifyListeners();
-            },
-          );
+        } catch (refreshError) {
+          // Already loaded local data above
         }
       } else {
-        await _loadUserFromLocalDb().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {         
-            _user = null;
-            notifyListeners();
-          },
-        );
+        // Already loaded local data above
       }
     } finally {
       _isLoading = false;
@@ -313,21 +299,81 @@ class UserViewModel extends ChangeNotifier {
 
   // Fetch user statistics
   Future<void> fetchUserStats({String? userId}) async {
+    // 1. Load local stats first for instant display
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = userId ?? prefs.getString('userId');
+      if (id != null) {
+        final dbUser = await database.userDao.getUserById(id);
+        if (dbUser != null) {
+          final fridgeIngredients = await database.fridgeIngredientDao
+              .getFridgeItems(fridgeId: dbUser.fridgeId);
+          final recipes = await database.recipeDao.getCookbookRecipes(id);
+
+          final ingredientNames = fridgeIngredients
+              .map((i) => i.name.toLowerCase())
+              .toSet()
+              .toList();
+          final ingredientCount = ingredientNames.length;
+          final recipeCount = recipes.length;
+
+          final Map<String, int> ingredientFrequency = {};
+          for (final recipe in recipes) {
+            final List<dynamic> recipeIngredients =
+                jsonDecode(recipe.ingredientsJson);
+            for (final ing in recipeIngredients) {
+              final name = (ing['name'] ?? '').toString().toLowerCase();
+              if (name.isNotEmpty) {
+                ingredientFrequency[name] =
+                    (ingredientFrequency[name] ?? 0) + 1;
+              }
+            }
+          }
+          final mostPopularIngredients = ingredientFrequency.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
+          final mostPopular = mostPopularIngredients
+              .take(5)
+              .map((e) => {'name': e.key, 'count': e.value})
+              .toList();
+
+          final favoriteRecipeCount =
+              recipes.where((r) => r.isFavorite == true).length;
+          final friends = await database.friendDao.getFriendsForUser(dbUser.id);
+          final friendCount = friends.length;
+
+          _userStats = {
+            'ingredientCount': ingredientCount,
+            'recipeCount': recipeCount,
+            'mostPopularIngredients': mostPopular,
+            'favoriteRecipeCount': favoriteRecipeCount,
+            'friendCount': friendCount,
+          };
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      _userStats = null;
+      notifyListeners();
+    }
+
+    // 2. If offline, stop here (local stats are already shown)
+    if (connectivityProvider.isOffline) {
+      return;
+    }
+
+    // 3. If online, fetch from remote and update stats
     try {
       final stats = await _userService.getUserStats(userId: userId);
       _userStats = stats;
       notifyListeners();
     } catch (e) {
-      _userStats = null;
-      notifyListeners();
-      rethrow;
+      // Ignore, already showing local stats
     }
   }
 
   // Remove friend
   Future<void> removeFriend(String friendId) async {
     await FriendService().removeFriend(friendId);
-    // Optionally, refresh the user data or friends list
     await fetchUserData();
   }
 }

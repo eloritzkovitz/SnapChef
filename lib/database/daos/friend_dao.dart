@@ -11,16 +11,29 @@ class FriendDao extends DatabaseAccessor<AppDatabase> with _$FriendDaoMixin {
   // CRUD
   Future<List<Friend>> getAllFriends() => select(friends).get();
   Stream<List<Friend>> watchAllFriends() => select(friends).watch();
-  Future<Friend?> getFriendById(int id) => (select(friends)..where((f) => f.id.equals(id))).getSingleOrNull();
-  Future<int> insertFriend(Insertable<Friend> friend) => into(friends).insertOnConflictUpdate(friend);
-  Future<bool> updateFriend(Insertable<Friend> friend) => update(friends).replace(friend);
-  Future<int> deleteFriend(int id) => (delete(friends)..where((f) => f.id.equals(id))).go();
+  Future<Friend?> getFriendById(int id) =>
+      (select(friends)..where((f) => f.id.equals(id))).getSingleOrNull();
+
+  Future<int> insertFriend(Insertable<Friend> friend) =>
+      into(friends).insertOnConflictUpdate(friend);
+
+  Future<bool> updateFriend(Insertable<Friend> friend) =>
+      update(friends).replace(friend);
+
+  Future<int> deleteFriend(int id) =>
+      (delete(friends)..where((f) => f.id.equals(id))).go();
 
   // Filter by user
   Future<List<Friend>> getFriendsForUser(String userId) =>
       (select(friends)..where((f) => f.userId.equals(userId))).get();
 
-  // Filter by status
-  Future<List<Friend>> getFriendsByStatus(String userId, String status) =>
-      (select(friends)..where((f) => f.userId.equals(userId) & f.status.equals(status))).get();
+  // Filter by friendId
+  Future<Friend?> getFriendByUserAndFriendId(String userId, String friendId) =>
+      (select(friends)
+        ..where((f) => f.userId.equals(userId) & f.friendId.equals(friendId)))
+          .getSingleOrNull();
+
+  // Delete all friends for a user (for syncing)
+  Future<int> deleteFriendsForUser(String userId) =>
+      (delete(friends)..where((f) => f.userId.equals(userId))).go();
 }

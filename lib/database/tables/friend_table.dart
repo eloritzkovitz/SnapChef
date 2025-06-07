@@ -4,5 +4,7 @@ class Friends extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get userId => text()();
   TextColumn get friendId => text()();
-  TextColumn get status => text().withDefault(const Constant('accepted'))();
+  TextColumn get friendName => text()(); 
+  TextColumn get friendEmail => text()();
+  TextColumn get friendProfilePicture => text().nullable()();  
 }
