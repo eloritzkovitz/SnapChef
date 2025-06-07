@@ -251,19 +251,21 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.check),
                     onPressed: () {
-                      vm.filterByCategory(
-                          selectedCategory.isEmpty ? null : selectedCategory);
-                      vm.filterByCuisine(
-                          selectedCuisine.isEmpty ? null : selectedCuisine);
-                      vm.filterByDifficulty(selectedDifficulty.isEmpty
+                      vm.selectedCategory =
+                          selectedCategory.isEmpty ? null : selectedCategory;
+                      vm.selectedCuisine =
+                          selectedCuisine.isEmpty ? null : selectedCuisine;
+                      vm.selectedDifficulty = selectedDifficulty.isEmpty
                           ? null
-                          : selectedDifficulty);
-                      vm.filterByPrepTime(prepTimeRange);
-                      vm.filterByCookingTime(cookingTimeRange);
-                      vm.filterByRating(ratingRange);
-                      vm.filterBySource(
-                          selectedSource.isEmpty ? null : selectedSource);
-                      vm.sortRecipes(selectedSort.isEmpty ? '' : selectedSort);
+                          : selectedDifficulty;
+                      vm.prepTimeRange = prepTimeRange;
+                      vm.cookingTimeRange = cookingTimeRange;
+                      vm.ratingRange = ratingRange;
+                      vm.selectedSource =
+                          selectedSource.isEmpty ? null : selectedSource;
+                      vm.selectedSortOption =
+                          selectedSort.isEmpty ? null : selectedSort;
+                      vm.applyFiltersAndSorting();
                       Navigator.pop(context);
                     },
                     label: const Text('Apply'),

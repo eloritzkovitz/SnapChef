@@ -7,15 +7,22 @@ import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
 import '../services/cookbook_service.dart';
+import '../mixins/sort_filter_mixin.dart';
 
-class CookbookViewModel extends ChangeNotifier {
+class CookbookViewModel extends ChangeNotifier with GenericFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
-  List<Recipe> filteredRecipes = [];
   List<SharedRecipe>? sharedWithMeRecipes = [];
   List<SharedRecipe>? sharedByMeRecipes = [];
   final CookbookService _cookbookService = CookbookService();
   final db.AppDatabase database;
   final ConnectivityProvider connectivityProvider;
+
+  String? selectedCuisine;
+  String? selectedDifficulty;
+  RangeValues? prepTimeRange;
+  RangeValues? cookingTimeRange;
+  RangeValues? ratingRange;
+  String? selectedSource;
 
   CookbookViewModel({
     required this.database,
@@ -24,33 +31,84 @@ class CookbookViewModel extends ChangeNotifier {
 
   RecipeDao get recipeDao => database.recipeDao;
 
-  String _filter = '';
-  String? _selectedCategory;
-  String? _selectedCuisine;
-  String? _selectedDifficulty;
-  RangeValues? _prepTimeRange;
-  RangeValues? _cookingTimeRange;
-  RangeValues? _ratingRange;
-  String? _selectedSortOption;
-  String? _selectedSource;
-
-  String? get selectedCategory => _selectedCategory;
-  String? get selectedCuisine => _selectedCuisine;
-  String? get selectedDifficulty => _selectedDifficulty;
-  RangeValues? get prepTimeRange => _prepTimeRange;
-  RangeValues? get cookingTimeRange => _cookingTimeRange;
-  RangeValues? get ratingRange => _ratingRange;
-  String? get selectedSortOption => _selectedSortOption;
-  String? get selectedSource => _selectedSource;
-
   bool _isLoading = false;
-
   bool get isLoading => _isLoading;
 
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
+  // --- GenericFilterMixin implementation ---
+  @override
+  List<Recipe> get sourceList => _recipes;
+
+  @override
+  bool filterByCategory(Recipe item, String? category) =>
+      category == null || category.isEmpty
+          ? true
+          : item.mealType.toLowerCase() == category.toLowerCase();
+
+  @override
+  bool filterBySearch(Recipe item, String filter) =>
+      item.title.toLowerCase().contains(filter.toLowerCase());
+
+  @override
+  int sortItems(Recipe a, Recipe b, String? sortOption) {
+    if (sortOption == 'Name') {
+      return a.title.compareTo(b.title);
+    } else if (sortOption == 'Rating') {
+      return (b.rating ?? 0).compareTo(a.rating ?? 0);
+    } else if (sortOption == 'PrepTime') {
+      return a.prepTime.compareTo(b.prepTime);
+    } else if (sortOption == 'CookingTime') {
+      return a.cookingTime.compareTo(b.cookingTime);
+    }
+    return 0;
+  }
+
+  // --- Category/cuisine/difficulty getters for UI ---
+  List<String> getCategories() {
+    final categories =
+        _recipes.map((recipe) => recipe.mealType).toSet().toList();
+    categories.sort();
+    return categories;
+  }
+
+  List<String> getCuisines() {
+    final cuisines =
+        _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
+    cuisines.sort();
+    return cuisines;
+  }
+
+  List<String> getDifficulties() {
+    final difficulties =
+        _recipes.map((recipe) => recipe.difficulty).toSet().toList();
+    difficulties.sort();
+    return difficulties;
+  }
+
+  int get minPrepTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.prepTime).reduce((a, b) => a < b ? a : b);
+  int get maxPrepTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.prepTime).reduce((a, b) => a > b ? a : b);
+  int get minCookingTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a < b ? a : b);
+  int get maxCookingTime => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a > b ? a : b);
+  double get minRating => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a < b ? a : b);
+  double get maxRating => _recipes.isEmpty
+      ? 0
+      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
+
+  // --- Cookbook logic (unchanged) ---
+
   // Fetch all recipes in the cookbook
-  Future<void> fetchCookbookRecipes(String cookbookId) async {  
+  Future<void> fetchCookbookRecipes(String cookbookId) async {
     _isLoading = true;
     notifyListeners();
 
@@ -58,14 +116,14 @@ class CookbookViewModel extends ChangeNotifier {
     if (isOffline) {
       await _loadCookbookRecipesFromLocalDb(cookbookId);
       _isLoading = false;
-      notifyListeners();     
+      notifyListeners();
       return;
     }
 
     try {
       final items = await _cookbookService
           .fetchCookbookRecipes(cookbookId)
-          .timeout(const Duration(seconds: 3), onTimeout: () {        
+          .timeout(const Duration(seconds: 3), onTimeout: () {
         throw Exception('Network timeout');
       });
 
@@ -103,13 +161,13 @@ class CookbookViewModel extends ChangeNotifier {
         await _storeCookbookRecipesLocally(cookbookId, _recipes);
       }
 
-      _applyFiltersAndSorting();
+      applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching cookbook recipes: $e');
       await _loadCookbookRecipesFromLocalDb(cookbookId);
     } finally {
       _isLoading = false;
-      notifyListeners();      
+      notifyListeners();
     }
   }
 
@@ -119,10 +177,10 @@ class CookbookViewModel extends ChangeNotifier {
     _recipes.clear();
     _recipes.addAll(
         localRecipes.map((dbRecipe) => Recipe.fromDb(dbRecipe.toJson())));
-    _applyFiltersAndSorting();
+    applyFiltersAndSorting();
   }
 
-// Store recipes locally using RecipeDao
+  // Store recipes locally using RecipeDao
   Future<void> _storeCookbookRecipesLocally(
       String userId, List<Recipe> recipes) async {
     for (final recipe in recipes) {
@@ -199,7 +257,7 @@ class CookbookViewModel extends ChangeNotifier {
             source: source,
           ),
         );
-        _applyFiltersAndSorting();
+        applyFiltersAndSorting();
         notifyListeners();
       }
       return success;
@@ -259,7 +317,7 @@ class CookbookViewModel extends ChangeNotifier {
             imageURL: imageURL ?? _recipes[index].imageURL,
             rating: rating,
           );
-          _applyFiltersAndSorting();
+          applyFiltersAndSorting();
         }
       }
       return success;
@@ -281,7 +339,7 @@ class CookbookViewModel extends ChangeNotifier {
       final index = _recipes.indexWhere((r) => r.id == recipeId);
       if (index != -1) {
         _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
-        _applyFiltersAndSorting();
+        applyFiltersAndSorting();
         notifyListeners();
       }
       return true;
@@ -302,7 +360,7 @@ class CookbookViewModel extends ChangeNotifier {
         if (index != -1) {
           _recipes[index] =
               _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
-          _applyFiltersAndSorting();
+          applyFiltersAndSorting();
           notifyListeners();
         }
       }
@@ -319,8 +377,8 @@ class CookbookViewModel extends ChangeNotifier {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
-    final recipe = filteredRecipes.removeAt(oldIndex);
-    filteredRecipes.insert(newIndex, recipe);
+    final recipe = filteredItems.removeAt(oldIndex);
+    filteredItems.insert(newIndex, recipe);
 
     // Also reorder in the main _recipes list to keep everything in sync
     final oldId = recipe.id;
@@ -328,11 +386,11 @@ class CookbookViewModel extends ChangeNotifier {
     if (oldMainIndex != -1) {
       final mainRecipe = _recipes.removeAt(oldMainIndex);
 
-      // Find the new index in the main list based on the next recipe in filteredRecipes
+      // Find the new index in the main list based on the next recipe in filteredItems
       int newMainIndex;
-      if (newIndex + 1 < filteredRecipes.length) {
-        // Insert before the next recipe in filteredRecipes
-        final nextId = filteredRecipes[newIndex + 1].id;
+      if (newIndex + 1 < filteredItems.length) {
+        // Insert before the next recipe in filteredItems
+        final nextId = filteredItems[newIndex + 1].id;
         newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
         if (newMainIndex == -1) {
           newMainIndex = _recipes.length;
@@ -400,186 +458,13 @@ class CookbookViewModel extends ChangeNotifier {
           await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        _applyFiltersAndSorting();
+        applyFiltersAndSorting();
       }
       return success;
     } catch (e) {
       log('Error deleting recipe: $e');
       return false;
     }
-  }
-
-  // Get a list of all categories
-  List<String> getCategories() {
-    final categories =
-        _recipes.map((recipe) => recipe.mealType).toSet().toList();
-    categories.sort();
-    return categories;
-  }
-
-  // Get a list of all cuisines
-  List<String> getCuisines() {
-    final cuisines =
-        _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
-    cuisines.sort();
-    return cuisines;
-  }
-
-  // Get a list of all difficulties
-  List<String> getDifficulties() {
-    final difficulties =
-        _recipes.map((recipe) => recipe.difficulty).toSet().toList();
-    difficulties.sort();
-    return difficulties;
-  }
-
-  // Get min/max for prep/cooking time and rating
-  int get minPrepTime => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.prepTime).reduce((a, b) => a < b ? a : b);
-  int get maxPrepTime => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.prepTime).reduce((a, b) => a > b ? a : b);
-  int get minCookingTime => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a < b ? a : b);
-  int get maxCookingTime => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.cookingTime).reduce((a, b) => a > b ? a : b);
-  double get minRating => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a < b ? a : b);
-  double get maxRating => _recipes.isEmpty
-      ? 0
-      : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
-
-  // Filter recipes by category
-  void filterByCategory(String? category) {
-    _selectedCategory = category;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by cuisine
-  void filterByCuisine(String? cuisine) {
-    _selectedCuisine = cuisine;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by difficulty
-  void filterByDifficulty(String? difficulty) {
-    _selectedDifficulty = difficulty;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by prep time range
-  void filterByPrepTime(RangeValues? range) {
-    _prepTimeRange = range;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by cooking time range
-  void filterByCookingTime(RangeValues? range) {
-    _cookingTimeRange = range;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by rating range
-  void filterByRating(RangeValues? range) {
-    _ratingRange = range;
-    _applyFiltersAndSorting();
-  }
-
-  // Filter recipes by source
-  void filterBySource(String? source) {
-    _selectedSource = source;
-    _applyFiltersAndSorting();
-  }
-
-  // Sort recipes by selected option
-  void sortRecipes(String sortOption) {
-    _selectedSortOption = sortOption;
-    _applyFiltersAndSorting();
-  }
-
-  // Set a filter for recipe titles
-  void setFilter(String filter) {
-    _filter = filter;
-    _applyFiltersAndSorting();
-  }
-
-  // Apply filters and sorting to the recipes
-  void _applyFiltersAndSorting() {
-    filteredRecipes = List.from(_recipes);
-
-    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.mealType.toLowerCase() ==
-            _selectedCategory!.toLowerCase();
-      }).toList();
-    }
-
-    if (_selectedCuisine != null && _selectedCuisine!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.cuisineType.toLowerCase() ==
-            _selectedCuisine!.toLowerCase();
-      }).toList();
-    }
-
-    if (_selectedDifficulty != null && _selectedDifficulty!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.difficulty.toLowerCase() ==
-            _selectedDifficulty!.toLowerCase();
-      }).toList();
-    }
-
-    if (_prepTimeRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.prepTime >= _prepTimeRange!.start.toInt() &&
-            recipe.prepTime <= _prepTimeRange!.end.toInt();
-      }).toList();
-    }
-
-    if (_cookingTimeRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.cookingTime >= _cookingTimeRange!.start.toInt() &&
-            recipe.cookingTime <= _cookingTimeRange!.end.toInt();
-      }).toList();
-    }
-
-    if (_ratingRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        final rating = recipe.rating ?? 0;
-        return rating >= _ratingRange!.start && rating <= _ratingRange!.end;
-      }).toList();
-    }
-
-    if (_selectedSource != null && _selectedSource!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        if (_selectedSource == 'ai') {
-          return recipe.source == RecipeSource.ai;
-        } else if (_selectedSource == 'user' || _selectedSource == 'manual') {
-          return recipe.source == RecipeSource.user;
-        }
-        return true;
-      }).toList();
-    }
-
-    if (_filter.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.title.toLowerCase().contains(_filter.toLowerCase());
-      }).toList();
-    }
-
-    if (_selectedSortOption == 'Name') {
-      filteredRecipes.sort((a, b) => a.title.compareTo(b.title));
-    } else if (_selectedSortOption == 'Rating') {
-      filteredRecipes.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
-    } else if (_selectedSortOption == 'PrepTime') {
-      filteredRecipes.sort((a, b) => a.prepTime.compareTo(b.prepTime));
-    } else if (_selectedSortOption == 'CookingTime') {
-      filteredRecipes.sort((a, b) => a.cookingTime.compareTo(b.cookingTime));
-    }
-    notifyListeners();
   }
 
   // Search recipes by name
@@ -590,17 +475,96 @@ class CookbookViewModel extends ChangeNotifier {
         .toList();
   }
 
-  // Reset all filters
+  @override
+  void applyFiltersAndSorting() {
+    // Start with all recipes
+    filteredItems = List<Recipe>.from(_recipes);
+
+    // Category (meal type)
+    if (selectedCategory != null && selectedCategory!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.mealType.toLowerCase() == selectedCategory!.toLowerCase())
+          .toList();
+    }
+
+    // Cuisine
+    if (selectedCuisine != null && selectedCuisine!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.cuisineType.toLowerCase() == selectedCuisine!.toLowerCase())
+          .toList();
+    }
+
+    // Difficulty
+    if (selectedDifficulty != null && selectedDifficulty!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.difficulty.toLowerCase() == selectedDifficulty!.toLowerCase())
+          .toList();
+    }
+
+    // Prep Time
+    if (prepTimeRange != null) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.prepTime >= prepTimeRange!.start.toInt() &&
+              r.prepTime <= prepTimeRange!.end.toInt())
+          .toList();
+    }
+
+    // Cooking Time
+    if (cookingTimeRange != null) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.cookingTime >= cookingTimeRange!.start.toInt() &&
+              r.cookingTime <= cookingTimeRange!.end.toInt())
+          .toList();
+    }
+
+    // Rating
+    if (ratingRange != null) {
+      filteredItems = filteredItems.where((r) {
+        final rating = r.rating ?? 0;
+        return rating >= ratingRange!.start && rating <= ratingRange!.end;
+      }).toList();
+    }
+
+    // Source
+    if (selectedSource != null && selectedSource!.isNotEmpty) {
+      filteredItems = filteredItems.where((r) {
+        if (selectedSource == 'ai') {
+          return r.source == RecipeSource.ai;
+        } else if (selectedSource == 'user' || selectedSource == 'manual') {
+          return r.source == RecipeSource.user;
+        }
+        return true;
+      }).toList();
+    }
+
+    if (filter.isNotEmpty) {
+      filteredItems =
+          filteredItems.where((item) => filterBySearch(item, filter)).toList();
+    }
+
+    if (selectedSortOption != null && selectedSortOption!.isNotEmpty) {
+      filteredItems.sort((a, b) => sortItems(a, b, selectedSortOption));
+    }
+
+    notifyListeners();
+  }
+
+  @override
   void clearFilters() {
-    _selectedCategory = null;
-    _selectedCuisine = null;
-    _selectedDifficulty = null;
-    _prepTimeRange = null;
-    _cookingTimeRange = null;
-    _ratingRange = null;
-    _filter = '';
-    _selectedSortOption = null;
-    _selectedSource = null;
-    _applyFiltersAndSorting();
+    selectedCategory = null;
+    selectedSortOption = null;
+    filter = '';
+    selectedCuisine = null;
+    selectedDifficulty = null;
+    prepTimeRange = null;
+    cookingTimeRange = null;
+    ratingRange = null;
+    selectedSource = null;
+    applyFiltersAndSorting();
   }
 }

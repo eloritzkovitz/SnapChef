@@ -130,10 +130,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
       body: Consumer<CookbookViewModel>(
         builder: (context, cookbookViewModel, child) {
           final recipes = showOnlyFavorites
-              ? cookbookViewModel.filteredRecipes
+              ? cookbookViewModel.filteredItems
                   .where((r) => r.isFavorite)
                   .toList()
-              : cookbookViewModel.filteredRecipes;
+              : cookbookViewModel.filteredItems;
 
           if (cookbookViewModel.isLoading) {
             return const Center(child: CircularProgressIndicator());

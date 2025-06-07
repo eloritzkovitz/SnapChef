@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../mixins/fridge_sync_mixin.dart';
-import '../mixins/fridge_filter_mixin.dart';
 import '../mixins/helpers_mixin.dart';
 import '../models/ingredient.dart';
 import '../providers/connectivity_provider.dart';
@@ -11,18 +10,18 @@ import '../viewmodels/ingredient_viewmodel.dart';
 import '../services/sync_service.dart';
 import '../repositories/fridge_repository.dart';
 import '../services/fridge_service.dart';
+import 'ingredient_list_controller.dart';
 
 class FridgeViewModel extends ChangeNotifier
-    with FridgeFilterMixin, FridgeSyncMixin, HelpersMixin {
+    with FridgeSyncMixin, HelpersMixin {
   // --- Fields & Constructor ---
   final List<Ingredient> _ingredients = [];
   final List<Ingredient> _groceries = [];
   List<dynamic> recognizedIngredients = [];
 
-  @override
-  List<Ingredient> get ingredientsSource => _ingredients;
-  @override
-  List<Ingredient> get groceriesSource => _groceries;
+  late final IngredientListController fridgeController;
+  late final IngredientListController groceriesController;
+
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
   List<Ingredient> get groceries => List.unmodifiable(_groceries);
 
@@ -41,6 +40,10 @@ class FridgeViewModel extends ChangeNotifier
     required this.syncManager,
     required this.fridgeRepository,
   }) {
+    fridgeController = IngredientListController(_ingredients);
+    groceriesController = IngredientListController(_groceries);
+    fridgeController.addListener(notifyListeners);
+    groceriesController.addListener(notifyListeners);
     syncManager.register(syncPendingActions);
     initFridgeSync(connectivityProvider);
   }
@@ -78,11 +81,10 @@ class FridgeViewModel extends ChangeNotifier
       final localOnlyItems =
           localItems.where((i) => !remoteIds.contains(i.id)).toList();
 
-      updateAndNotify(() {
-        _ingredients.clear();
-        _ingredients.addAll(remoteItems);
-        _ingredients.addAll(localOnlyItems);
-      }, applyFiltersAndSorting);
+      _ingredients.clear();
+      _ingredients.addAll(remoteItems);
+      _ingredients.addAll(localOnlyItems);
+      fridgeController.applyFiltersAndSorting();
 
       // Store merged list locally
       await fridgeRepository.storeFridgeItemsLocal(fridgeId, _ingredients);
@@ -118,11 +120,10 @@ class FridgeViewModel extends ChangeNotifier
       final localOnlyItems =
           localItems.where((i) => !remoteIds.contains(i.id)).toList();
 
-      updateAndNotify(() {
-        _groceries.clear();
-        _groceries.addAll(remoteItems);
-        _groceries.addAll(localOnlyItems);
-      }, applyGroceryFiltersAndSorting);
+      _groceries.clear();
+      _groceries.addAll(remoteItems);
+      _groceries.addAll(localOnlyItems);
+      groceriesController.applyFiltersAndSorting();
 
       // Store merged list locally
       await fridgeRepository.storeGroceriesLocal(fridgeId, _groceries);
@@ -140,18 +141,16 @@ class FridgeViewModel extends ChangeNotifier
   Future<void> _loadFridgeIngredientsFromLocalDb(String fridgeId) async {
     final localIngredients =
         await fridgeRepository.fetchFridgeItemsLocal(fridgeId);
-    updateAndNotify(() {
-      _ingredients.clear();
-      _ingredients.addAll(localIngredients);
-    }, applyFiltersAndSorting);
+    _ingredients.clear();
+    _ingredients.addAll(localIngredients);
+    fridgeController.applyFiltersAndSorting();
   }
 
   Future<void> _loadGroceriesFromLocalDb(String fridgeId) async {
     final localGroceries = await fridgeRepository.fetchGroceriesLocal(fridgeId);
-    updateAndNotify(() {
-      _groceries.clear();
-      _groceries.addAll(localGroceries);
-    }, applyGroceryFiltersAndSorting);
+    _groceries.clear();
+    _groceries.addAll(localGroceries);
+    groceriesController.applyFiltersAndSorting();
   }
 
   // --- Add/Update/Delete Helpers ---
@@ -178,16 +177,14 @@ class FridgeViewModel extends ChangeNotifier
           'itemId': ingredient.id,
           'newCount': newQuantity,
         });
-        updateAndNotify(() {
-          list[idx].count = newQuantity;
-        }, applyFilters);
+        list[idx].count = newQuantity;
+        applyFilters();
         return true;
       }
       final success = await remoteUpdateAction(newQuantity);
       if (success) {
-        updateAndNotify(() {
-          list[idx].count = newQuantity;
-        }, applyFilters);
+        list[idx].count = newQuantity;
+        applyFilters();
         return true;
       } else {
         return false;
@@ -199,16 +196,14 @@ class FridgeViewModel extends ChangeNotifier
           'fridgeId': fridgeId,
           'ingredient': ingredient,
         });
-        updateAndNotify(() {
-          list.add(ingredient);
-        }, applyFilters);
+        list.add(ingredient);
+        applyFilters();
         return true;
       }
       final success = await remoteAddAction();
       if (success) {
-        updateAndNotify(() {
-          list.add(ingredient);
-        }, applyFilters);
+        list.add(ingredient);
+        applyFilters();
         return true;
       } else {
         return false;
@@ -228,9 +223,8 @@ class FridgeViewModel extends ChangeNotifier
   }) async {
     try {
       await localDbAction();
-      updateAndNotify(() {
-        list.removeWhere((ingredient) => ingredient.id == itemId);
-      }, applyFilters);
+      list.removeWhere((ingredient) => ingredient.id == itemId);
+      applyFilters();
 
       if (isOffline) {
         pendingActions.add({
@@ -285,7 +279,7 @@ class FridgeViewModel extends ChangeNotifier
           fridgeId, ingredient.id, newCount),
       pendingActions: pendingFridgeActions,
       isOffline: connectivityProvider.isOffline,
-      applyFilters: applyFiltersAndSorting,
+      applyFilters: fridgeController.applyFiltersAndSorting,
     );
   }
 
@@ -295,9 +289,8 @@ class FridgeViewModel extends ChangeNotifier
       final index =
           _ingredients.indexWhere((ingredient) => ingredient.id == itemId);
       if (index != -1) {
-        updateAndNotify(() {
-          _ingredients[index].count = newCount;
-        }, applyFiltersAndSorting);
+        _ingredients[index].count = newCount;
+        fridgeController.applyFiltersAndSorting();
         await fridgeRepository.addOrUpdateFridgeItem(
           fridgeId,
           _ingredients[index],
@@ -350,7 +343,7 @@ class FridgeViewModel extends ChangeNotifier
           fridgeRepository.deleteFridgeItemRemote(fridgeId, itemId),
       pendingActions: pendingFridgeActions,
       isOffline: connectivityProvider.isOffline,
-      applyFilters: applyFiltersAndSorting,
+      applyFilters: fridgeController.applyFiltersAndSorting,
     );
   }
 
@@ -376,7 +369,7 @@ class FridgeViewModel extends ChangeNotifier
           .updateGroceryItemRemote(fridgeId, ingredient.id, newCount),
       pendingActions: pendingGroceryActions,
       isOffline: connectivityProvider.isOffline,
-      applyFilters: applyGroceryFiltersAndSorting,
+      applyFilters: groceriesController.applyFiltersAndSorting,
     );
   }
 
@@ -386,9 +379,8 @@ class FridgeViewModel extends ChangeNotifier
       final index =
           _groceries.indexWhere((ingredient) => ingredient.id == itemId);
       if (index != -1) {
-        updateAndNotify(() {
-          _groceries[index].count = newCount;
-        }, applyGroceryFiltersAndSorting);
+        _groceries[index].count = newCount;
+        groceriesController.applyFiltersAndSorting();
         await fridgeRepository.addOrUpdateGroceryItem(
           fridgeId,
           _groceries[index],
@@ -441,7 +433,7 @@ class FridgeViewModel extends ChangeNotifier
           fridgeRepository.deleteGroceryItemRemote(fridgeId, itemId),
       pendingActions: pendingGroceryActions,
       isOffline: connectivityProvider.isOffline,
-      applyFilters: applyGroceryFiltersAndSorting,
+      applyFilters: groceriesController.applyFiltersAndSorting,
     );
   }
 
@@ -451,8 +443,8 @@ class FridgeViewModel extends ChangeNotifier
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
-    final ingredient = filteredIngredients.removeAt(oldIndex);
-    filteredIngredients.insert(newIndex, ingredient);
+    final ingredient = fridgeController.filteredItems.removeAt(oldIndex);
+    fridgeController.filteredItems.insert(newIndex, ingredient);
 
     // Also reorder in the main _ingredients list to keep everything in sync
     final oldId = ingredient.id;
@@ -460,10 +452,9 @@ class FridgeViewModel extends ChangeNotifier
     if (oldMainIndex != -1) {
       final mainIngredient = _ingredients.removeAt(oldMainIndex);
 
-      // Find the new index in the main list based on the next ingredient in filteredIngredients
       int newMainIndex;
-      if (newIndex + 1 < filteredIngredients.length) {
-        final nextId = filteredIngredients[newIndex + 1].id;
+      if (newIndex + 1 < fridgeController.filteredItems.length) {
+        final nextId = fridgeController.filteredItems[newIndex + 1].id;
         newMainIndex = _ingredients.indexWhere((i) => i.id == nextId);
         if (newMainIndex == -1) {
           newMainIndex = _ingredients.length;
@@ -493,8 +484,8 @@ class FridgeViewModel extends ChangeNotifier
   Future<void> reorderGroceryItem(
       int oldIndex, int newIndex, String fridgeId) async {
     if (oldIndex < newIndex) newIndex -= 1;
-    final item = filteredGroceries.removeAt(oldIndex);
-    filteredGroceries.insert(newIndex, item);
+    final item = groceriesController.filteredItems.removeAt(oldIndex);
+    groceriesController.filteredItems.insert(newIndex, item);
 
     // Also reorder in the main groceries list
     final oldId = item.id;
@@ -502,8 +493,8 @@ class FridgeViewModel extends ChangeNotifier
     if (oldMainIndex != -1) {
       final mainItem = _groceries.removeAt(oldMainIndex);
       int newMainIndex;
-      if (newIndex + 1 < filteredGroceries.length) {
-        final nextId = filteredGroceries[newIndex + 1].id;
+      if (newIndex + 1 < groceriesController.filteredItems.length) {
+        final nextId = groceriesController.filteredItems[newIndex + 1].id;
         newMainIndex = _groceries.indexWhere((g) => g.id == nextId);
         if (newMainIndex == -1) newMainIndex = _groceries.length;
       } else {
@@ -564,25 +555,22 @@ class FridgeViewModel extends ChangeNotifier
       );
 
       // Update in memory
-      updateAndNotify(() {
-        _ingredients[fridgeIndex].count = newCount;
-      }, applyFiltersAndSorting);
+      _ingredients[fridgeIndex].count = newCount;
+      fridgeController.applyFiltersAndSorting();
     } else {
       // Not in fridge: add as new fridge item
       await fridgeRepository.addOrUpdateFridgeItem(
         fridgeId,
         ingredient,
       );
-      updateAndNotify(() {
-        _ingredients.add(ingredient);
-      }, applyFiltersAndSorting);
+      _ingredients.add(ingredient);
+      fridgeController.applyFiltersAndSorting();
     }
 
     // Remove from groceries in local DB and memory
     await fridgeRepository.deleteGroceryItemLocal(ingredient.id);
-    updateAndNotify(() {
-      _groceries.removeWhere((g) => g.id == ingredient.id);
-    }, applyGroceryFiltersAndSorting);
+    _groceries.removeWhere((g) => g.id == ingredient.id);
+    groceriesController.applyFiltersAndSorting();
 
     // Optionally, sync with backend if online
     if (!connectivityProvider.isOffline) {
@@ -614,7 +602,7 @@ class FridgeViewModel extends ChangeNotifier
     required String fridgeId,
     required int delta,
   }) async {
-    final ingredient = filteredIngredients[filteredIndex];
+    final ingredient = fridgeController.filteredItems[filteredIndex];
     final newCount = ingredient.count + delta;
     if (newCount < 1) return;
 
@@ -623,9 +611,8 @@ class FridgeViewModel extends ChangeNotifier
       final mainIndex =
           _ingredients.indexWhere((ing) => ing.id == ingredient.id);
       if (mainIndex != -1) {
-        updateAndNotify(() {
-          _ingredients[mainIndex].count = newCount;
-        }, applyFiltersAndSorting);
+        _ingredients[mainIndex].count = newCount;
+        fridgeController.applyFiltersAndSorting();
       }
     }
   }

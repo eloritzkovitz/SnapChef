@@ -24,7 +24,7 @@ class GroceriesList extends StatelessWidget {
         SnapChefAppBar(
           title: const Text(
             'Groceries',
-            style: TextStyle(                      
+            style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -33,17 +33,24 @@ class GroceriesList extends StatelessWidget {
               icon: const Icon(Icons.kitchen_outlined, color: Colors.black),
               tooltip: 'Add all to fridge',
               onPressed: () async {
-                final fridgeViewModel = Provider.of<FridgeViewModel>(context, listen: false);
-                final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+                final fridgeViewModel =
+                    Provider.of<FridgeViewModel>(context, listen: false);
+                final userViewModel =
+                    Provider.of<UserViewModel>(context, listen: false);
                 final fridgeId = userViewModel.fridgeId;
-                final groceries = fridgeViewModel.filteredGroceries;
-                if (fridgeId != null && fridgeId.isNotEmpty && groceries.isNotEmpty) {
+                final groceries =
+                    fridgeViewModel.groceriesController.filteredItems;
+                if (fridgeId != null &&
+                    fridgeId.isNotEmpty &&
+                    groceries.isNotEmpty) {
                   for (final ingredient in groceries) {
-                    await fridgeViewModel.addGroceryToFridge(fridgeId, ingredient);
+                    await fridgeViewModel.addGroceryToFridge(
+                        fridgeId, ingredient);
                   }
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('All groceries moved to fridge!')),
+                      const SnackBar(
+                          content: Text('All groceries moved to fridge!')),
                     );
                   }
                 }
@@ -57,23 +64,24 @@ class GroceriesList extends StatelessWidget {
                   context: context,
                   isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   builder: (context) {
-                    final vm = Provider.of<FridgeViewModel>(context,
-                        listen: false);
+                    final vm =
+                        Provider.of<FridgeViewModel>(context, listen: false);
                     return FilterSortSheet(
                       selectedCategory:
-                          vm.selectedGroceryCategory ?? '',
+                          vm.groceriesController.selectedCategory ?? '',
                       selectedSort:
-                          vm.selectedGrocerySortOption ?? '',
-                      categories: vm.getGroceryCategories(),
-                      onClear: vm.clearGroceryFilters,
+                          vm.groceriesController.selectedSortOption ?? '',
+                      categories: vm.groceriesController.getCategories(),
+                      onClear: vm.groceriesController.clearFilters,
                       onApply: (cat, sort) {
-                        vm.filterGroceriesByCategory(
-                            cat.isEmpty ? null : cat);
-                        vm.sortGroceries(sort.isEmpty ? null : sort);
+                        vm.groceriesController
+                            .filterByCategoryValue(cat.isEmpty ? null : cat);
+                        vm.groceriesController
+                            .sortByOption(sort.isEmpty ? null : sort);
                       },
                       categoryLabel: 'Category',
                       sortLabel: 'Sort By',
@@ -103,7 +111,7 @@ class GroceriesList extends StatelessWidget {
         Expanded(
           child: Consumer<FridgeViewModel>(
             builder: (context, fridgeViewModel, _) {
-              final groceries = fridgeViewModel.filteredGroceries;
+              final groceries = fridgeViewModel.groceriesController.filteredItems;
 
               return groceries.isEmpty
                   ? const Center(
@@ -125,7 +133,7 @@ class GroceriesList extends StatelessWidget {
                               oldIndex, newIndex, fridgeId);
                         }
                       },
-                      proxyDecorator: (child, index, animation) {                        
+                      proxyDecorator: (child, index, animation) {
                         return Material(
                           color: Colors.transparent,
                           elevation: 0,

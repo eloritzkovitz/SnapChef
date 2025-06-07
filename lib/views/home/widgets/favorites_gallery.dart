@@ -17,7 +17,7 @@ class FavoritesGallery extends StatelessWidget {
 
     return Consumer<CookbookViewModel>(
       builder: (context, cookbookViewModel, _) {
-        final favoriteRecipes = cookbookViewModel.filteredRecipes
+        final favoriteRecipes = cookbookViewModel.filteredItems
             .where((r) => r.isFavorite)
             .toList();
 

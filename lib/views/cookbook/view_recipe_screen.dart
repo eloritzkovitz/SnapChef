@@ -131,7 +131,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
 
     // Get the updated recipe from the viewmodel (if needed)
     if (success) {
-      final updatedRecipe = cookbookViewModel.filteredRecipes
+      final updatedRecipe = cookbookViewModel.filteredItems
           .firstWhere((r) => r.id == _recipe.id, orElse: () => _recipe);
       setState(() {
         _recipe = updatedRecipe;
