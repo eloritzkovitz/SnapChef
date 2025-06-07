@@ -34,7 +34,7 @@ class ConnectivityProvider extends ChangeNotifier {
 
     // First, check if any network is available
     final result = await _connectivity.checkConnectivity();
-    if (result == ConnectivityResult.none) {
+    if (result == [ConnectivityResult.none]) {
       offline = true;
     } else {
       // Try to reach your server using SERVER_IP from .env
