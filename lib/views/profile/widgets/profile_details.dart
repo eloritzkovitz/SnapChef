@@ -350,13 +350,13 @@ class _ProfileDetailsState extends State<ProfileDetails> {
                                           ? ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(25),
-                                              child: Image.network(
-                                                ImageUtil()
+                                              child: CachedNetworkImage(
+                                                imageUrl: ImageUtil()
                                                     .getFullImageUrl(imageURL),
                                                 width: 50,
                                                 height: 50,
                                                 fit: BoxFit.contain,
-                                                errorBuilder: (context, error,
+                                                errorWidget: (context, error,
                                                         stackTrace) =>
                                                     Container(
                                                   width: 50,

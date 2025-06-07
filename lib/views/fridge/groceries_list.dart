@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './ingredient_search_delegate.dart';
@@ -151,12 +152,12 @@ class GroceriesList extends StatelessWidget {
                             color: Colors.white,
                             child: ListTile(
                               leading: (ingredient.imageURL.isNotEmpty)
-                                  ? Image.network(
-                                      ingredient.imageURL,
+                                  ? CachedNetworkImage(
+                                      imageUrl: ingredient.imageURL,
                                       width: 40,
                                       height: 40,
                                       fit: BoxFit.contain,
-                                      errorBuilder:
+                                      errorWidget:
                                           (context, error, stackTrace) =>
                                               SizedBox(
                                         width: 40,

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 
@@ -42,12 +43,12 @@ class FridgeListView extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           leading:
               (ingredient.imageURL != null && ingredient.imageURL.isNotEmpty)
-                  ? Image.network(
-                      ingredient.imageURL,
+                  ? CachedNetworkImage(
+                      imageUrl: ingredient.imageURL,
                       width: 50,
                       height: 50,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => SizedBox(
+                      errorWidget: (context, error, stackTrace) => SizedBox(
                         width: 50,
                         height: 50,
                         child: Icon(Icons.image_not_supported, size: 36),
