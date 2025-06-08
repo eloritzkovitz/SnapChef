@@ -17,7 +17,7 @@ class ConnectivityProvider extends ChangeNotifier {
     });
     _checkInternetAndServer();
 
-    // Poll the server every 10 seconds (adjust as needed)
+    // Poll the server every 10 seconds
     _timer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkInternetAndServer();
     });
