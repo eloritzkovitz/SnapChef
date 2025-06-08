@@ -12,23 +12,24 @@ import 'services/user_service.dart';
 
 final GetIt getIt = GetIt.instance;
 
-void setupLocator(AppDatabase db) {  
+void setupLocator(AppDatabase db) { 
+  // Singletons 
   getIt.registerSingleton<AppDatabase>(db);
   getIt.registerSingleton<ConnectivityProvider>(ConnectivityProvider());
   getIt.registerSingleton<SyncManager>(SyncManager(getIt<ConnectivityProvider>()));
   
   // Ingredient Service
-  getIt.registerSingleton<IngredientService>(IngredientService());
+  getIt.registerLazySingleton<IngredientService>(() => IngredientService());
   
   // User
-  getIt.registerSingleton<UserService>(UserService());
-  getIt.registerSingleton<UserRepository>(UserRepository());
+  getIt.registerLazySingleton<UserService>(() => UserService());
+  getIt.registerLazySingleton<UserRepository>(() => UserRepository());
   
   // Fridge
-  getIt.registerSingleton<FridgeService>(FridgeService());
-  getIt.registerSingleton<FridgeRepository>(FridgeRepository());
+  getIt.registerLazySingleton<FridgeService>(() => FridgeService());
+  getIt.registerLazySingleton<FridgeRepository>(() => FridgeRepository());
   
   // Cookbook
-  getIt.registerSingleton<CookbookService>(CookbookService());
-  getIt.registerSingleton<CookbookRepository>(CookbookRepository());
+  getIt.registerLazySingleton<CookbookService>(() => CookbookService());
+  getIt.registerLazySingleton<CookbookRepository>(() => CookbookRepository());
 }
