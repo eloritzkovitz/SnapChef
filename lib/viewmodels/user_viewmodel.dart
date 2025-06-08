@@ -2,26 +2,22 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
-import '../services/user_service.dart';
 import '../utils/ui_util.dart';
 import '../database/app_database.dart' as db;
 import '../providers/connectivity_provider.dart';
+import '../repositories/user_repository.dart';
 
 class UserViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  final UserService _userService = UserService();
-  final db.AppDatabase database;
-  final ConnectivityProvider connectivityProvider;
-
-  UserViewModel({
-    required this.database,
-    required this.connectivityProvider,
-  });
+  final db.AppDatabase database = GetIt.I<db.AppDatabase>();
+  final ConnectivityProvider connectivityProvider = GetIt.I<ConnectivityProvider>();
+  final UserRepository userRepository = GetIt.I<UserRepository>();
 
   bool _isLoading = false;
   bool isLoggingOut = false;
@@ -53,7 +49,7 @@ class UserViewModel extends ChangeNotifier {
 
     // 3. If online, fetch from remote and update local data
     try {
-      final userProfile = await _userService.getUserData().timeout(
+      final userProfile = await userRepository.fetchUserRemote().timeout(
             const Duration(seconds: 10),
             onTimeout: () => throw Exception('Network timeout'),
           );
@@ -61,7 +57,9 @@ class UserViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Store user in local DB and SharedPreferences
-      await _storeUserLocally(userProfile);
+      if (userProfile != null) {
+        await userRepository.storeUserLocal(userProfile);
+      }
 
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -73,7 +71,7 @@ class UserViewModel extends ChangeNotifier {
                 const Duration(seconds: 10),
                 onTimeout: () => throw Exception('Token refresh timeout'),
               );
-          final userProfile = await _userService.getUserData().timeout(
+          final userProfile = await userRepository.fetchUserRemote().timeout(
                 const Duration(seconds: 10),
                 onTimeout: () =>
                     throw Exception('Network timeout after refresh'),
@@ -82,7 +80,9 @@ class UserViewModel extends ChangeNotifier {
           notifyListeners();
 
           // Store user in local DB and SharedPreferences
-          await _storeUserLocally(userProfile);
+          if (userProfile != null) {
+            await userRepository.storeUserLocal(userProfile);
+          }
 
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -102,19 +102,9 @@ class UserViewModel extends ChangeNotifier {
   // Helper: Load user from local database
   Future<void> _loadUserFromLocalDb() async {
     try {
-      // Option 1: Use userId from SharedPreferences if you store it
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
-      db.User? localUser;
-      if (userId != null && userId.isNotEmpty) {
-        localUser = await database.userDao.getUserById(userId);
-      } else {
-        // Option 2: Fallback to first user in DB
-        final users = await database.userDao.getAllUsers();
-        localUser = users.isNotEmpty ? users.first : null;
-      }
+      final localUser = await userRepository.fetchUserLocal();
       if (localUser != null) {
-        _user = model.User.fromDb(localUser);
+        _user = localUser;
         notifyListeners();
       } else {
         _user = null;
@@ -124,34 +114,7 @@ class UserViewModel extends ChangeNotifier {
       _user = null;
       notifyListeners();
     }
-  }
-
-  // Helper: Store user data locally in the database and SharedPreferences
-  Future<void> _storeUserLocally(model.User user) async {
-    // Serialize preferences if needed
-    String? preferencesJson;
-    if (user.preferences != null) {
-      preferencesJson = Preferences.toJsonString(user.preferences!);
-    }
-
-    // Create db.User instance with all relevant fields
-    final dbUser = db.User(
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fridgeId: user.fridgeId,
-      cookbookId: user.cookbookId,
-      fcmToken: user.fcmToken,
-      profilePicture: user.profilePicture,
-      preferencesJson: preferencesJson,
-    );
-
-    await database.userDao.insertUser(dbUser);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userId', user.id);
-  }
+  }  
 
   // Get friends list
   Future<List<model.User>> getFriends() async {
@@ -168,27 +131,14 @@ class UserViewModel extends ChangeNotifier {
   }) async {
     _setLoading(true);
     try {
-      final updatedData = await _userService.updateUser(
-        firstName,
-        lastName,
-        password ?? '',
-        profilePicture,
+      await userRepository.updateUserRemote(
+        firstName: firstName,
+        lastName: lastName,
+        password: password,
+        profilePicture: profilePicture,
       );
-      final newProfilePicture = updatedData['profilePicture'];
-      if (_user != null) {
-        _user = _user!.copyWith(
-          firstName: firstName,
-          lastName: lastName,
-          password: password ?? _user!.password,
-          profilePicture: profilePicture != null
-              ? newProfilePicture ?? _user!.profilePicture
-              : _user!.profilePicture,
-        );
-        notifyListeners();
-
-        // Store updated user locally
-        await _storeUserLocally(_user!);
-      }
+      // Fetch updated user from remote and store locally
+      await fetchUserData();
     } catch (e) {
       throw Exception('Failed to update profile');
     } finally {
@@ -211,7 +161,7 @@ class UserViewModel extends ChangeNotifier {
         _user!.preferences?.notificationPreferences ??
         {};
 
-    await _userService.updateUserPreferences(
+    await userRepository.updateUserPreferencesRemote(
       allergies: updatedAllergies,
       dietaryPreferences: updatedDietary,
       notificationPreferences: updatedNotifications,
@@ -227,20 +177,20 @@ class UserViewModel extends ChangeNotifier {
     notifyListeners();
 
     // Store updated user locally
-    await _storeUserLocally(_user!);
+    await userRepository.storeUserLocal(_user!);
   }
 
   // Update FCM Token
   Future<void> updateFcmToken(String? token) async {
     if (token == null || token.isEmpty) return;
     try {
-      await _userService.updateFcmToken(token);
+      await userRepository.updateFcmTokenRemote(token);
       if (_user != null) {
         _user = _user!.copyWith(fcmToken: token);
         notifyListeners();
 
         // Store updated user locally
-        await _storeUserLocally(_user!);
+        await userRepository.storeUserLocal(_user!);
       }
     } catch (e) {
       throw Exception('Failed to update FCM token: ${e.toString()}');
@@ -258,7 +208,7 @@ class UserViewModel extends ChangeNotifier {
   Future<void> deleteUser(BuildContext context) async {
     _setLoading(true);
     try {
-      await _userService.deleteUser();
+      await userRepository.deleteUserRemote();
       _user = null;
       notifyListeners();
 
@@ -290,7 +240,7 @@ class UserViewModel extends ChangeNotifier {
   // Fetch another user's profile by userId
   Future<model.User?> fetchUserProfile(String userId) async {
     try {
-      final userProfile = await _userService.getUserProfile(userId);
+      final userProfile = await userRepository.fetchUserProfileRemote(userId);
       return userProfile;
     } catch (e) {
       return null;
@@ -363,7 +313,7 @@ class UserViewModel extends ChangeNotifier {
 
     // 3. If online, fetch from remote and update stats
     try {
-      final stats = await _userService.getUserStats(userId: userId);
+      final stats = await userRepository.fetchUserStatsRemote(userId: userId);
       _userStats = stats;
       notifyListeners();
     } catch (e) {

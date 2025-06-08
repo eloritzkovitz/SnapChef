@@ -3,23 +3,15 @@ import 'package:provider/provider.dart';
 import 'widgets/profile_details.dart';
 import '../../models/user.dart' as model;
 import '../../viewmodels/user_viewmodel.dart';
-import '../../database/app_database.dart';
-import '../../providers/connectivity_provider.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   final model.User user;
   const PublicProfileScreen({super.key, required this.user});
 
   @override
-  Widget build(BuildContext context) {
-    final database = Provider.of<AppDatabase>(context, listen: false);
-    final connectivityProvider = Provider.of<ConnectivityProvider>(context, listen: false);
-
+  Widget build(BuildContext context) { 
     return ChangeNotifierProvider(
-      create: (_) => UserViewModel(
-        database: database,
-        connectivityProvider: connectivityProvider,
-      )..fetchUserStats(userId: user.id),
+      create: (_) => UserViewModel()..fetchUserStats(userId: user.id),
       child: Scaffold(
         appBar: AppBar(
           title: const Text(

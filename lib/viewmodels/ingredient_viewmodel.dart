@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:snapchef/database/app_database.dart' as db;
 import '../services/ingredient_service.dart';
 import '../database/daos/ingredient_dao.dart';
 import '../models/ingredient.dart';
@@ -12,10 +14,8 @@ class IngredientViewModel extends ChangeNotifier {
   Map<String, Ingredient>? get ingredientMap => _ingredientMap;
   bool get loading => _loading;
 
-  final IngredientService _service;
-  final IngredientDao _ingredientDao;
-
-  IngredientViewModel(this._service, this._ingredientDao);
+  final IngredientService _service = GetIt.I<IngredientService>();
+  final IngredientDao _ingredientDao = GetIt.I<db.AppDatabase>().ingredientDao;
 
   /// Fetches all ingredients from the service and updates the state and local DB if changed.
   Future<void> fetchIngredients() async {

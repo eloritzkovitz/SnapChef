@@ -1,15 +1,11 @@
+import 'package:get_it/get_it.dart';
 import '../models/ingredient.dart';
 import '../database/app_database.dart' as db;
 import '../services/fridge_service.dart';
 
 class FridgeRepository {
-  final db.AppDatabase database;
-  final FridgeService fridgeService;
-
-  FridgeRepository({
-    required this.database,
-    required this.fridgeService,
-  });
+  final db.AppDatabase database = GetIt.I<db.AppDatabase>();
+  final FridgeService fridgeService = GetIt.I<FridgeService>();
 
   // --- Fridge Items ---
 

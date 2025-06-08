@@ -5,13 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
+import 'repositories/cookbook_repository.dart';
 import 'repositories/fridge_repository.dart';
+import 'repositories/user_repository.dart';
+import 'services/cookbook_service.dart';
 import 'services/fridge_service.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'services/sync_service.dart';
+import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'utils/navigation_observer.dart';
@@ -37,6 +42,24 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 // Initialize Flutter Local Notifications
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+final GetIt getIt = GetIt.instance;
+
+void setupLocator(AppDatabase db) {
+  getIt.registerSingleton<AppDatabase>(db);
+  getIt.registerSingleton<ConnectivityProvider>(ConnectivityProvider());
+  getIt.registerSingleton<SyncManager>(SyncManager(getIt<ConnectivityProvider>())); 
+  getIt.registerSingleton<IngredientService>(IngredientService()); 
+  // User
+  getIt.registerSingleton<UserService>(UserService());
+  getIt.registerSingleton<UserRepository>(UserRepository());  
+  // Fridge  
+  getIt.registerSingleton<FridgeService>(FridgeService());
+  getIt.registerSingleton<FridgeRepository>(FridgeRepository()); 
+  // Cookbook
+  getIt.registerSingleton<CookbookService>(CookbookService());
+  getIt.registerSingleton<CookbookRepository>(CookbookRepository());
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,71 +88,37 @@ Future<void> main() async {
   // Initialize local database
   final db = AppDatabase();
 
+  // Setup GetIt service locator
+  setupLocator(db);
+
   // Run the app
-  runApp(MyApp(
-    db: db,
-  ));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final AppDatabase db;
-
-  const MyApp({
-    required this.db,
-    super.key,
-  });
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Singletons/services
-    final connectivityProvider = ConnectivityProvider();
-    final syncManager = SyncManager(connectivityProvider);
-    final ingredientService = IngredientService();
-    final fridgeService = FridgeService();
-    final fridgeRepository = FridgeRepository(
-      database: db,
-      fridgeService: fridgeService,
-    );
-
     return MultiProvider(
       providers: [
-        Provider<AppDatabase>.value(value: db),
-        Provider<SyncManager>.value(value: syncManager),
-        Provider<IngredientService>.value(value: ingredientService),
+        // Singletons/Providers
+        Provider<AppDatabase>.value(value: getIt<AppDatabase>()),
+        Provider<SyncManager>.value(value: getIt<SyncManager>()),
+        Provider<IngredientService>.value(value: getIt<IngredientService>()),
         ChangeNotifierProvider<ConnectivityProvider>.value(
-            value: connectivityProvider),
+            value: getIt<ConnectivityProvider>()),
 
         // ViewModels
         ChangeNotifierProvider(create: (_) => MainViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
-        ChangeNotifierProvider(
-          create: (_) => UserViewModel(
-            database: db,
-            connectivityProvider: connectivityProvider,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => FridgeViewModel(
-            connectivityProvider: connectivityProvider,
-            syncManager: syncManager,
-            fridgeRepository: fridgeRepository,
-          ),
-        ),
+        ChangeNotifierProvider(create: (_) => UserViewModel()),
+        ChangeNotifierProvider(create: (_) => IngredientViewModel()),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(
-          create: (_) => CookbookViewModel(
-            database: db,
-            connectivityProvider: connectivityProvider,
-          ),
-        ),
+        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
-        ChangeNotifierProvider(
-          create: (_) => IngredientViewModel(
-            ingredientService,
-            db.ingredientDao,
-          ),
-        ),
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
       ],
       child: Consumer<ConnectivityProvider>(
         builder: (context, connectivity, child) {

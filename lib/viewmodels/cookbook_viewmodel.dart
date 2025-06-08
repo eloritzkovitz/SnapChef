@@ -1,21 +1,23 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import '../database/app_database.dart' as db;
 import '../database/daos/recipe_dao.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
-import '../services/cookbook_service.dart';
+import '../repositories/cookbook_repository.dart';
 import '../mixins/sort_filter_mixin.dart';
 
 class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
   List<SharedRecipe>? sharedWithMeRecipes = [];
   List<SharedRecipe>? sharedByMeRecipes = [];
-  final CookbookService _cookbookService = CookbookService();
-  final db.AppDatabase database;
-  final ConnectivityProvider connectivityProvider;
+
+  final db.AppDatabase database = GetIt.I<db.AppDatabase>();
+  final ConnectivityProvider connectivityProvider = GetIt.I<ConnectivityProvider>();
+  final CookbookRepository cookbookRepository = GetIt.I<CookbookRepository>();
 
   String? selectedCuisine;
   String? selectedDifficulty;
@@ -23,11 +25,6 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   RangeValues? cookingTimeRange;
   RangeValues? ratingRange;
   String? selectedSource;
-
-  CookbookViewModel({
-    required this.database,
-    required this.connectivityProvider,
-  });
 
   RecipeDao get recipeDao => database.recipeDao;
 
@@ -105,7 +102,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       ? 0
       : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
 
-  // --- Cookbook logic (unchanged) ---
+  // --- Cookbook logic (repository-based) ---
 
   // Fetch all recipes in the cookbook
   Future<void> fetchCookbookRecipes(String cookbookId) async {
@@ -121,44 +118,12 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
 
     try {
-      final items = await _cookbookService
-          .fetchCookbookRecipes(cookbookId)
-          .timeout(const Duration(seconds: 3), onTimeout: () {
-        throw Exception('Network timeout');
-      });
+      final items = await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
 
       _recipes.clear();
       if (items.isNotEmpty) {
-        _recipes.addAll(
-          items.map((item) {
-            return Recipe(
-              id: item['_id'] ?? '',
-              title: item['title'],
-              description: item['description'],
-              mealType: item['mealType'],
-              cuisineType: item['cuisineType'],
-              difficulty: item['difficulty'],
-              prepTime: item['prepTime'],
-              cookingTime: item['cookingTime'],
-              ingredients: (item['ingredients'] as List<dynamic>)
-                  .map((ingredient) => Ingredient.fromJson(ingredient))
-                  .toList(),
-              instructions: List<String>.from(item['instructions']),
-              imageURL:
-                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
-              rating: item['rating'] != null
-                  ? (item['rating'] as num).toDouble()
-                  : null,
-              isFavorite: item['isFavorite'] ?? false,
-              source: item['source'] == 'ai'
-                  ? RecipeSource.ai
-                  : item['source'] == 'shared'
-                      ? RecipeSource.shared
-                      : RecipeSource.user,
-            );
-          }).toList(),
-        );
-        await _storeCookbookRecipesLocally(cookbookId, _recipes);
+        _recipes.addAll(items);
+        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
       }
 
       applyFiltersAndSorting();
@@ -173,24 +138,15 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
 
   // Load recipes from local DB using RecipeDao
   Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
-    final localRecipes = await recipeDao.getCookbookRecipes(userId);
+    final localRecipes = await cookbookRepository.fetchCookbookRecipesLocal(userId);
     _recipes.clear();
-    _recipes.addAll(
-        localRecipes.map((dbRecipe) => Recipe.fromDb(dbRecipe.toJson())));
+    _recipes.addAll(localRecipes);
     applyFiltersAndSorting();
-  }
-
-  // Store recipes locally using RecipeDao
-  Future<void> _storeCookbookRecipesLocally(
-      String userId, List<Recipe> recipes) async {
-    for (final recipe in recipes) {
-      await recipeDao.insertOrUpdateRecipe(recipe.toDbRecipe(userId: userId));
-    }
-  }
+  }  
 
   // Fetch recipes shared with the user
   Future<void> fetchSharedRecipes(String cookbookId) async {
-    final result = await _cookbookService.fetchSharedRecipes(cookbookId);
+    final result = await cookbookRepository.fetchSharedRecipes(cookbookId);
     sharedWithMeRecipes = result['sharedWithMe'] ?? [];
     sharedByMeRecipes = result['sharedByMe'] ?? [];
     notifyListeners();
@@ -214,49 +170,30 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     String? raw,
   }) async {
     try {
-      final recipeData = {
-        'title': title,
-        'description': description,
-        'mealType': mealType,
-        'cuisineType': cuisineType,
-        'difficulty': difficulty,
-        'prepTime': prepTime,
-        'cookingTime': cookingTime,
-        'ingredients':
-            ingredients.map((ingredient) => ingredient.toJson()).toList(),
-        'instructions': instructions,
-        'imageURL': imageURL,
-        'rating': rating,
-        'isFavorite': false,
-        'source': source == RecipeSource.ai
-            ? 'ai'
-            : source == RecipeSource.shared
-                ? 'shared'
-                : 'user',
-        'raw': raw,
-      };
+      final recipe = Recipe(
+        id: DateTime.now().toString(),
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: source,
+      );
 
-      final success =
-          await _cookbookService.addRecipeToCookbook(recipeData, cookbookId);
+      final success = await cookbookRepository.addRecipeToCookbook(
+        cookbookId,
+        recipe,
+        raw: raw,
+      );
       if (success) {
-        _recipes.add(
-          Recipe(
-            id: DateTime.now().toString(),
-            title: title,
-            description: description,
-            mealType: mealType,
-            cuisineType: cuisineType,
-            difficulty: difficulty,
-            prepTime: prepTime,
-            cookingTime: cookingTime,
-            ingredients: ingredients,
-            instructions: instructions,
-            imageURL: imageURL ?? '',
-            rating: rating,
-            isFavorite: false,
-            source: source,
-          ),
-        );
+        _recipes.add(recipe);
         applyFiltersAndSorting();
         notifyListeners();
       }
@@ -284,23 +221,28 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     double? rating,
   }) async {
     try {
-      final updatedData = {
-        'title': title,
-        'description': description,
-        'mealType': mealType,
-        'cuisineType': cuisineType,
-        'difficulty': difficulty,
-        'prepTime': prepTime,
-        'cookingTime': cookingTime,
-        'ingredients':
-            ingredients.map((ingredient) => ingredient.toJson()).toList(),
-        'instructions': instructions,
-        'imageURL': imageURL,
-        'rating': rating,
-      };
+      final updatedRecipe = Recipe(
+        id: recipeId,
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: RecipeSource.user,
+      );
 
-      final success = await _cookbookService.updateCookbookRecipe(
-          cookbookId, recipeId, updatedData);
+      final success = await cookbookRepository.updateRecipe(
+        cookbookId,
+        recipeId,
+        updatedRecipe,
+      );
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
@@ -334,7 +276,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      final newImageUrl = await _cookbookService.regenerateRecipeImage(
+      final newImageUrl = await cookbookRepository.regenerateRecipeImage(
           cookbookId, recipeId, payload);
       final index = _recipes.indexWhere((r) => r.id == recipeId);
       if (index != -1) {
@@ -353,7 +295,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   Future<bool> toggleRecipeFavoriteStatus(
       String cookbookId, String recipeId) async {
     try {
-      final success = await _cookbookService.toggleRecipeFavoriteStatus(
+      final success = await cookbookRepository.toggleRecipeFavoriteStatus(
           cookbookId, recipeId);
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
@@ -413,7 +355,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     try {
       // Send the list of recipe IDs in the new order
       final orderedIds = _recipes.map((r) => r.id).toList();
-      await _cookbookService.saveRecipeOrder(cookbookId, orderedIds);
+      await cookbookRepository.saveRecipeOrder(cookbookId, orderedIds);
     } catch (e) {
       log('Error saving recipe order: $e');
     }
@@ -425,7 +367,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     required String recipeId,
     required String friendId,
   }) async {
-    await _cookbookService.shareRecipeWithFriend(
+    await cookbookRepository.shareRecipeWithFriend(
       cookbookId: cookbookId,
       recipeId: recipeId,
       friendId: friendId,
@@ -436,8 +378,8 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
       {required bool isSharedByMe}) async {
     try {
-      // Call the service to delete the shared recipe
-      await _cookbookService.deleteSharedRecipe(cookbookId, sharedRecipeId);
+      // Call the repository to delete the shared recipe
+      await cookbookRepository.removeSharedRecipe(cookbookId, sharedRecipeId);
 
       // Remove from the correct list
       if (isSharedByMe) {
@@ -455,7 +397,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
       final success =
-          await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
+          await cookbookRepository.deleteRecipe(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
         applyFiltersAndSorting();

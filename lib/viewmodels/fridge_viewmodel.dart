@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import '../mixins/sync_mixin.dart';
 import '../mixins/helpers_mixin.dart';
 import '../models/ingredient.dart';
@@ -24,20 +25,17 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin, SyncMixin {
   List<Ingredient> get ingredients => List.unmodifiable(_ingredients);
   List<Ingredient> get groceries => List.unmodifiable(_groceries);
 
-  final ConnectivityProvider connectivityProvider;
-  final SyncManager syncManager;
-  final FridgeRepository fridgeRepository;
+  final ConnectivityProvider connectivityProvider =
+      GetIt.I<ConnectivityProvider>();
+  final SyncManager syncManager = GetIt.I<SyncManager>();
+  final FridgeRepository fridgeRepository = GetIt.I<FridgeRepository>();
 
   FridgeService get fridgeService => fridgeRepository.fridgeService;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  FridgeViewModel({
-    required this.connectivityProvider,
-    required this.syncManager,
-    required this.fridgeRepository,
-  }) {
+  FridgeViewModel() {
     fridgeController = IngredientListController(_ingredients);
     groceriesController = IngredientListController(_groceries);
     fridgeController.addListener(notifyListeners);
@@ -52,7 +50,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin, SyncMixin {
     disposeSync();
     syncManager.unregister(syncPendingActions);
     super.dispose();
-  }  
+  }
 
   // --- Data Fetching & Sync ---
   Future<void> fetchFridgeIngredients(
@@ -155,6 +153,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin, SyncMixin {
   }
 
   @override
+
   /// Handles sync actions for fridge and grocery queues.
   Future<void> handleSyncAction(
       String queue, Map<String, dynamic> action) async {
@@ -229,7 +228,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin, SyncMixin {
             );
             break;
         }
-        break;      
+        break;
     }
   }
 
