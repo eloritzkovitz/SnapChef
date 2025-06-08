@@ -29,6 +29,8 @@ class ConnectivityProvider extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Checks internet connectivity and server availability.
+  /// Updates [_isOffline] and notifies listeners if the status changes.
   Future<void> _checkInternetAndServer() async {
     bool offline = false;
 
@@ -37,14 +39,14 @@ class ConnectivityProvider extends ChangeNotifier {
     if (result == [ConnectivityResult.none]) {
       offline = true;
     } else {
-      // Try to reach your server using SERVER_IP from .env
+      // Try to reach the server
       final serverIp = dotenv.env['SERVER_IP'];
       if (serverIp == null) {
         offline = true;
       } else {
         try {
           final response = await http
-              .get(Uri.parse('$serverIp/api-docs'))
+              .get(Uri.parse('$serverIp/health'))
               .timeout(const Duration(seconds: 3));             
           if (response.statusCode != 200) {
             offline = true;
