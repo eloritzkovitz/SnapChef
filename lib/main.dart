@@ -6,17 +6,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
+import 'service_locator.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
-import 'repositories/cookbook_repository.dart';
-import 'repositories/fridge_repository.dart';
-import 'repositories/user_repository.dart';
-import 'services/cookbook_service.dart';
-import 'services/fridge_service.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
 import 'services/sync_service.dart';
-import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
 import 'utils/navigation_observer.dart';
@@ -43,23 +38,8 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+// GetIt service locator instance
 final GetIt getIt = GetIt.instance;
-
-void setupLocator(AppDatabase db) {
-  getIt.registerSingleton<AppDatabase>(db);
-  getIt.registerSingleton<ConnectivityProvider>(ConnectivityProvider());
-  getIt.registerSingleton<SyncManager>(SyncManager(getIt<ConnectivityProvider>())); 
-  getIt.registerSingleton<IngredientService>(IngredientService()); 
-  // User
-  getIt.registerSingleton<UserService>(UserService());
-  getIt.registerSingleton<UserRepository>(UserRepository());  
-  // Fridge  
-  getIt.registerSingleton<FridgeService>(FridgeService());
-  getIt.registerSingleton<FridgeRepository>(FridgeRepository()); 
-  // Cookbook
-  getIt.registerSingleton<CookbookService>(CookbookService());
-  getIt.registerSingleton<CookbookRepository>(CookbookRepository());
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
