@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../viewmodels/cookbook_viewmodel.dart';
-import '../../../viewmodels/fridge_viewmodel.dart';
-import '../../../viewmodels/ingredient_viewmodel.dart';
-import '../../../viewmodels/user_viewmodel.dart';
+import '../../theme/colors.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/fridge_viewmodel.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -24,16 +25,16 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
   @override
   void initState() {
-    super.initState();    
+    super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
     // Fade controller for fade out effect
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 0),
+      duration: const Duration(milliseconds: 60),
       vsync: this,
     );
     _fadeAnimation =
@@ -115,7 +116,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
             final cookbookId = userViewModel.cookbookId;
             final futures = <Future>[];
             if (fridgeId != null) {
-              futures.add(fridgeViewModel.fetchFridgeIngredients(fridgeId, ingredientViewModel));
+              futures.add(fridgeViewModel.fetchFridgeIngredients(
+                  fridgeId, ingredientViewModel));
             }
             if (cookbookId != null) {
               futures.add(cookbookViewModel.fetchCookbookRecipes(cookbookId));
@@ -136,13 +138,15 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
       Future.delayed(const Duration(milliseconds: 500)),
     ]);
 
-    // Fade out after animation and data loading
+    // Start fade-out animation
     await _fadeController.forward();
 
-    // Set system navigation bar to white for the main app
+    // Now set system bars to match the next screen (after fade-out, just before navigation)
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.white,
         systemNavigationBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     );
@@ -164,12 +168,12 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF47851),
+      backgroundColor: splashColor,
       resizeToAvoidBottomInset: false,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
-          color: const Color(0xFFF47851),
+          color: splashColor,
           alignment: Alignment.center,
           child: AnimatedBuilder(
             animation: _controller,
