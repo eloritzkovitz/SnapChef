@@ -616,6 +616,398 @@ class UsersCompanion extends UpdateCompanion<User> {
   }
 }
 
+class $UserStatsTable extends UserStats
+    with TableInfo<$UserStatsTable, UserStat> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserStatsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ingredientCountMeta =
+      const VerificationMeta('ingredientCount');
+  @override
+  late final GeneratedColumn<int> ingredientCount = GeneratedColumn<int>(
+      'ingredient_count', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _recipeCountMeta =
+      const VerificationMeta('recipeCount');
+  @override
+  late final GeneratedColumn<int> recipeCount = GeneratedColumn<int>(
+      'recipe_count', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _favoriteRecipeCountMeta =
+      const VerificationMeta('favoriteRecipeCount');
+  @override
+  late final GeneratedColumn<int> favoriteRecipeCount = GeneratedColumn<int>(
+      'favorite_recipe_count', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _friendCountMeta =
+      const VerificationMeta('friendCount');
+  @override
+  late final GeneratedColumn<int> friendCount = GeneratedColumn<int>(
+      'friend_count', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _mostPopularIngredientsMeta =
+      const VerificationMeta('mostPopularIngredients');
+  @override
+  late final GeneratedColumn<String> mostPopularIngredients =
+      GeneratedColumn<String>('most_popular_ingredients', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        userId,
+        ingredientCount,
+        recipeCount,
+        favoriteRecipeCount,
+        friendCount,
+        mostPopularIngredients
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_stats';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserStat> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('ingredient_count')) {
+      context.handle(
+          _ingredientCountMeta,
+          ingredientCount.isAcceptableOrUnknown(
+              data['ingredient_count']!, _ingredientCountMeta));
+    }
+    if (data.containsKey('recipe_count')) {
+      context.handle(
+          _recipeCountMeta,
+          recipeCount.isAcceptableOrUnknown(
+              data['recipe_count']!, _recipeCountMeta));
+    }
+    if (data.containsKey('favorite_recipe_count')) {
+      context.handle(
+          _favoriteRecipeCountMeta,
+          favoriteRecipeCount.isAcceptableOrUnknown(
+              data['favorite_recipe_count']!, _favoriteRecipeCountMeta));
+    }
+    if (data.containsKey('friend_count')) {
+      context.handle(
+          _friendCountMeta,
+          friendCount.isAcceptableOrUnknown(
+              data['friend_count']!, _friendCountMeta));
+    }
+    if (data.containsKey('most_popular_ingredients')) {
+      context.handle(
+          _mostPopularIngredientsMeta,
+          mostPopularIngredients.isAcceptableOrUnknown(
+              data['most_popular_ingredients']!, _mostPopularIngredientsMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  UserStat map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserStat(
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      ingredientCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}ingredient_count']),
+      recipeCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recipe_count']),
+      favoriteRecipeCount: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}favorite_recipe_count']),
+      friendCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}friend_count']),
+      mostPopularIngredients: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}most_popular_ingredients']),
+    );
+  }
+
+  @override
+  $UserStatsTable createAlias(String alias) {
+    return $UserStatsTable(attachedDatabase, alias);
+  }
+}
+
+class UserStat extends DataClass implements Insertable<UserStat> {
+  final String userId;
+  final int? ingredientCount;
+  final int? recipeCount;
+  final int? favoriteRecipeCount;
+  final int? friendCount;
+  final String? mostPopularIngredients;
+  const UserStat(
+      {required this.userId,
+      this.ingredientCount,
+      this.recipeCount,
+      this.favoriteRecipeCount,
+      this.friendCount,
+      this.mostPopularIngredients});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || ingredientCount != null) {
+      map['ingredient_count'] = Variable<int>(ingredientCount);
+    }
+    if (!nullToAbsent || recipeCount != null) {
+      map['recipe_count'] = Variable<int>(recipeCount);
+    }
+    if (!nullToAbsent || favoriteRecipeCount != null) {
+      map['favorite_recipe_count'] = Variable<int>(favoriteRecipeCount);
+    }
+    if (!nullToAbsent || friendCount != null) {
+      map['friend_count'] = Variable<int>(friendCount);
+    }
+    if (!nullToAbsent || mostPopularIngredients != null) {
+      map['most_popular_ingredients'] =
+          Variable<String>(mostPopularIngredients);
+    }
+    return map;
+  }
+
+  UserStatsCompanion toCompanion(bool nullToAbsent) {
+    return UserStatsCompanion(
+      userId: Value(userId),
+      ingredientCount: ingredientCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ingredientCount),
+      recipeCount: recipeCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeCount),
+      favoriteRecipeCount: favoriteRecipeCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(favoriteRecipeCount),
+      friendCount: friendCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(friendCount),
+      mostPopularIngredients: mostPopularIngredients == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mostPopularIngredients),
+    );
+  }
+
+  factory UserStat.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserStat(
+      userId: serializer.fromJson<String>(json['userId']),
+      ingredientCount: serializer.fromJson<int?>(json['ingredientCount']),
+      recipeCount: serializer.fromJson<int?>(json['recipeCount']),
+      favoriteRecipeCount:
+          serializer.fromJson<int?>(json['favoriteRecipeCount']),
+      friendCount: serializer.fromJson<int?>(json['friendCount']),
+      mostPopularIngredients:
+          serializer.fromJson<String?>(json['mostPopularIngredients']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'ingredientCount': serializer.toJson<int?>(ingredientCount),
+      'recipeCount': serializer.toJson<int?>(recipeCount),
+      'favoriteRecipeCount': serializer.toJson<int?>(favoriteRecipeCount),
+      'friendCount': serializer.toJson<int?>(friendCount),
+      'mostPopularIngredients':
+          serializer.toJson<String?>(mostPopularIngredients),
+    };
+  }
+
+  UserStat copyWith(
+          {String? userId,
+          Value<int?> ingredientCount = const Value.absent(),
+          Value<int?> recipeCount = const Value.absent(),
+          Value<int?> favoriteRecipeCount = const Value.absent(),
+          Value<int?> friendCount = const Value.absent(),
+          Value<String?> mostPopularIngredients = const Value.absent()}) =>
+      UserStat(
+        userId: userId ?? this.userId,
+        ingredientCount: ingredientCount.present
+            ? ingredientCount.value
+            : this.ingredientCount,
+        recipeCount: recipeCount.present ? recipeCount.value : this.recipeCount,
+        favoriteRecipeCount: favoriteRecipeCount.present
+            ? favoriteRecipeCount.value
+            : this.favoriteRecipeCount,
+        friendCount: friendCount.present ? friendCount.value : this.friendCount,
+        mostPopularIngredients: mostPopularIngredients.present
+            ? mostPopularIngredients.value
+            : this.mostPopularIngredients,
+      );
+  UserStat copyWithCompanion(UserStatsCompanion data) {
+    return UserStat(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      ingredientCount: data.ingredientCount.present
+          ? data.ingredientCount.value
+          : this.ingredientCount,
+      recipeCount:
+          data.recipeCount.present ? data.recipeCount.value : this.recipeCount,
+      favoriteRecipeCount: data.favoriteRecipeCount.present
+          ? data.favoriteRecipeCount.value
+          : this.favoriteRecipeCount,
+      friendCount:
+          data.friendCount.present ? data.friendCount.value : this.friendCount,
+      mostPopularIngredients: data.mostPopularIngredients.present
+          ? data.mostPopularIngredients.value
+          : this.mostPopularIngredients,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserStat(')
+          ..write('userId: $userId, ')
+          ..write('ingredientCount: $ingredientCount, ')
+          ..write('recipeCount: $recipeCount, ')
+          ..write('favoriteRecipeCount: $favoriteRecipeCount, ')
+          ..write('friendCount: $friendCount, ')
+          ..write('mostPopularIngredients: $mostPopularIngredients')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, ingredientCount, recipeCount,
+      favoriteRecipeCount, friendCount, mostPopularIngredients);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserStat &&
+          other.userId == this.userId &&
+          other.ingredientCount == this.ingredientCount &&
+          other.recipeCount == this.recipeCount &&
+          other.favoriteRecipeCount == this.favoriteRecipeCount &&
+          other.friendCount == this.friendCount &&
+          other.mostPopularIngredients == this.mostPopularIngredients);
+}
+
+class UserStatsCompanion extends UpdateCompanion<UserStat> {
+  final Value<String> userId;
+  final Value<int?> ingredientCount;
+  final Value<int?> recipeCount;
+  final Value<int?> favoriteRecipeCount;
+  final Value<int?> friendCount;
+  final Value<String?> mostPopularIngredients;
+  final Value<int> rowid;
+  const UserStatsCompanion({
+    this.userId = const Value.absent(),
+    this.ingredientCount = const Value.absent(),
+    this.recipeCount = const Value.absent(),
+    this.favoriteRecipeCount = const Value.absent(),
+    this.friendCount = const Value.absent(),
+    this.mostPopularIngredients = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserStatsCompanion.insert({
+    required String userId,
+    this.ingredientCount = const Value.absent(),
+    this.recipeCount = const Value.absent(),
+    this.favoriteRecipeCount = const Value.absent(),
+    this.friendCount = const Value.absent(),
+    this.mostPopularIngredients = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId);
+  static Insertable<UserStat> custom({
+    Expression<String>? userId,
+    Expression<int>? ingredientCount,
+    Expression<int>? recipeCount,
+    Expression<int>? favoriteRecipeCount,
+    Expression<int>? friendCount,
+    Expression<String>? mostPopularIngredients,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (ingredientCount != null) 'ingredient_count': ingredientCount,
+      if (recipeCount != null) 'recipe_count': recipeCount,
+      if (favoriteRecipeCount != null)
+        'favorite_recipe_count': favoriteRecipeCount,
+      if (friendCount != null) 'friend_count': friendCount,
+      if (mostPopularIngredients != null)
+        'most_popular_ingredients': mostPopularIngredients,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserStatsCompanion copyWith(
+      {Value<String>? userId,
+      Value<int?>? ingredientCount,
+      Value<int?>? recipeCount,
+      Value<int?>? favoriteRecipeCount,
+      Value<int?>? friendCount,
+      Value<String?>? mostPopularIngredients,
+      Value<int>? rowid}) {
+    return UserStatsCompanion(
+      userId: userId ?? this.userId,
+      ingredientCount: ingredientCount ?? this.ingredientCount,
+      recipeCount: recipeCount ?? this.recipeCount,
+      favoriteRecipeCount: favoriteRecipeCount ?? this.favoriteRecipeCount,
+      friendCount: friendCount ?? this.friendCount,
+      mostPopularIngredients:
+          mostPopularIngredients ?? this.mostPopularIngredients,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (ingredientCount.present) {
+      map['ingredient_count'] = Variable<int>(ingredientCount.value);
+    }
+    if (recipeCount.present) {
+      map['recipe_count'] = Variable<int>(recipeCount.value);
+    }
+    if (favoriteRecipeCount.present) {
+      map['favorite_recipe_count'] = Variable<int>(favoriteRecipeCount.value);
+    }
+    if (friendCount.present) {
+      map['friend_count'] = Variable<int>(friendCount.value);
+    }
+    if (mostPopularIngredients.present) {
+      map['most_popular_ingredients'] =
+          Variable<String>(mostPopularIngredients.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserStatsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('ingredientCount: $ingredientCount, ')
+          ..write('recipeCount: $recipeCount, ')
+          ..write('favoriteRecipeCount: $favoriteRecipeCount, ')
+          ..write('friendCount: $friendCount, ')
+          ..write('mostPopularIngredients: $mostPopularIngredients, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $IngredientsTable extends Ingredients
     with TableInfo<$IngredientsTable, Ingredient> {
   @override
@@ -3172,6 +3564,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $UsersTable users = $UsersTable(this);
+  late final $UserStatsTable userStats = $UserStatsTable(this);
   late final $IngredientsTable ingredients = $IngredientsTable(this);
   late final $FridgeIngredientsTable fridgeIngredients =
       $FridgeIngredientsTable(this);
@@ -3180,6 +3573,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FriendsTable friends = $FriendsTable(this);
   late final $NotificationsTable notifications = $NotificationsTable(this);
   late final UserDao userDao = UserDao(this as AppDatabase);
+  late final UserStatsDao userStatsDao = UserStatsDao(this as AppDatabase);
   late final IngredientDao ingredientDao = IngredientDao(this as AppDatabase);
   late final FridgeIngredientDao fridgeIngredientDao =
       FridgeIngredientDao(this as AppDatabase);
@@ -3195,6 +3589,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         users,
+        userStats,
         ingredients,
         fridgeIngredients,
         recipes,
@@ -3476,6 +3871,192 @@ typedef $$UsersTableProcessedTableManager = ProcessedTableManager<
     $$UsersTableUpdateCompanionBuilder,
     (User, BaseReferences<_$AppDatabase, $UsersTable, User>),
     User,
+    PrefetchHooks Function()>;
+typedef $$UserStatsTableCreateCompanionBuilder = UserStatsCompanion Function({
+  required String userId,
+  Value<int?> ingredientCount,
+  Value<int?> recipeCount,
+  Value<int?> favoriteRecipeCount,
+  Value<int?> friendCount,
+  Value<String?> mostPopularIngredients,
+  Value<int> rowid,
+});
+typedef $$UserStatsTableUpdateCompanionBuilder = UserStatsCompanion Function({
+  Value<String> userId,
+  Value<int?> ingredientCount,
+  Value<int?> recipeCount,
+  Value<int?> favoriteRecipeCount,
+  Value<int?> friendCount,
+  Value<String?> mostPopularIngredients,
+  Value<int> rowid,
+});
+
+class $$UserStatsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserStatsTable> {
+  $$UserStatsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get ingredientCount => $composableBuilder(
+      column: $table.ingredientCount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get recipeCount => $composableBuilder(
+      column: $table.recipeCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get favoriteRecipeCount => $composableBuilder(
+      column: $table.favoriteRecipeCount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get friendCount => $composableBuilder(
+      column: $table.friendCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mostPopularIngredients => $composableBuilder(
+      column: $table.mostPopularIngredients,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$UserStatsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserStatsTable> {
+  $$UserStatsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get ingredientCount => $composableBuilder(
+      column: $table.ingredientCount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get recipeCount => $composableBuilder(
+      column: $table.recipeCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get favoriteRecipeCount => $composableBuilder(
+      column: $table.favoriteRecipeCount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get friendCount => $composableBuilder(
+      column: $table.friendCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mostPopularIngredients => $composableBuilder(
+      column: $table.mostPopularIngredients,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$UserStatsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserStatsTable> {
+  $$UserStatsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get ingredientCount => $composableBuilder(
+      column: $table.ingredientCount, builder: (column) => column);
+
+  GeneratedColumn<int> get recipeCount => $composableBuilder(
+      column: $table.recipeCount, builder: (column) => column);
+
+  GeneratedColumn<int> get favoriteRecipeCount => $composableBuilder(
+      column: $table.favoriteRecipeCount, builder: (column) => column);
+
+  GeneratedColumn<int> get friendCount => $composableBuilder(
+      column: $table.friendCount, builder: (column) => column);
+
+  GeneratedColumn<String> get mostPopularIngredients => $composableBuilder(
+      column: $table.mostPopularIngredients, builder: (column) => column);
+}
+
+class $$UserStatsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UserStatsTable,
+    UserStat,
+    $$UserStatsTableFilterComposer,
+    $$UserStatsTableOrderingComposer,
+    $$UserStatsTableAnnotationComposer,
+    $$UserStatsTableCreateCompanionBuilder,
+    $$UserStatsTableUpdateCompanionBuilder,
+    (UserStat, BaseReferences<_$AppDatabase, $UserStatsTable, UserStat>),
+    UserStat,
+    PrefetchHooks Function()> {
+  $$UserStatsTableTableManager(_$AppDatabase db, $UserStatsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserStatsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserStatsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserStatsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> userId = const Value.absent(),
+            Value<int?> ingredientCount = const Value.absent(),
+            Value<int?> recipeCount = const Value.absent(),
+            Value<int?> favoriteRecipeCount = const Value.absent(),
+            Value<int?> friendCount = const Value.absent(),
+            Value<String?> mostPopularIngredients = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              UserStatsCompanion(
+            userId: userId,
+            ingredientCount: ingredientCount,
+            recipeCount: recipeCount,
+            favoriteRecipeCount: favoriteRecipeCount,
+            friendCount: friendCount,
+            mostPopularIngredients: mostPopularIngredients,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String userId,
+            Value<int?> ingredientCount = const Value.absent(),
+            Value<int?> recipeCount = const Value.absent(),
+            Value<int?> favoriteRecipeCount = const Value.absent(),
+            Value<int?> friendCount = const Value.absent(),
+            Value<String?> mostPopularIngredients = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              UserStatsCompanion.insert(
+            userId: userId,
+            ingredientCount: ingredientCount,
+            recipeCount: recipeCount,
+            favoriteRecipeCount: favoriteRecipeCount,
+            friendCount: friendCount,
+            mostPopularIngredients: mostPopularIngredients,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$UserStatsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $UserStatsTable,
+    UserStat,
+    $$UserStatsTableFilterComposer,
+    $$UserStatsTableOrderingComposer,
+    $$UserStatsTableAnnotationComposer,
+    $$UserStatsTableCreateCompanionBuilder,
+    $$UserStatsTableUpdateCompanionBuilder,
+    (UserStat, BaseReferences<_$AppDatabase, $UserStatsTable, UserStat>),
+    UserStat,
     PrefetchHooks Function()>;
 typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
     Function({
@@ -4758,6 +5339,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$UsersTableTableManager get users =>
       $$UsersTableTableManager(_db, _db.users);
+  $$UserStatsTableTableManager get userStats =>
+      $$UserStatsTableTableManager(_db, _db.userStats);
   $$IngredientsTableTableManager get ingredients =>
       $$IngredientsTableTableManager(_db, _db.ingredients);
   $$FridgeIngredientsTableTableManager get fridgeIngredients =>

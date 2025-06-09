@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 
 import 'tables/user_table.dart';
+import 'tables/user_stats_table.dart';
 import 'tables/ingredient_table.dart';
 import 'tables/fridge_ingredient_table.dart';
 import 'tables/recipe_table.dart';
@@ -13,6 +14,7 @@ import 'tables/friend_table.dart';
 import 'tables/notification_table.dart';
 
 import 'daos/user_dao.dart';
+import 'daos/user_stats_dao.dart';
 import 'daos/ingredient_dao.dart';
 import 'daos/fridge_ingredient_dao.dart';
 import 'daos/recipe_dao.dart';
@@ -24,6 +26,7 @@ part 'app_database.g.dart';
 
 @DriftDatabase(tables: [
   Users,
+  UserStats,
   Ingredients,
   FridgeIngredients,
   Recipes,
@@ -32,6 +35,7 @@ part 'app_database.g.dart';
   Notifications  
 ], daos: [
   UserDao,
+  UserStatsDao,
   IngredientDao,
   FridgeIngredientDao,
   RecipeDao,

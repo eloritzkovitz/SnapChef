@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -34,7 +33,8 @@ class UserViewModel extends ChangeNotifier {
   Map<String, dynamic>? get userStats => _userStats;
   List<model.User> get friends => _user?.friends ?? [];
 
-  // Fetch user data and store locally
+  /// Fetches the current user's data.
+  /// This method handles both local and remote data fetching.
   Future<void> fetchUserData() async {
     _isLoading = true;
     notifyListeners();
@@ -108,7 +108,7 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // Helper: Load user from local database
+  /// Loads the user from local database.
   Future<void> _loadUserFromLocalDb() async {
     try {
       final localUser = await userRepository.fetchUserLocal();
@@ -125,13 +125,13 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // Get friends list
+  /// Gets the current user's profile.
   Future<List<model.User>> getFriends() async {
     await fetchUserData();
     return _user?.friends ?? [];
   }
 
-  // Update User Profile
+  /// Updates the current user's profile.
   Future<void> updateUser({
     required String firstName,
     required String lastName,
@@ -155,7 +155,8 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // Update User Preferences
+  // Updates user preferences.
+  // Preferences include allergies, dietary preferences and notification settings.
   Future<void> updateUserPreferences({
     List<String>? allergies,
     Map<String, bool>? dietaryPreferences,
@@ -189,7 +190,7 @@ class UserViewModel extends ChangeNotifier {
     await userRepository.storeUserLocal(_user!);
   }
 
-  // Update FCM Token
+  /// Updates FCM Token for the current user.  
   Future<void> updateFcmToken(String? token) async {
     if (token == null || token.isEmpty) return;
     try {
@@ -206,14 +207,15 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // Listen for FCM token refresh and update backend
+  /// Listens for FCM token refresh and updates backend.
   void listenForFcmTokenRefresh() {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       await updateFcmToken(newToken);
     });
   }
 
-  // Delete User Account
+  /// Delete the current user account.
+  /// This will remove the user from the remote server and local database.
   Future<void> deleteUser(BuildContext context) async {
     _setLoading(true);
     try {
@@ -266,83 +268,51 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // Fetch user statistics
+  /// Fetches user statistics for the current user or a specific userId.
+  /// If offline, fetches from local UserStats table.
   Future<void> fetchUserStats({String? userId}) async {
-    // 1. Load local stats first for instant display
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final id = userId ?? prefs.getString('userId');
-      if (id != null) {
-        final dbUser = await database.userDao.getUserById(id);
-        if (dbUser != null) {
-          final fridgeIngredients = await database.fridgeIngredientDao
-              .getFridgeItems(fridgeId: dbUser.fridgeId);
-          final recipes = await database.recipeDao.getCookbookRecipes(id);
-
-          final ingredientNames = fridgeIngredients
-              .map((i) => i.name.toLowerCase())
-              .toSet()
-              .toList();
-          final ingredientCount = ingredientNames.length;
-          final recipeCount = recipes.length;
-
-          final Map<String, int> ingredientFrequency = {};
-          for (final recipe in recipes) {
-            final List<dynamic> recipeIngredients =
-                jsonDecode(recipe.ingredientsJson);
-            for (final ing in recipeIngredients) {
-              final name = (ing['name'] ?? '').toString().toLowerCase();
-              if (name.isNotEmpty) {
-                ingredientFrequency[name] =
-                    (ingredientFrequency[name] ?? 0) + 1;
-              }
-            }
-          }
-          final mostPopularIngredients = ingredientFrequency.entries.toList()
-            ..sort((a, b) => b.value.compareTo(a.value));
-          final mostPopular = mostPopularIngredients
-              .take(5)
-              .map((e) => {'name': e.key, 'count': e.value})
-              .toList();
-
-          final favoriteRecipeCount =
-              recipes.where((r) => r.isFavorite == true).length;
-          final friends = await database.friendDao.getFriendsForUser(dbUser.id);
-          final friendCount = friends.length;
-
-          _userStats = {
-            'ingredientCount': ingredientCount,
-            'recipeCount': recipeCount,
-            'mostPopularIngredients': mostPopular,
-            'favoriteRecipeCount': favoriteRecipeCount,
-            'friendCount': friendCount,
-          };
-          notifyListeners();
-        }
-      }
-    } catch (e) {
+    final prefs = await SharedPreferences.getInstance();
+    final id = userId ?? prefs.getString('userId');
+    if (id == null) {
       _userStats = null;
       notifyListeners();
-    }
-
-    // 2. If offline, stop here (local stats are already shown)
-    if (connectivityProvider.isOffline) {
       return;
     }
 
-    // 3. If online, fetch from remote and update stats
-    try {
-      final stats = await userRepository.fetchUserStatsRemote(userId: userId);
-      _userStats = stats;
+    // 1. If offline, fetch from local UserStats table and stop
+    if (connectivityProvider.isOffline) {
+      final localStats = await userRepository.fetchUserStatsLocal(id);
+      _userStats = localStats;
       notifyListeners();
+      return;
+    }
+
+    // 2. If online, fetch from backend and cache locally
+    try {
+      final stats = await userRepository.fetchUserStatsRemote(userId: id);
+      if (stats != null) {
+        _userStats = stats;
+        notifyListeners();
+        // Cache stats locally for offline use
+        await userRepository.storeUserStatsLocal(id, stats);
+      } else {
+        // If backend returns null, fallback to local
+        final localStats = await userRepository.fetchUserStatsLocal(id);
+        _userStats = localStats;
+        notifyListeners();
+      }
     } catch (e) {
-      // Ignore, already showing local stats
+      // On error, fallback to local
+      final localStats = await userRepository.fetchUserStatsLocal(id);
+      _userStats = localStats;
+      notifyListeners();
     }
   }
 
-  // Remove friend
+  /// Removes a friend by their userId.
   Future<void> removeFriend(String friendId) async {
     await FriendService().removeFriend(friendId);
+    await database.userStatsDao.deleteUserStats(friendId);
     await fetchUserData();
   }
 }

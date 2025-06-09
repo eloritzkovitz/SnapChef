@@ -34,8 +34,7 @@ class _FriendsListState extends State<FriendsList> {
   // Opens the public profile of a user
   void _openPublicProfile(BuildContext context, dynamic friend) async {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final fullProfile =
-        await userViewModel.userRepository.fetchUserProfileRemote(friend.id);
+    final fullProfile = await userViewModel.fetchUserProfile(friend.id);
 
     if (fullProfile != null && context.mounted) {
       Navigator.push(

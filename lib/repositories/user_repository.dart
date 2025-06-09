@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:get_it/get_it.dart';
@@ -34,7 +35,7 @@ class UserRepository {
     return null;
   }
 
-  /// Fetches the user preferences from local database.
+  /// Stores the user preferences in the local database.
   Future<void> storeUserLocal(model.User user) async {
     String? preferencesJson;
     if (user.preferences != null) {
@@ -50,12 +51,14 @@ class UserRepository {
       fcmToken: user.fcmToken,
       profilePicture: user.profilePicture,
       preferencesJson: preferencesJson,
+      joinDate: user.joinDate?.toIso8601String(),
     );
     await database.userDao.insertUser(dbUser);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userId', user.id);
   }
 
+  /// Fetches the user preferences from the local database.
   Future<List<model.User>> fetchFriendsLocal(String userId) async {
     final friends = await database.friendDao.getFriendsForUser(userId);
     return friends.map((f) => model.User.fromFriendDb(f)).toList();
@@ -63,22 +66,22 @@ class UserRepository {
 
   // --- Remote API Methods ---
 
-  /// Fetches the user data from remote API.
+  /// Fetches the current user from remote API.
   Future<model.User?> fetchUserRemote() async {
     return await userService.getUserData();
   }
 
-  /// Fetches the user preferences from remote API.
+  /// Fetches a user's profile from remote API.
   Future<model.User?> fetchUserProfileRemote(String userId) async {
     return await userService.getUserProfile(userId);
   }
 
-  /// Fetches the user preferences from remote API.
+  /// Fetches a user's statistics from remote API.
   Future<Map<String, dynamic>?> fetchUserStatsRemote({String? userId}) async {
     return await userService.getUserStats(userId: userId);
   }
 
-  /// Updates the user data on remote API.
+  /// Updates the user's data on remote API.
   Future<void> updateUserRemote({
     required String firstName,
     required String lastName,
@@ -93,7 +96,7 @@ class UserRepository {
     );
   }
 
-  /// Updates the user preferences on remote API.
+  /// Updates the user's preferences on remote API.
   Future<void> updateUserPreferencesRemote({
     required List<String> allergies,
     required Map<String, bool> dietaryPreferences,
@@ -134,8 +137,8 @@ class UserRepository {
         friendJoinDate: friend.joinDate?.toIso8601String(),
       );
       await database.friendDao.insertOrUpdateFriend(dbFriend);
-    } else { 
-      // Insert new friend     
+    } else {
+      // Insert new friend
       final dbFriend = db.FriendsCompanion.insert(
         userId: userId,
         friendId: friend.id,
@@ -145,8 +148,7 @@ class UserRepository {
         friendJoinDate: Value(friend.joinDate?.toIso8601String()),
       );
       await database.friendDao.insertFriend(dbFriend);
-    }
-    print('Stored friend: ${friend.id} for user: $userId');
+    }  
   }
 
   /// Fetches a friend from the local DB.
@@ -167,7 +169,7 @@ class UserRepository {
       );
     }
     return null;
-  }
+  }  
 
   /// Updates local friend after fetching full profile from remote.
   Future<void> updateFriendFromRemote(String userId, String friendId) async {
@@ -175,5 +177,41 @@ class UserRepository {
     if (remoteFriend != null) {
       await storeFriendLocal(remoteFriend, userId);
     }
+  }
+
+  // --- User Stats Methods ---
+
+  /// Stores user stats in the local DB.
+  Future<void> storeUserStatsLocal(
+      String userId, Map<String, dynamic> stats) async {
+    await database.userStatsDao.insertOrUpdateUserStats(
+      db.UserStatsCompanion(
+        userId: Value(userId),
+        ingredientCount: Value(stats['ingredientCount'] ?? 0),
+        recipeCount: Value(stats['recipeCount'] ?? 0),
+        favoriteRecipeCount: Value(stats['favoriteRecipeCount'] ?? 0),
+        friendCount: Value(stats['friendCount'] ?? 0),
+        mostPopularIngredients: Value(stats['mostPopularIngredients'] != null
+            ? jsonEncode(stats['mostPopularIngredients'])
+            : jsonEncode([])),
+      ),
+    );
+  }
+
+  /// Fetches user stats from the local DB.
+  Future<Map<String, dynamic>?> fetchUserStatsLocal(String userId) async {
+    final dbStats = await database.userStatsDao.getUserStats(userId);
+    if (dbStats != null) {
+      return {
+        'ingredientCount': dbStats.ingredientCount ?? 0,
+        'recipeCount': dbStats.recipeCount ?? 0,
+        'favoriteRecipeCount': dbStats.favoriteRecipeCount ?? 0,
+        'friendCount': dbStats.friendCount ?? 0,
+        'mostPopularIngredients': dbStats.mostPopularIngredients != null
+            ? jsonDecode(dbStats.mostPopularIngredients!)
+            : [],
+      };
+    }
+    return null;
   }
 }
