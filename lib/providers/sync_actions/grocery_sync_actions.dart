@@ -29,7 +29,7 @@ class GrocerySyncActions {
 
   /// Adds a grocery item based on the action details.
   Future<void> _addGroceryItem(Map<String, dynamic> action) async {
-    final ingredient = action['ingredient'] as Ingredient;
+    final ingredient = Ingredient.fromJson(action['ingredient'] as Map<String, dynamic>);
     final fridgeId = action['fridgeId'] as String;
     final itemData = {
       'id': ingredient.id,

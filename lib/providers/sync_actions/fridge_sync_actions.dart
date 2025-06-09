@@ -22,14 +22,15 @@ class FridgeSyncActions {
       case 'reorder':
         await _reorderFridgeItems(action);
         break;
-      default:        
+      default:
         break;
     }
   }
 
   /// Adds a fridge item based on the action details.
   Future<void> _addFridgeItem(Map<String, dynamic> action) async {
-    final ingredient = action['ingredient'] as Ingredient;
+    final ingredient =
+        Ingredient.fromJson(action['ingredient'] as Map<String, dynamic>);
     final fridgeId = action['fridgeId'] as String;
     final itemData = {
       'id': ingredient.id,

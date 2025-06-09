@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:snapchef/viewmodels/auth_viewmodel.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/sync_actions/fridge_sync_actions.dart';
@@ -25,7 +26,8 @@ void setupLocator(AppDatabase db) {
   // Ingredient Service
   getIt.registerLazySingleton<IngredientService>(() => IngredientService());
   
-  // User
+  // User  
+  getIt.registerLazySingleton<AuthViewModel>(() => AuthViewModel());
   getIt.registerLazySingleton<UserService>(() => UserService());
   getIt.registerLazySingleton<UserRepository>(() => UserRepository());
   

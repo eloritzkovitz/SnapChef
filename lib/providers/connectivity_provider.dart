@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:snapchef/providers/sync_provider.dart';
+import 'package:snapchef/viewmodels/auth_viewmodel.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
   bool _isOffline = false;
@@ -36,7 +40,7 @@ class ConnectivityProvider extends ChangeNotifier {
 
     // First, check if any network is available
     final result = await _connectivity.checkConnectivity();
-    if (result == [ConnectivityResult.none]) {
+    if (result == ConnectivityResult.none) {
       offline = true;
     } else {
       // Try to reach the server
@@ -47,18 +51,30 @@ class ConnectivityProvider extends ChangeNotifier {
         try {
           final response = await http
               .get(Uri.parse('$serverIp/health'))
-              .timeout(const Duration(seconds: 3));             
+              .timeout(const Duration(seconds: 3));
           if (response.statusCode != 200) {
             offline = true;
+            log("Server is not reachable, status code: ${response.statusCode}");
           }
         } catch (_) {
           offline = true;
+          log("Failed to reach server at $serverIp");
         }
       }
     }
 
     if (_isOffline != offline) {
-      _isOffline = offline;      
+      _isOffline = offline;
+
+      if (!_isOffline) {        
+        try {         
+          await GetIt.I<AuthViewModel>().refreshTokens();         
+          await GetIt.I<SyncProvider>().syncPendingActions();          
+        } catch (e) {
+          log('Failed to refresh tokens or sync actions: $e');          
+        }
+      }
+
       notifyListeners();
     }
   }

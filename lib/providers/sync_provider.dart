@@ -12,7 +12,7 @@ final getIt = GetIt.instance;
 class SyncProvider extends ChangeNotifier {
   /// Map of action queue names to their pending actions.
   final Map<String, List<Map<String, dynamic>>> pendingActionQueues = {};
-  
+
   // Get sync actions
   FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
   GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
@@ -49,18 +49,27 @@ class SyncProvider extends ChangeNotifier {
     pendingActionQueues.putIfAbsent(queue, () => []);
     pendingActionQueues[queue]!.add(action);
     savePendingActions();
+    log('Hi! I have just added action to $queue: $action');
+    notifyListeners();
+  }
+
+  /// Clears the pending actions queue.
+  void clearSyncQueue() {
+    pendingActionQueues.clear();
+    savePendingActions();
     notifyListeners();
   }
 
   /// Handles sync action based on the queue type.
-  Future<void> handleSyncAction(String queue, Map<String, dynamic> action) async {
+  Future<void> handleSyncAction(
+      String queue, Map<String, dynamic> action) async {
     switch (queue) {
       case 'fridge':
         await fridgeSyncActions.handleFridgeAction(action);
-        break; 
+        break;
       case 'grocery':
-      await grocerySyncActions.handleGroceryAction(action);
-      break;     
+        await grocerySyncActions.handleGroceryAction(action);
+        break;
       default:
         log('Unknown queue: $queue');
     }

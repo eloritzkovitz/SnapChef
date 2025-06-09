@@ -151,7 +151,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
     _groceries.clear();
     _groceries.addAll(localGroceries);
     groceriesController.applyFiltersAndSorting();
-  }  
+  }
 
   // --- Add/Update/Delete Helpers ---
   Future<bool> _addOrUpdateIngredient({
@@ -172,7 +172,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
     if (idx != -1) {
       final newQuantity = list[idx].count + ingredient.count;
       if (isOffline) {
-        pendingActions.add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'update',
           'fridgeId': fridgeId,
           'itemId': ingredient.id,
@@ -193,10 +193,10 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       }
     } else {
       if (isOffline) {
-        pendingActions.add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'add',
           'fridgeId': fridgeId,
-          'ingredient': ingredient,
+          'ingredient': ingredient.toJson(),
         });
         await syncProvider.savePendingActions();
         list.add(ingredient);
@@ -231,7 +231,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       applyFilters();
 
       if (isOffline) {
-        pendingActions.add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'delete',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -243,7 +243,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
 
       final success = await remoteDeleteAction();
       if (!success) {
-        pendingActions.add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'delete',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -252,7 +252,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       }
       return success;
     } catch (e) {
-      pendingActions.add({
+      syncProvider.addPendingAction('fridge', {
         'action': 'delete',
         'fridgeId': fridgeId,
         'itemId': itemId,
@@ -305,7 +305,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       }
 
       if (connectivityProvider.isOffline) {
-        (syncProvider.pendingActionQueues['fridge'] ??= []).add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'update',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -319,7 +319,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       final success = await fridgeRepository.updateFridgeItemRemote(
           fridgeId, itemId, newCount);
       if (!success) {
-        (syncProvider.pendingActionQueues['fridge'] ??= []).add({
+        syncProvider.addPendingAction('fridge', {
           'action': 'update',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -330,7 +330,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       return success;
     } catch (e) {
       log('Error updating item: $e');
-      (syncProvider.pendingActionQueues['fridge'] ??= []).add({
+      syncProvider.addPendingAction('fridge', {
         'action': 'update',
         'fridgeId': fridgeId,
         'itemId': itemId,
@@ -398,7 +398,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       }
 
       if (connectivityProvider.isOffline) {
-        (syncProvider.pendingActionQueues['grocery'] ??= []).add({
+        syncProvider.addPendingAction('grocery', {
           'action': 'update',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -412,7 +412,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       final success = await fridgeRepository.updateGroceryItemRemote(
           fridgeId, itemId, newCount);
       if (!success) {
-        (syncProvider.pendingActionQueues['grocery'] ??= []).add({
+        syncProvider.addPendingAction('grocery', {
           'action': 'update',
           'fridgeId': fridgeId,
           'itemId': itemId,
@@ -423,7 +423,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       return success;
     } catch (e) {
       log('Error updating grocery item: $e');
-      (syncProvider.pendingActionQueues['grocery'] ??= []).add({
+      syncProvider.addPendingAction('grocery', {
         'action': 'update',
         'fridgeId': fridgeId,
         'itemId': itemId,
@@ -480,7 +480,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
 
     // Save the new order
     if (connectivityProvider.isOffline) {
-      (syncProvider.pendingActionQueues['fridge'] ??= []).add({
+      syncProvider.addPendingAction('fridge', {
         'action': 'reorder',
         'fridgeId': fridgeId,
         'orderedIds': _ingredients.map((i) => i.id).toList(),
@@ -519,7 +519,7 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
 
     // Save the new order
     if (connectivityProvider.isOffline) {
-      (syncProvider.pendingActionQueues['grocery'] ??= []).add({
+      syncProvider.addPendingAction('grocery', {
         'action': 'reorder',
         'fridgeId': fridgeId,
         'orderedIds': _groceries.map((g) => g.id).toList(),
@@ -555,7 +555,6 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
   // --- Move Grocery to Fridge ---
   Future<void> addGroceryToFridge(
       String fridgeId, Ingredient ingredient) async {
-    // Check if the ingredient is already in the fridge
     final fridgeIndex = _ingredients.indexWhere((i) => i.id == ingredient.id);
 
     if (fridgeIndex != -1) {
@@ -568,10 +567,17 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
         fridgeId,
         existing.copyWith(count: newCount),
       );
-
-      // Update in memory
       _ingredients[fridgeIndex].count = newCount;
       fridgeController.applyFiltersAndSorting();
+
+      // Update remotely if online
+      if (!connectivityProvider.isOffline) {
+        await fridgeRepository.updateFridgeItemRemote(
+          fridgeId,
+          existing.id,
+          newCount,
+        );
+      }
     } else {
       // Not in fridge: add as new fridge item
       await fridgeRepository.addOrUpdateFridgeItem(
@@ -580,6 +586,14 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
       );
       _ingredients.add(ingredient);
       fridgeController.applyFiltersAndSorting();
+
+      // Add remotely if online
+      if (!connectivityProvider.isOffline) {
+        await fridgeRepository.addFridgeItemRemote(
+          fridgeId,
+          ingredient,
+        );
+      }
     }
 
     // Remove from groceries in local DB and memory
@@ -587,23 +601,29 @@ class FridgeViewModel extends ChangeNotifier with HelpersMixin {
     _groceries.removeWhere((g) => g.id == ingredient.id);
     groceriesController.applyFiltersAndSorting();
 
-    // Optionally, sync with backend if online
+    // Remove remotely if online
     if (!connectivityProvider.isOffline) {
-      await fridgeRepository.updateFridgeItemRemote(
-        fridgeId,
-        ingredient.id,
-        _ingredients.firstWhere((i) => i.id == ingredient.id).count,
-      );
       await fridgeRepository.deleteGroceryItemRemote(fridgeId, ingredient.id);
-    } else {
-      // Add to pending actions for sync
-      (syncProvider.pendingActionQueues['grocery'] ??= []).add({
-        'action': 'update',
-        'fridgeId': fridgeId,
-        'itemId': ingredient.id,
-        'newCount': _ingredients.firstWhere((i) => i.id == ingredient.id).count,
-      });
-      (syncProvider.pendingActionQueues['grocery'] ??= []).add({
+    }
+
+    // Offline sync logic
+    if (connectivityProvider.isOffline) {
+      final fridgeIndex = _ingredients.indexWhere((i) => i.id == ingredient.id);
+      if (fridgeIndex != -1) {
+        syncProvider.addPendingAction('fridge', {
+          'action': 'update',
+          'fridgeId': fridgeId,
+          'itemId': ingredient.id,
+          'newCount': _ingredients[fridgeIndex].count,
+        });
+      } else {
+        syncProvider.addPendingAction('fridge', {
+          'action': 'add',
+          'fridgeId': fridgeId,
+          'ingredient': ingredient.toJson(),
+        });
+      }
+      syncProvider.addPendingAction('grocery', {
         'action': 'delete',
         'fridgeId': fridgeId,
         'itemId': ingredient.id,
