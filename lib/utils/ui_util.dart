@@ -36,13 +36,12 @@ class UIUtil {
   }
 
   /// Formats a raw date string to a more readable format.
-  static String formatDate(String? rawDate) {
-    if (rawDate == null || rawDate.isEmpty) return '';
-    try {
-      final date = DateTime.parse(rawDate);
+  static String formatDate(DateTime? date) {
+    if (date == null) return '';
+    try {      
       return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
     } catch (e) {
-      return rawDate;
+      return 'Invalid date';
     }
   }
 }

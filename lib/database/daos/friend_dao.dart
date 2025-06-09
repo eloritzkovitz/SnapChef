@@ -30,10 +30,22 @@ class FriendDao extends DatabaseAccessor<AppDatabase> with _$FriendDaoMixin {
   // Filter by friendId
   Future<Friend?> getFriendByUserAndFriendId(String userId, String friendId) =>
       (select(friends)
-        ..where((f) => f.userId.equals(userId) & f.friendId.equals(friendId)))
+            ..where(
+                (f) => f.userId.equals(userId) & f.friendId.equals(friendId)))
           .getSingleOrNull();
 
   // Delete all friends for a user (for syncing)
   Future<int> deleteFriendsForUser(String userId) =>
       (delete(friends)..where((f) => f.userId.equals(userId))).go();
+
+  // Get a friend by userId and friendId (for upsert logic)
+  Future<Friend?> getFriend(String userId, String friendId) => (select(friends)
+        ..where((f) => f.userId.equals(userId) & f.friendId.equals(friendId)))
+      .getSingleOrNull();
+
+  // Insert or update a friend (upsert)
+  Future<int> insertOrUpdateFriend(Friend friend) async {
+    // If friend.id is null, this will insert; if not, it will update
+    return into(friends).insertOnConflictUpdate(friend);
+  }
 }

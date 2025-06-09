@@ -6,5 +6,6 @@ class Friends extends Table {
   TextColumn get friendId => text()();
   TextColumn get friendName => text()(); 
   TextColumn get friendEmail => text()();
-  TextColumn get friendProfilePicture => text().nullable()();  
+  TextColumn get friendProfilePicture => text().nullable()(); 
+  TextColumn get friendJoinDate => text().nullable()(); 
 }

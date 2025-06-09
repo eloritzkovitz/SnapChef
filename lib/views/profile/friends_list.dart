@@ -32,17 +32,30 @@ class _FriendsListState extends State<FriendsList> {
   }
 
   // Opens the public profile of a user
-  void _openPublicProfile(BuildContext context, user) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PublicProfileScreen(user: user),
-      ),
-    );
+  void _openPublicProfile(BuildContext context, dynamic friend) async {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final fullProfile =
+        await userViewModel.userRepository.fetchUserProfileRemote(friend.id);
+
+    if (fullProfile != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicProfileScreen(user: fullProfile),
+        ),
+      );
+    } else {
+      if (context.mounted) {        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load profile')),
+        );
+      }
+    }
   }
 
   // Shows a confirmation dialog to remove a friend
-  Future<void> _showRemoveFriendDialog(BuildContext context, dynamic friend) async {
+  Future<void> _showRemoveFriendDialog(
+      BuildContext context, dynamic friend) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -83,6 +96,7 @@ class _FriendsListState extends State<FriendsList> {
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context);
     final friends = userViewModel.user?.friends ?? [];
+    final isOffline = userViewModel.connectivityProvider.isOffline;
 
     if (userViewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -172,8 +186,8 @@ class _FriendsListState extends State<FriendsList> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.person_add),
-                            label: const Text('Add Friend'),
-                            onPressed: () => _openAddFriendModal(context),
+                            label: const Text('Add Friends'),
+                            onPressed: isOffline ? null : () => _openAddFriendModal(context),
                           ),
                         ),
                       ),
@@ -202,8 +216,8 @@ class _FriendsListState extends State<FriendsList> {
                                     friend: friend,
                                     onViewProfile: () =>
                                         _openPublicProfile(context, friend),
-                                    onRemove: () =>
-                                        _showRemoveFriendDialog(context, friend),
+                                    onRemove: () => _showRemoveFriendDialog(
+                                        context, friend),
                                   );
                                 },
                               ),
@@ -214,8 +228,8 @@ class _FriendsListState extends State<FriendsList> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.person_add),
-                            label: const Text('Add Friend'),
-                            onPressed: () => _openAddFriendModal(context),
+                            label: const Text('Add Friends'),
+                            onPressed: isOffline ? null : () => _openAddFriendModal(context),
                           ),
                         ),
                       ),

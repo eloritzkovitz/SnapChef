@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -16,7 +17,8 @@ import '../repositories/user_repository.dart';
 class UserViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
-  final ConnectivityProvider connectivityProvider = GetIt.I<ConnectivityProvider>();
+  final ConnectivityProvider connectivityProvider =
+      GetIt.I<ConnectivityProvider>();
   final UserRepository userRepository = GetIt.I<UserRepository>();
 
   bool _isLoading = false;
@@ -61,6 +63,13 @@ class UserViewModel extends ChangeNotifier {
         await userRepository.storeUserLocal(userProfile);
       }
 
+      // Store friends in local DB
+      if (userProfile != null && userProfile.friends.isNotEmpty) {
+        for (final friend in userProfile.friends) {
+          await userRepository.storeFriendLocal(friend, userProfile.id);
+        }
+      }
+
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
       await updateFcmToken(fcmToken);
@@ -88,10 +97,10 @@ class UserViewModel extends ChangeNotifier {
           final fcmToken = await FirebaseMessaging.instance.getToken();
           await updateFcmToken(fcmToken);
         } catch (refreshError) {
-          // Already loaded local data above
+          log('Failed to refresh tokens: $refreshError');
         }
       } else {
-        // Already loaded local data above
+        log('Failed to fetch user data: $e');
       }
     } finally {
       _isLoading = false;
@@ -114,7 +123,7 @@ class UserViewModel extends ChangeNotifier {
       _user = null;
       notifyListeners();
     }
-  }  
+  }
 
   // Get friends list
   Future<List<model.User>> getFriends() async {
@@ -239,11 +248,21 @@ class UserViewModel extends ChangeNotifier {
 
   // Fetch another user's profile by userId
   Future<model.User?> fetchUserProfile(String userId) async {
+    // If offline, fetch from local DB
+    if (connectivityProvider.isOffline) {
+      return await userRepository.fetchFriendLocal(_user?.id ?? '', userId);
+    }
+
+    // If online, fetch from remote and update local DB
     try {
       final userProfile = await userRepository.fetchUserProfileRemote(userId);
+      if (userProfile != null && _user != null) {
+        await userRepository.storeFriendLocal(userProfile, _user!.id);
+      }
       return userProfile;
     } catch (e) {
-      return null;
+      // If remote fetch fails, fallback to local
+      return await userRepository.fetchFriendLocal(_user?.id ?? '', userId);
     }
   }
 
