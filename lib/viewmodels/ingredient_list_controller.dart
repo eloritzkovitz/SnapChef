@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../mixins/sort_filter_mixin.dart';
+import '../utils/sort_filter_mixin.dart';
 import '../models/ingredient.dart';
 
 class IngredientListController extends ChangeNotifier

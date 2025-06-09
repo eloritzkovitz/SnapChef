@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import '../mixins/helpers_mixin.dart';
 import '../models/ingredient.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/sync_provider.dart';
@@ -13,7 +12,7 @@ import '../repositories/fridge_repository.dart';
 import '../services/fridge_service.dart';
 import 'ingredient_list_controller.dart';
 
-class FridgeViewModel extends ChangeNotifier with HelpersMixin {
+class FridgeViewModel extends ChangeNotifier {
   // --- Fields & Constructor ---
   final List<Ingredient> _ingredients = [];
   final List<Ingredient> _groceries = [];

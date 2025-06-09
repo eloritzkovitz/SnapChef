@@ -8,7 +8,7 @@ import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
 import '../repositories/cookbook_repository.dart';
-import '../mixins/sort_filter_mixin.dart';
+import '../utils/sort_filter_mixin.dart';
 
 class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
