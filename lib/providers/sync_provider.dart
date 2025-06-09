@@ -1,13 +1,21 @@
 import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer';
+import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/sync_actions/fridge_sync_actions.dart';
+import '../providers/sync_actions/grocery_sync_actions.dart';
 
-mixin SyncMixin on ChangeNotifier {
+final getIt = GetIt.instance;
+
+class SyncProvider extends ChangeNotifier {
   /// Map of action queue names to their pending actions.
   final Map<String, List<Map<String, dynamic>>> pendingActionQueues = {};
+  
+  // Get sync actions
+  FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
+  GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
 
   ConnectivityProvider? _syncConnectivityProvider;
 
@@ -37,7 +45,26 @@ mixin SyncMixin on ChangeNotifier {
   }
 
   /// Adds an action to a specific queue.
-  Future<void> handleSyncAction(String queue, Map<String, dynamic> action);
+  void addPendingAction(String queue, Map<String, dynamic> action) {
+    pendingActionQueues.putIfAbsent(queue, () => []);
+    pendingActionQueues[queue]!.add(action);
+    savePendingActions();
+    notifyListeners();
+  }
+
+  /// Handles sync action based on the queue type.
+  Future<void> handleSyncAction(String queue, Map<String, dynamic> action) async {
+    switch (queue) {
+      case 'fridge':
+        await fridgeSyncActions.handleFridgeAction(action);
+        break; 
+      case 'grocery':
+      await grocerySyncActions.handleGroceryAction(action);
+      break;     
+      default:
+        log('Unknown queue: $queue');
+    }
+  }
 
   /// Syncs all pending actions in all queues.
   Future<void> syncPendingActions() async {
@@ -55,6 +82,7 @@ mixin SyncMixin on ChangeNotifier {
         }
       }
     }
+    savePendingActions();
     notifyListeners();
   }
 
@@ -75,5 +103,6 @@ mixin SyncMixin on ChangeNotifier {
         pendingActionQueues[key] = List<Map<String, dynamic>>.from(value);
       });
     }
+    notifyListeners();
   }
 }
