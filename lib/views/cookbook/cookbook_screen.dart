@@ -12,6 +12,7 @@ import '../../widgets/snapchef_appbar.dart';
 import '../../main.dart';
 import '../../providers/connectivity_provider.dart';
 import '../../theme/colors.dart';
+import '../../utils/ui_util.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../views/fridge/generate_recipe_screen.dart';
@@ -225,21 +226,22 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                 ),
               );
             },
-          ),          
+          ),
           SpeedDialChild(
             child: const Icon(Icons.auto_awesome, color: Colors.white),
-            backgroundColor: primarySwatch[300],
+            backgroundColor:
+                isOffline ? disabledSecondaryColor : primarySwatch[300],
             label: 'Generate Recipe',
             labelStyle: const TextStyle(fontSize: 12),
             onTap: isOffline
-                ? null
+                ? () => UIUtil().showOfflineSnackbar(context)
                 : () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => GenerateRecipeScreen()),
-                    );
-                  },           
-          ),          
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => GenerateRecipeScreen()));
+                  },
+          ),
         ],
       ),
     );

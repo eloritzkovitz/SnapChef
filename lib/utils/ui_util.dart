@@ -10,7 +10,7 @@ class UIUtil {
   /// Show unavailable offline message in a SnackBar.
   void showOfflineSnackbar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unavailable offline')),
+      const SnackBar(content: Text('Unavailable offline.')),
     );
   }
 
