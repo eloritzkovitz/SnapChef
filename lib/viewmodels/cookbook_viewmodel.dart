@@ -8,6 +8,7 @@ import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
 import '../repositories/cookbook_repository.dart';
+import '../services/user_service.dart';
 import '../utils/sort_filter_mixin.dart';
 
 class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
@@ -16,7 +17,8 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   List<SharedRecipe>? sharedByMeRecipes = [];
 
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
-  final ConnectivityProvider connectivityProvider = GetIt.I<ConnectivityProvider>();
+  final ConnectivityProvider connectivityProvider =
+      GetIt.I<ConnectivityProvider>();
   final CookbookRepository cookbookRepository = GetIt.I<CookbookRepository>();
 
   String? selectedCuisine;
@@ -104,7 +106,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
 
   // --- Cookbook logic (repository-based) ---
 
-  // Fetch all recipes in the cookbook
+  /// Fetches all recipes in the cookbook.
   Future<void> fetchCookbookRecipes(String cookbookId) async {
     _isLoading = true;
     notifyListeners();
@@ -118,12 +120,14 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
 
     try {
-      final items = await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
+      final items =
+          await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
 
       _recipes.clear();
       if (items.isNotEmpty) {
         _recipes.addAll(items);
-        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+        await cookbookRepository.storeCookbookRecipesLocal(
+            cookbookId, _recipes);
       }
 
       applyFiltersAndSorting();
@@ -136,23 +140,54 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Load recipes from local DB using RecipeDao
+  /// Loads recipes from local DB using RecipeDao.
   Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
-    final localRecipes = await cookbookRepository.fetchCookbookRecipesLocal(userId);
+    final localRecipes =
+        await cookbookRepository.fetchCookbookRecipesLocal(userId);
     _recipes.clear();
     _recipes.addAll(localRecipes);
     applyFiltersAndSorting();
-  }  
+  }
 
-  // Fetch recipes shared with the user
-  Future<void> fetchSharedRecipes(String cookbookId) async {
-    final result = await cookbookRepository.fetchSharedRecipes(cookbookId);
+  /// Fetches recipes shared with the user.
+  Future<void> fetchSharedRecipes(String cookbookId, String userId) async {
+    final isOffline = connectivityProvider.isOffline;
+
+    if (isOffline) {
+      // Load from local DB
+      final localShared =
+          await cookbookRepository.fetchSharedRecipesLocal(userId);
+      sharedWithMeRecipes =
+          localShared.where((r) => r.toUser == userId).toList();
+      sharedByMeRecipes =
+          localShared.where((r) => r.fromUser == userId).toList();
+      notifyListeners();
+      return;
+    }
+
+    // Fetch from remote and cache locally
+    final result =
+        await cookbookRepository.fetchSharedRecipesRemote(cookbookId);
+
+    // Store both lists locally
+    final allShared = [
+      ...(result['sharedWithMe'] != null
+          ? List<SharedRecipe>.from(result['sharedWithMe']!)
+          : <SharedRecipe>[]),
+      ...(result['sharedByMe'] != null
+          ? List<SharedRecipe>.from(result['sharedByMe']!)
+          : <SharedRecipe>[]),
+    ];
+    if (allShared.isNotEmpty) {
+      await cookbookRepository.storeSharedRecipesLocal(allShared);
+    }
+
     sharedWithMeRecipes = result['sharedWithMe'] ?? [];
     sharedByMeRecipes = result['sharedByMe'] ?? [];
     notifyListeners();
   }
 
-  // Add a recipe to the cookbook
+  /// Adds a recipe to the cookbook.
   Future<bool> addRecipeToCookbook({
     required String cookbookId,
     required String title,
@@ -204,7 +239,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Update a recipe in the cookbook
+  /// Updates a recipe in the cookbook.
   Future<bool> updateRecipe({
     required String cookbookId,
     required String recipeId,
@@ -269,7 +304,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Regenerate the image for a recipe in the cookbook
+  /// Regenerates the image for a recipe in the cookbook.
   Future<bool> regenerateRecipeImage({
     required String cookbookId,
     required String recipeId,
@@ -291,7 +326,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Toggle the favorite status of a recipe
+  /// Toggle the favorite status of a recipe.
   Future<bool> toggleRecipeFavoriteStatus(
       String cookbookId, String recipeId) async {
     try {
@@ -313,7 +348,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Reorder a recipe in the cookbook
+  /// Reorders a recipe in the cookbook.
   Future<void> reorderRecipe(
       int oldIndex, int newIndex, String cookbookId) async {
     if (oldIndex < newIndex) {
@@ -350,7 +385,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     notifyListeners();
   }
 
-  // Save the new order to backend
+  /// Saves the new order to backend.
   Future<void> saveRecipeOrder(String cookbookId) async {
     try {
       // Send the list of recipe IDs in the new order
@@ -361,7 +396,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Share a recipe with a friend
+  /// Shares a recipe with a friend,
   Future<void> shareRecipeWithFriend({
     required String cookbookId,
     required String recipeId,
@@ -374,7 +409,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     );
   }
 
-  // Remove a shared recipe
+  /// Removes a shared recipe.
   Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
       {required bool isSharedByMe}) async {
     try {
@@ -393,7 +428,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Delete a recipe from the cookbook
+  /// Deletes a recipe from the cookbook.
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
       final success =
@@ -409,7 +444,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     }
   }
 
-  // Search recipes by name
+  /// Searches recipes by name.
   List<Recipe> searchRecipes(String query) {
     return _recipes
         .where((recipe) =>
@@ -508,5 +543,39 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     ratingRange = null;
     selectedSource = null;
     applyFiltersAndSorting();
+  }
+
+  String? sharedUserName;
+  String? sharedUserProfilePic;
+
+  /// Fetches the relevant user info for a shared recipe (remote first, then local).
+  Future<void> fetchSharedUserInfo({
+    required String userId,
+    required String currentUserId,
+  }) async {
+    final userService = GetIt.I<UserService>();
+    try {
+      // Try remote fetch first
+      final user = await userService.getUserProfile(userId);
+      sharedUserName = '${user.firstName} ${user.lastName}'.trim();
+      sharedUserProfilePic = user.profilePicture;
+    } catch (e) {
+      // If remote fails, try local lookup
+      try {
+        final friendMap = await cookbookRepository.getFriendsMap(currentUserId);
+        final friend = friendMap[userId];
+        if (friend != null) {
+          sharedUserName = friend.friendName;
+          sharedUserProfilePic = friend.friendProfilePicture;
+        } else {
+          sharedUserName = null;
+          sharedUserProfilePic = null;
+        }
+      } catch (_) {
+        sharedUserName = null;
+        sharedUserProfilePic = null;
+      }
+    }
+    notifyListeners();
   }
 }

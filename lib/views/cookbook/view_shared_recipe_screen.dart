@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
 import '../../models/shared_recipe.dart';
-import '../../services/user_service.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
@@ -24,33 +23,26 @@ class ViewSharedRecipeScreen extends StatefulWidget {
 
 class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   late String? _currentImageUrl;
-  String? _sharedByName;
-  String? _sharedByProfilePic;
-
+  
   @override
   void initState() {
     super.initState();
     _currentImageUrl = widget.sharedRecipe.recipe.imageURL;
-    _fetchRelevantUser();
-  }
 
-  Future<void> _fetchRelevantUser() async {
-    final userService = UserService();
-    final userId = widget.isSharedByMe
-        ? widget.sharedRecipe.toUser
-        : widget.sharedRecipe.fromUser;
-    try {
-      final user = await userService.getUserProfile(userId);
-      setState(() {
-        _sharedByName = '${user.firstName} ${user.lastName}'.trim();
-        _sharedByProfilePic = user.profilePicture;
-      });
-    } catch (e) {
-      setState(() {
-        _sharedByName = null;
-        _sharedByProfilePic = null;
-      });
-    }
+    // Fetch user info
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      final cookbookViewModel =
+          Provider.of<CookbookViewModel>(context, listen: false);
+      final userId = widget.isSharedByMe
+          ? widget.sharedRecipe.toUser
+          : widget.sharedRecipe.fromUser;
+      final currentUserId = userViewModel.user?.id ?? '';
+      cookbookViewModel.fetchSharedUserInfo(
+        userId: userId,
+        currentUserId: currentUserId,
+      );
+    });
   }
 
   // Save the shared recipe to the user's cookbook
@@ -142,7 +134,12 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipe = widget.sharedRecipe.recipe;
-    final sharedBy = _sharedByName ?? widget.sharedRecipe.fromUser;
+    final cookbookViewModel = Provider.of<CookbookViewModel>(context);
+    final sharedBy = cookbookViewModel.sharedUserName ??
+        (widget.isSharedByMe
+            ? widget.sharedRecipe.toUser
+            : widget.sharedRecipe.fromUser);
+    final sharedByProfilePic = cookbookViewModel.sharedUserProfilePic;
 
     return Scaffold(
       appBar: AppBar(
@@ -212,10 +209,10 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: (_sharedByProfilePic != null &&
-                              _sharedByProfilePic!.isNotEmpty)
+                      backgroundImage: (sharedByProfilePic != null &&
+                              sharedByProfilePic.isNotEmpty)
                           ? NetworkImage(
-                              ImageUtil().getFullImageUrl(_sharedByProfilePic!))
+                              ImageUtil().getFullImageUrl(sharedByProfilePic))
                           : const AssetImage(
                                   'assets/images/default_profile.png')
                               as ImageProvider,

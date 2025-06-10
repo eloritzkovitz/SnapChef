@@ -121,7 +121,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               final user =
                   Provider.of<UserViewModel>(context, listen: false).user;
               await Provider.of<CookbookViewModel>(context, listen: false)
-                  .fetchSharedRecipes(user?.cookbookId ?? '');
+                  .fetchSharedRecipes(user?.cookbookId ?? '', user?.id ?? '');
               if (context.mounted) {
                 Navigator.push(
                   context,

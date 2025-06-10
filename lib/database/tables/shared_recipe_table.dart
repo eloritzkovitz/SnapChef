@@ -7,4 +7,7 @@ class SharedRecipes extends Table {
   TextColumn get toUser => text()();
   TextColumn get sharedAt => text()();
   TextColumn get status => text().withDefault(const Constant('pending'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
