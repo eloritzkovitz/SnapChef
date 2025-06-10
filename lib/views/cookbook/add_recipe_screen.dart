@@ -137,7 +137,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Add Your Own Recipe',
+          'Add Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
@@ -164,8 +164,17 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                               controller: _titleController,
                               decoration: InputDecoration(
                                 labelText: 'Title',
-                                border: const OutlineInputBorder(),
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon:
+                                    const Icon(Icons.title, color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
                               ),
@@ -182,8 +191,17 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                               controller: _descriptionController,
                               decoration: InputDecoration(
                                 labelText: 'Description',
-                                border: const OutlineInputBorder(),
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.description,
+                                    color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
                               ),
@@ -197,8 +215,18 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     value: _selectedMealType,
                                     decoration: InputDecoration(
                                       labelText: 'Meal Type',
-                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      prefixIcon: const Icon(Icons.restaurant,
+                                          color: Colors.grey),
                                       focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                         borderSide:
                                             BorderSide(color: primaryColor),
                                       ),
@@ -222,8 +250,18 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     value: _selectedCuisine,
                                     decoration: InputDecoration(
                                       labelText: 'Cuisine',
-                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      prefixIcon: const Icon(Icons.room_service,
+                                          color: Colors.grey),
                                       focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                         borderSide:
                                             BorderSide(color: primaryColor),
                                       ),
@@ -251,8 +289,18 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     value: _selectedDifficulty,
                                     decoration: InputDecoration(
                                       labelText: 'Difficulty',
-                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      prefixIcon: const Icon(Icons.emoji_events,
+                                          color: Colors.grey),
                                       focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                         borderSide:
                                             BorderSide(color: primaryColor),
                                       ),
@@ -277,8 +325,18 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       labelText: 'Prep Time (min)',
-                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      prefixIcon: const Icon(Icons.access_time,
+                                          color: Colors.grey),
                                       focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                         borderSide:
                                             BorderSide(color: primaryColor),
                                       ),
@@ -292,8 +350,18 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       labelText: 'Cooking Time (min)',
-                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      prefixIcon: const Icon(Icons.timer,
+                                          color: Colors.grey),
                                       focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                         borderSide:
                                             BorderSide(color: primaryColor),
                                       ),
@@ -314,9 +382,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                 minHeight: 120,
                               ),
                               child: Container(
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade400),
+                                decoration: BoxDecoration(                                  
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Scrollbar(
@@ -327,10 +393,21 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     maxLines: null,
                                     expands: true,
                                     scrollController: _recipeScrollController,
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
+                                    decoration: InputDecoration(                                      
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      filled: true,
+                                      fillColor: Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
                                       contentPadding: const EdgeInsets.all(12),
-                                      hintText: '''**Ingredients:**
+                                      hintText: '''# My Recipe
+
+This is a description of my recipe.
+
+**Ingredients:**
 *   1 cup Flour
 *   2 Eggs
 
