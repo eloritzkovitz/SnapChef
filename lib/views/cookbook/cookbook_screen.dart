@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'add_recipe_screen.dart';
 import 'recipe_search_delegate.dart';
@@ -9,9 +10,11 @@ import './widgets/cookbook_filter_sort_sheet.dart';
 import './widgets/recipe_card.dart';
 import '../../widgets/snapchef_appbar.dart';
 import '../../main.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../views/fridge/generate_recipe_screen.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});
@@ -22,8 +25,8 @@ class CookbookScreen extends StatefulWidget {
 
 class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
   final String serverUrl = dotenv.env['SERVER_IP'] ?? '';
-    bool showOnlyFavorites = false;
-  
+  bool showOnlyFavorites = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -65,10 +68,12 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final isOffline = Provider.of<ConnectivityProvider>(context).isOffline;
+
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Cookbook',
-            style: TextStyle(fontWeight: FontWeight.bold)),           
+            style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           // Filter & Sort button
           IconButton(
@@ -89,7 +94,8 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
               showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
               color: showOnlyFavorites ? Colors.black : Colors.black,
             ),
-            tooltip: showOnlyFavorites ? 'Show All Recipes' : 'Show Favorites Only',
+            tooltip:
+                showOnlyFavorites ? 'Show All Recipes' : 'Show Favorites Only',
             onPressed: () {
               setState(() {
                 showOnlyFavorites = !showOnlyFavorites;
@@ -117,10 +123,10 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
                   .fetchSharedRecipes(user?.cookbookId ?? '');
               if (context.mounted) {
                 Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const SharedRecipesScreen()),
-              );
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SharedRecipesScreen()),
+                );
               }
             },
           ),
@@ -192,23 +198,49 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
+        activeIcon: Icons.close,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        onPressed: () {
-          final cookbookId =
-              Provider.of<UserViewModel>(context, listen: false).cookbookId ??
-                  '';
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddRecipeScreen(cookbookId: cookbookId),
-            ),
-          );
-        },
-        tooltip: 'Add Manual Recipe',
-        child: const Icon(Icons.add),
+        spacing: 10,
+        spaceBetweenChildren: 8,
+        childPadding: const EdgeInsets.all(4),
+        animatedIconTheme: const IconThemeData(size: 22.0),
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.create_outlined, color: Colors.white),
+            backgroundColor: primarySwatch[300],
+            label: 'Add Recipe',
+            labelStyle: const TextStyle(fontSize: 12),
+            onTap: () {
+              final cookbookId =
+                  Provider.of<UserViewModel>(context, listen: false)
+                          .cookbookId ??
+                      '';
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddRecipeScreen(cookbookId: cookbookId),
+                ),
+              );
+            },
+          ),          
+          SpeedDialChild(
+            child: const Icon(Icons.auto_awesome, color: Colors.white),
+            backgroundColor: primarySwatch[300],
+            label: 'Generate Recipe',
+            labelStyle: const TextStyle(fontSize: 12),
+            onTap: isOffline
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => GenerateRecipeScreen()),
+                    );
+                  },           
+          ),          
+        ],
       ),
     );
   }

@@ -54,7 +54,7 @@ class QuickActions extends StatelessWidget {
           const SizedBox(width: 12),
           // Add recipe action
           ActionChip(
-            avatar: const Icon(Icons.add, color: primaryColor, size: 20),
+            avatar: const Icon(Icons.create_outlined, color: primaryColor, size: 20),
             label: const Text('Add Recipe'),
             onPressed: () {
               Navigator.push(

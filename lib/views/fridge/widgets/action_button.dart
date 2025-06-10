@@ -152,7 +152,7 @@ class ActionButton extends StatelessWidget {
       animatedIconTheme: const IconThemeData(size: 22.0),
       children: [
         SpeedDialChild(
-          child: const Icon(Icons.restaurant_menu, color: Colors.white),
+          child: const Icon(Icons.auto_awesome, color: Colors.white),
           backgroundColor:
               isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Generate Recipe',
