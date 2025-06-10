@@ -67,7 +67,7 @@ class SettingsMenu extends StatelessWidget {
               ),
               _buildMenuItem(
                 context: context,
-                icon: Icons.restaurant,
+                icon: Icons.restaurant_menu,
                 text: 'Preferences',
                 onTap: () {
                   Navigator.pop(context); 
