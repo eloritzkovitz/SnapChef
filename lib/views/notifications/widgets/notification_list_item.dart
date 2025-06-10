@@ -69,7 +69,7 @@ class NotificationListItem extends StatelessWidget {
       User? friend;
       try {
         friend = userViewModel.friends
-            .firstWhere((u) => u.fullName == (notification as FriendNotification).friendName);
+            .firstWhere((u) => u.id == (notification as FriendNotification).senderId);
       } catch (_) {
         friend = null;
       }
