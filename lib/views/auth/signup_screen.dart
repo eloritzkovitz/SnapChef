@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'otp_verification_screen.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
@@ -17,14 +16,7 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-    final primaryColor = Theme.of(context).primaryColor;
-
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
+    final primaryColor = Theme.of(context).primaryColor;   
 
     return Scaffold(
       body: SafeArea(

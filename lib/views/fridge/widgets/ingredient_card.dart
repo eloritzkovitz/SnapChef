@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../models/ingredient.dart';
 
@@ -33,12 +34,12 @@ class IngredientCard extends StatelessWidget {
             // Ingredient Image
             (ingredient.imageURL.isNotEmpty &&
                     ingredient.imageURL.startsWith('http'))
-                ? Image.network(
-                    ingredient.imageURL,
+                ? CachedNetworkImage(
+                    imageUrl: ingredient.imageURL,
                     height: 60,
                     width: 60,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                    errorWidget: (context, error, stackTrace) => Image.asset(
                       'assets/images/placeholder_image.png',
                       height: 60,
                       width: 60,

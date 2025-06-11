@@ -20,7 +20,7 @@ SnapChef follows the **MVVM (Model-View-ViewModel)** pattern for clear separatio
 | **Views**     | UI screens, pages, and reusable widgets.                                         |
 | **ViewModels**| State management, business logic, and data flow between views and services.      |
 | **Services**  | API communication, authentication, and integration with external services.       |
-| **Database**  | Local persistence using Floor (SQLite ORM), DAOs, and database classes.          |
+| **Database**  | Local persistence using Drift (SQLite ORM), DAOs, and database classes.          |
 | **Utils**     | Helper functions and utilities for formatting, validation, etc.                  |
 | **Theme**     | App-wide theming, color schemes, and text styles.                                |
 | **Constants** | Application-wide constant values and configuration.                              |
@@ -65,4 +65,4 @@ See [`lib/README.md`](/lib/README.md) for a detailed breakdown of the source cod
 - [MVVM Pattern in Flutter](https://docs.flutter.dev/app-architecture/guide)
 - [App State Management](https://docs.flutter.dev/development/data-and-backend/state-mgmt/simple)
 - [Provider Package Documentation](https://pub.dev/packages/provider)
-- [Floor ORM Documentation](https://pub.dev/packages/floor)
+- [Drift Documentation](https://drift.simonbinder.eu/setup/)

@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
+import '../../cookbook/view_recipe_screen.dart';
+import '../../../providers/connectivity_provider.dart';
 import '../../../theme/colors.dart';
+import '../../../utils/image_util.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 import '../../../viewmodels/cookbook_viewmodel.dart';
-import '../../cookbook/view_recipe_screen.dart';
-import '../../../utils/image_util.dart';
 
 class FavoritesGallery extends StatelessWidget {
   const FavoritesGallery({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final isOffline = Provider.of<ConnectivityProvider>(context).isOffline;
 
     return Consumer<CookbookViewModel>(
       builder: (context, cookbookViewModel, _) {
-        final favoriteRecipes = cookbookViewModel.filteredRecipes
-            .where((r) => r.isFavorite)
-            .toList();
+        final favoriteRecipes =
+            cookbookViewModel.filteredItems.where((r) => r.isFavorite).toList();
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -28,8 +28,10 @@ class FavoritesGallery extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Your Favorite Recipes',
+                Text(
+                  isOffline
+                      ? 'Oops! You are offline...'
+                      : 'Your Favorite Recipes',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -37,7 +39,40 @@ class FavoritesGallery extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (favoriteRecipes.isEmpty)
+                if (isOffline)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: cardSize,
+                        height: cardSize,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            'assets/images/default_offline_image.png',
+                            width: cardSize,
+                            height: cardSize,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'You are offline. Some functionality will be disabled.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  )
+                else if (favoriteRecipes.isEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -91,7 +126,11 @@ class FavoritesGallery extends StatelessWidget {
                               MaterialPageRoute(
                                 builder: (context) => ViewRecipeScreen(
                                   recipe: recipe,
-                                  cookbookId: userViewModel.cookbookId ?? '',
+                                  cookbookId: Provider.of<UserViewModel>(
+                                              context,
+                                              listen: false)
+                                          .cookbookId ??
+                                      '',
                                 ),
                               ),
                             );

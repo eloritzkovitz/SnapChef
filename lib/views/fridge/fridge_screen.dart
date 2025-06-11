@@ -8,6 +8,7 @@ import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
 import './widgets/ingredient_reminder_dialog.dart';
 import '../../models/notifications/ingredient_reminder.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../widgets/snapchef_appbar.dart';
@@ -120,7 +121,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
   @override
   Widget build(BuildContext context) {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    final fridgeId = userViewModel.fridgeId;    
+    final fridgeId = userViewModel.fridgeId;
 
     // Check if the user is null
     if (userViewModel.user == null) {
@@ -133,6 +134,9 @@ class _FridgeScreenState extends State<FridgeScreen> {
         ),
       );
     }
+
+    // Check if the device or the server are offline
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
 
     return Scaffold(
       appBar: SnapChefAppBar(
@@ -156,13 +160,16 @@ class _FridgeScreenState extends State<FridgeScreen> {
                   final vm =
                       Provider.of<FridgeViewModel>(context, listen: false);
                   return FilterSortSheet(
-                    selectedCategory: vm.selectedCategory ?? '',
-                    selectedSort: vm.selectedSortOption ?? '',
-                    categories: vm.getCategories(),
-                    onClear: vm.clearFilters,
+                    selectedCategory:
+                        vm.fridgeController.selectedCategory ?? '',
+                    selectedSort: vm.fridgeController.selectedSortOption ?? '',
+                    categories: vm.fridgeController.getCategories(),
+                    onClear: vm.fridgeController.clearFilters,
                     onApply: (cat, sort) {
-                      vm.filterByCategory(cat.isEmpty ? null : cat);
-                      vm.sortIngredients(sort.isEmpty ? null : sort);
+                      vm.fridgeController
+                          .filterByCategoryValue(cat.isEmpty ? null : cat);
+                      vm.fridgeController
+                          .sortByOption(sort.isEmpty ? null : sort);
                     },
                     categoryLabel: 'Category',
                     sortLabel: 'Sort By',
@@ -212,7 +219,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               );
             }
 
-            if (viewModel.filteredIngredients.isEmpty) {
+            if (viewModel.fridgeController.filteredItems.isEmpty) {
               // Show "No available ingredients" message if the fridge is empty
               return const Center(
                 child: Text(
@@ -225,7 +232,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
             // Render GridView or ListView based on the selected view mode
             return isListView
                 ? FridgeListView(
-                    ingredients: viewModel.filteredIngredients,
+                    ingredients: viewModel.fridgeController.filteredItems,
                     fridgeId: fridgeId!,
                     viewModel: viewModel,
                     onDelete: (ingredient) {
@@ -237,7 +244,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
                     },
                   )
                 : FridgeGridView(
-                    ingredients: viewModel.filteredIngredients,
+                    ingredients: viewModel.fridgeController.filteredItems,
                     fridgeId: fridgeId!,
                     viewModel: viewModel,
                     onDelete: (ingredient) {
@@ -251,8 +258,8 @@ class _FridgeScreenState extends State<FridgeScreen> {
           },
         ),
       ),
-      floatingActionButton: ActionButton(),
+      floatingActionButton: ActionButton(isDisabled: isOffline),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
-  }  
+  }
 }

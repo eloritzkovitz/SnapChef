@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../constants/notification_preferences.dart';
 
 class Preferences {
@@ -39,4 +40,14 @@ class Preferences {
         'allergies': allergies,
         'dietaryPreferences': dietaryPreferences,
       };
+  
+  /// Serialize Preferences to a JSON string for storage
+  static String toJsonString(Preferences prefs) {
+    return jsonEncode(prefs.toJson());
+  }
+
+  /// Deserialize Preferences from a JSON string
+  static Preferences fromJsonString(String jsonString) {
+    return Preferences.fromJson(jsonDecode(jsonString));
+  }
 }

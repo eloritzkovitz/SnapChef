@@ -8,10 +8,16 @@ This folder contains all the main source code for the SnapChef application. Belo
   Contains app-wide constant values such as strings, keys, and configuration variables.
 
 - [`database/`](./database/)    
-  Local persistence logic, including Floor entities, DAOs, and the database class.
+  Local persistence logic, including Drift entities, DAOs, and the database class.
 
 - [`models/`](./models/)   
   Data models representing core objects (e.g., User, Recipe, Ingredient) used throughout the app.
+
+- [`providers/`](./providers/)   
+  Providers that handle global state management (e.g. connectivity) used throughhout the app.
+
+- [`repositories/`](./repositories/) 
+  Repositories act as an abstraction layer between the data sources (local database and remote APIs) and the rest of the app. 
 
 - [`services/`](./services/)    
   Classes for handling business logic, API communication, authentication, and other external services.

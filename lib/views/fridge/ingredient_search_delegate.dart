@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/ingredient.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
@@ -36,16 +38,13 @@ class IngredientSearchDelegate extends SearchDelegate {
     if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (allIngredients == null) {
-      return const Center(child: Text('No ingredients found'));
-    }
     if (query.isEmpty) {
       return const Center(child: Text('Please enter a search term'));
     }
 
     final filteredResults = allIngredients.where((ingredient) {
-      final name = ingredient['name'].toString().toLowerCase();
-      final category = ingredient['category'].toString().toLowerCase();
+      final name = ingredient.name.toString().toLowerCase();
+      final category = ingredient.category.toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
@@ -59,14 +58,13 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredResults[index];
         return ListTile(
-          leading: (ingredient['imageURL'] != null &&
-                  ingredient['imageURL'].toString().isNotEmpty)
-              ? Image.network(
-                  ingredient['imageURL'],
+          leading: (ingredient.imageURL.toString().isNotEmpty)
+              ? CachedNetworkImage(
+                  imageUrl: ingredient.imageURL,
                   width: 40,
                   height: 40,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => SizedBox(
+                  errorWidget: (context, url, error) => SizedBox(
                     width: 40,
                     height: 40,
                     child: Icon(Icons.image_not_supported, size: 32),
@@ -77,8 +75,8 @@ class IngredientSearchDelegate extends SearchDelegate {
                   height: 40,
                   child: Icon(Icons.image_not_supported, size: 32),
                 ),
-          title: Text(ingredient['name']),
-          subtitle: Text('Category: ${ingredient['category']}'),
+          title: Text(ingredient.name),
+          subtitle: Text('Category: ${ingredient.category}'),
           trailing: IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -101,16 +99,14 @@ class IngredientSearchDelegate extends SearchDelegate {
     if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (allIngredients == null) {
-      return const Center(child: Text('No ingredients available'));
-    }
     if (query.isEmpty) {
-      return const Center(child: Text('Start typing to search for ingredients'));
+      return const Center(
+          child: Text('Start typing to search for ingredients'));
     }
 
     final filteredSuggestions = allIngredients.where((ingredient) {
-      final name = ingredient['name'].toString().toLowerCase();
-      final category = ingredient['category'].toString().toLowerCase();
+      final name = ingredient.name.toString().toLowerCase();
+      final category = ingredient.category.toString().toLowerCase();
       final searchQuery = query.toLowerCase();
       return name.contains(searchQuery) || category.contains(searchQuery);
     }).toList();
@@ -124,14 +120,13 @@ class IngredientSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final ingredient = filteredSuggestions[index];
         return ListTile(
-          leading: (ingredient['imageURL'] != null &&
-                  ingredient['imageURL'].toString().isNotEmpty)
-              ? Image.network(
-                  ingredient['imageURL'],
+          leading: (ingredient.imageURL.toString().isNotEmpty)
+              ? CachedNetworkImage(
+                  imageUrl: ingredient.imageURL,
                   width: 40,
                   height: 40,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => SizedBox(
+                  errorWidget: (context, error, stackTrace) => SizedBox(
                     width: 40,
                     height: 40,
                     child: Icon(Icons.image_not_supported, size: 32),
@@ -142,8 +137,8 @@ class IngredientSearchDelegate extends SearchDelegate {
                   height: 40,
                   child: Icon(Icons.image_not_supported, size: 32),
                 ),
-          title: Text(ingredient['name']),
-          subtitle: Text('Category: ${ingredient['category']}'),
+          title: Text(ingredient.name),
+          subtitle: Text('Category: ${ingredient.category}'),
           trailing: IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -151,7 +146,7 @@ class IngredientSearchDelegate extends SearchDelegate {
             },
           ),
           onTap: () {
-            query = ingredient['name'];
+            query = ingredient.name;
             showResults(context);
           },
         );
@@ -159,7 +154,7 @@ class IngredientSearchDelegate extends SearchDelegate {
     );
   }
 
-  void _showAddToFridgeDialog(BuildContext context, dynamic ingredient) {
+  void _showAddToFridgeDialog(BuildContext context, Ingredient ingredient) {
     int quantity = 1;
 
     showDialog(
@@ -167,10 +162,11 @@ class IngredientSearchDelegate extends SearchDelegate {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             backgroundColor: Colors.white,
             title: Text(
-              'Add ${ingredient['name']}',
+              'Add ${ingredient.name}',
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
@@ -180,18 +176,17 @@ class IngredientSearchDelegate extends SearchDelegate {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (ingredient['imageURL'] != null &&
-                      ingredient['imageURL'].toString().isNotEmpty)
+                  if (ingredient.imageURL.toString().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          ingredient['imageURL'],
+                        child: CachedNetworkImage(
+                          imageUrl: ingredient.imageURL,
                           width: 80,
                           height: 80,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => Icon(
+                          errorWidget: (context, url, error) => Icon(
                             Icons.image_not_supported,
                             size: 48,
                             color: Colors.grey[400],
@@ -217,7 +212,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                       ),
                     ),
                   Text(
-                    ingredient['category'] ?? '',
+                    ingredient.category,
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 16),
@@ -268,7 +263,8 @@ class IngredientSearchDelegate extends SearchDelegate {
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -296,10 +292,10 @@ class IngredientSearchDelegate extends SearchDelegate {
                         if (fridgeId != null && fridgeId.isNotEmpty) {
                           final success = await fridgeViewModel.addGroceryItem(
                             fridgeId,
-                            ingredient['id'],
-                            ingredient['name'],
-                            ingredient['category'],
-                            ingredient['imageURL'],
+                            ingredient.id,
+                            ingredient.name,
+                            ingredient.category,
+                            ingredient.imageURL,
                             quantity,
                           );
 
@@ -308,7 +304,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
-                                      '${ingredient['name']} added to groceries')),
+                                      '${ingredient.name} added to groceries')),
                             );
                           } else {
                             if (context.mounted) {
@@ -353,10 +349,10 @@ class IngredientSearchDelegate extends SearchDelegate {
                         if (fridgeId != null && fridgeId.isNotEmpty) {
                           final success = await fridgeViewModel.addFridgeItem(
                             fridgeId,
-                            ingredient['id'],
-                            ingredient['name'],
-                            ingredient['category'],
-                            ingredient['imageURL'],
+                            ingredient.id,
+                            ingredient.name,
+                            ingredient.category,
+                            ingredient.imageURL,
                             quantity,
                           );
 
@@ -365,7 +361,7 @@ class IngredientSearchDelegate extends SearchDelegate {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
-                                      '${ingredient['name']} added to fridge')),
+                                      '${ingredient.name} added to fridge')),
                             );
                           } else {
                             if (context.mounted) {
@@ -390,7 +386,8 @@ class IngredientSearchDelegate extends SearchDelegate {
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      child: Text('Cancel', style: TextStyle(color: primaryColor)),
+                      child:
+                          Text('Cancel', style: TextStyle(color: primaryColor)),
                     ),
                   ],
                 ),

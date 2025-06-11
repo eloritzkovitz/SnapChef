@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
 import '../../models/shared_recipe.dart';
-import '../../services/user_service.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/shared_recipe_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../widgets/base_screen.dart';
 import '../../widgets/display_recipe_widget.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class ViewSharedRecipeScreen extends StatefulWidget {
   final SharedRecipe sharedRecipe;
@@ -24,33 +26,24 @@ class ViewSharedRecipeScreen extends StatefulWidget {
 
 class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   late String? _currentImageUrl;
-  String? _sharedByName;
-  String? _sharedByProfilePic;
-
+  
   @override
   void initState() {
     super.initState();
     _currentImageUrl = widget.sharedRecipe.recipe.imageURL;
-    _fetchRelevantUser();
-  }
 
-  Future<void> _fetchRelevantUser() async {
-    final userService = UserService();
-    final userId = widget.isSharedByMe
-        ? widget.sharedRecipe.toUser
-        : widget.sharedRecipe.fromUser;
-    try {
-      final user = await userService.getUserProfile(userId);
-      setState(() {
-        _sharedByName = '${user.firstName} ${user.lastName}'.trim();
-        _sharedByProfilePic = user.profilePicture;
-      });
-    } catch (e) {
-      setState(() {
-        _sharedByName = null;
-        _sharedByProfilePic = null;
-      });
-    }
+    // Fetch user info
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);      
+      final userId = widget.isSharedByMe
+          ? widget.sharedRecipe.toUser
+          : widget.sharedRecipe.fromUser;
+      final currentUserId = userViewModel.user?.id ?? '';
+      userViewModel.fetchUserInfo(
+        userId: userId,
+        currentUserId: currentUserId,
+      );
+    });
   }
 
   // Save the shared recipe to the user's cookbook
@@ -116,7 +109,7 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
 
     try {
       if (context.mounted) {
-        await Provider.of<CookbookViewModel>(context, listen: false)
+        await Provider.of<SharedRecipeViewModel>(context, listen: false)
             .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
                 isSharedByMe: widget.isSharedByMe);
       }
@@ -142,17 +135,21 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipe = widget.sharedRecipe.recipe;
-    final sharedBy = _sharedByName ?? widget.sharedRecipe.fromUser;
+    final userViewModel = Provider.of<UserViewModel>(context);
+    final sharedBy = userViewModel.sharedUserName ??
+        (widget.isSharedByMe
+            ? widget.sharedRecipe.toUser
+            : widget.sharedRecipe.fromUser);
+    final sharedByProfilePic = userViewModel.sharedUserProfilePic;
 
-    return Scaffold(
-      appBar: AppBar(
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Shared Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        foregroundColor: Colors.black,        
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) async {
@@ -163,13 +160,14 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'add',
-                child: ListTile(
-                  leading: Icon(Icons.bookmark_add),
-                  title: Text('Add to Cookbook'),
+              if (!widget.isSharedByMe)
+                const PopupMenuItem<String>(
+                  value: 'add',
+                  child: ListTile(
+                    leading: Icon(Icons.bookmark_add),
+                    title: Text('Add to Cookbook'),
+                  ),
                 ),
-              ),
               PopupMenuItem<String>(
                 value: 'remove',
                 child: ListTile(
@@ -212,10 +210,10 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: (_sharedByProfilePic != null &&
-                              _sharedByProfilePic!.isNotEmpty)
+                      backgroundImage: (sharedByProfilePic != null &&
+                              sharedByProfilePic.isNotEmpty)
                           ? NetworkImage(
-                              ImageUtil().getFullImageUrl(_sharedByProfilePic!))
+                              ImageUtil().getFullImageUrl(sharedByProfilePic))
                           : const AssetImage(
                                   'assets/images/default_profile.png')
                               as ImageProvider,

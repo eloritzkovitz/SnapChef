@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 import '../../models/notifications/share_notification.dart';
 import '../../models/recipe.dart';
 import '../../models/user.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../widgets/base_screen.dart';
 import '../../widgets/display_recipe_widget.dart';
+import '../../widgets/snapchef_appbar.dart';
 import './widgets/edit_recipe_modal.dart';
 
 class ViewRecipeScreen extends StatefulWidget {
@@ -131,7 +134,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
 
     // Get the updated recipe from the viewmodel (if needed)
     if (success) {
-      final updatedRecipe = cookbookViewModel.filteredRecipes
+      final updatedRecipe = cookbookViewModel.filteredItems
           .firstWhere((r) => r.id == _recipe.id, orElse: () => _recipe);
       setState(() {
         _recipe = updatedRecipe;
@@ -448,28 +451,29 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    final isOffline = Provider.of<ConnectivityProvider>(context).isOffline;
+
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Recipe Details',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        foregroundColor: Colors.black,        
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
                 _showEditRecipeDialog(context);
               }
-              if (value == 'regenerate_image') {
+              if (value == 'regenerate_image' && !isOffline) {
                 _regenerateRecipeImage(context);
               }
               if (value == 'toggle_favorite') {
                 _toggleFavorite(context);
               }
-              if (value == 'share') {
+              if (value == 'share' && !isOffline) {
                 _showShareWithFriendDialog(context);
               }
               if (value == 'delete') {
@@ -488,15 +492,21 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                 ),
               ),
               PopupMenuItem(
-                value: 'regenerate_image',
-                child: Row(
-                  children: const [
-                    Icon(Icons.image, color: Colors.black),
-                    SizedBox(width: 8),
-                    Text('Regenerate Image'),
-                  ],
-                ),
+              value: 'regenerate_image',
+              enabled: !isOffline,
+              child: Row(
+                children: [
+                  Icon(Icons.image, color: isOffline ? Colors.grey : Colors.black),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Regenerate Image',
+                    style: TextStyle(
+                      color: isOffline ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ],
               ),
+            ),
               PopupMenuItem(
                 value: 'toggle_favorite',
                 child: Row(
@@ -513,15 +523,21 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                 ),
               ),
               PopupMenuItem(
-                value: 'share',
-                child: Row(
-                  children: const [
-                    Icon(Icons.share, color: Colors.black),
-                    SizedBox(width: 8),
-                    Text('Share Recipe'),
-                  ],
-                ),
+              value: 'share',
+              enabled: !isOffline,
+              child: Row(
+                children: [
+                  Icon(Icons.share, color: isOffline ? Colors.grey : Colors.black),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Share Recipe',
+                    style: TextStyle(
+                      color: isOffline ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ],
               ),
+            ),
               PopupMenuItem(
                 value: 'delete',
                 child: Row(

@@ -1,24 +1,33 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:snapchef/models/notifications/app_notification.dart';
-import 'package:snapchef/services/notification_service.dart';
-import 'package:snapchef/services/backend_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:snapchef/utils/token_util.dart';
+import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:snapchef/viewmodels/user_viewmodel.dart';
-import 'package:snapchef/models/notifications/ingredient_reminder.dart';
+import '../models/notifications/app_notification.dart';
+import '../models/notifications/ingredient_reminder.dart';
+import '../providers/connectivity_provider.dart';
+import '../providers/sync_provider.dart';
+import '../services/backend_notification_service.dart';
+import '../services/notification_service.dart';
+import '../services/sync_service.dart';
+import '../utils/token_util.dart';
+import '../viewmodels/user_viewmodel.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
   final BackendNotificationService _backendService =
       BackendNotificationService(baseUrl: dotenv.env['SERVER_IP']!);
 
+  final ConnectivityProvider connectivityProvider =
+      GetIt.I<ConnectivityProvider>();
+  final SyncProvider syncProvider = GetIt.I<SyncProvider>();
+  final SyncManager syncManager = GetIt.I<SyncManager>();
+
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
   StreamSubscription<AppNotification>? _wsSubscription;
   Timer? _refreshTimer;
-  Timer? _cleanupTimer; // <-- Add this line
+  Timer? _cleanupTimer;
 
   // Alerts: only future expiry/grocery notifications
   List<AppNotification> get alerts => _notifications
@@ -43,7 +52,7 @@ class NotificationsViewModel extends ChangeNotifier {
     _startAutoCleanup();
   }
 
-  // Start a periodic timer to refresh notifications every 5 minutes
+  /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
@@ -51,7 +60,7 @@ class NotificationsViewModel extends ChangeNotifier {
     });
   }
 
-  // Periodically move expired alerts to notifications and remove from alerts
+  /// Periodically moves expired alerts to notifications and removes from alerts.
   void _startAutoCleanup() {
     _cleanupTimer?.cancel(); // Cancel previous timer if any
     _cleanupTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
@@ -99,13 +108,13 @@ class NotificationsViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  // Initialize the notification service and load the notifications
+  /// Initializes the notification service and loads the notifications
   Future<void> _initialize() async {
     await _notificationService.initNotification();
     await syncNotifications();
   }
 
-  // Connect to WebSocket and listen for real-time notifications using context
+  /// Connects to WebSocket and listens for real-time notifications using context.
   Future<void> connectWebSocketAndListenWithContext(
       BuildContext context) async {
     final userToken = await TokenUtil.getAccessToken();
@@ -131,55 +140,129 @@ class NotificationsViewModel extends ChangeNotifier {
     }
   }
 
-  // Sync backend and local notifications (for initial load or manual refresh)
+  /// Syncs backend and local notifications.
   Future<void> syncNotifications() async {
     _isLoading = true;
     notifyListeners();
 
-    final backendNotifications = await _backendService.fetchNotifications();
+    final isOffline = connectivityProvider.isOffline;
 
-    // Cancel all scheduled notifications in the plugin to avoid duplicates
-    await _notificationService.notificationsPlugin.cancelAll();
-
-    // Schedule only backend notifications locally
-    for (final notif in backendNotifications) {
-      await _notificationService.scheduleNotification(notif);
+    if (isOffline) {
+      _notifications = await _notificationService.getStoredNotifications();
+      _isLoading = false;
+      notifyListeners();
+      return;
     }
 
-    // Overwrite local storage with backend notifications
-    await _notificationService.saveStoredNotifications(backendNotifications);
+    // 1. Fetch from backend
+    final backendNotifications = await _backendService.fetchNotifications();
 
-    _notifications = backendNotifications;
+    // 2. Get pending notification actions (add/edit) from SyncProvider
+    final pendingActions = await syncProvider.getPendingActions('notifications');
+
+    // 3. Apply pending actions to backendNotifications
+    List<AppNotification> mergedNotifications = List.from(backendNotifications);
+    for (final action in pendingActions) {
+      switch (action['action']) {
+        case 'add':
+          mergedNotifications.insert(
+              0, AppNotification.fromJson(action['notification']));
+          break;
+        case 'edit':
+          final idx = mergedNotifications
+              .indexWhere((n) => n.id == action['notification']['id']);
+          if (idx != -1) {
+            mergedNotifications[idx] =
+                AppNotification.fromJson(action['notification']);
+          }
+          break;
+        case 'delete':
+          mergedNotifications
+              .removeWhere((n) => n.id == action['notificationId']);
+          break;
+      }
+    }
+
+    // 4. Save merged list to local storage and update _notifications
+    await _notificationService.saveStoredNotifications(mergedNotifications);
+    _notifications = mergedNotifications;
     _isLoading = false;
     notifyListeners();
   }
 
-  // Generate a unique notification ID
+  /// Generates a unique notification ID.
   Future<String> generateUniqueNotificationId() async {
     return await _notificationService.generateUniqueNotificationId();
   }
 
-  // Add a new notification
+  /// Adds a new notification.
   Future<void> addNotification(AppNotification notification,
       [String? userId]) async {
+    if (connectivityProvider.isOffline) {
+      // Queue the action for later sync
+      GetIt.I<SyncProvider>().addPendingAction(
+        'notifications',
+        {
+          'action': 'add',
+          'notification': notification.toJson(),
+        },
+      );
+      // Optionally add to local list for immediate UI feedback
+      if (userId == null) {
+        _notifications.insert(0, notification);
+        notifyListeners();
+        // Persist to local storage
+        await _notificationService.saveStoredNotifications(_notifications);
+        // Schedule with local notifications plugin
+        await _notificationService.scheduleNotification(notification);
+      }
+      return;
+    }
     final created = await _backendService.createNotification(notification);
-    // Only add to local list if userId is null
     if (userId == null) {
       _notifications.insert(0, created);
       notifyListeners();
     }
   }
 
-  // Edit an existing notification
+  /// Updates an existing notification.
   Future<void> editNotification(
       String id, AppNotification updatedNotification) async {
+    if (connectivityProvider.isOffline) {
+      GetIt.I<SyncProvider>().addPendingAction(
+        'notifications',
+        {
+          'action': 'edit',
+          'notification': updatedNotification.toJson()..['id'] = id,
+        },
+      );
+      // Optionally update local list for immediate UI feedback
+      final idx = _notifications.indexWhere((n) => n.id == id);
+      if (idx != -1) {
+        _notifications[idx] = updatedNotification;
+        notifyListeners();
+      }
+      return;
+    }
     final backendNotif =
         await _backendService.updateNotification(id, updatedNotification);
     await _notificationService.editNotification(id, backendNotif);
   }
 
-  // Delete a notification
+  /// Deletes a notification.
   Future<void> deleteNotification(String id) async {
+    if (connectivityProvider.isOffline) {
+      GetIt.I<SyncProvider>().addPendingAction(
+        'notifications',
+        {
+          'action': 'delete',
+          'notificationId': id,
+        },
+      );
+      _notifications.removeWhere((n) => n.id == id);
+      notifyListeners();
+      return;
+    }
     await _backendService.deleteNotification(id);
     _notifications.removeWhere((n) => n.id == id);
     notifyListeners();

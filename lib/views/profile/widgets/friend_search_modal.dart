@@ -64,7 +64,7 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
       _isLoading = true;
       _error = null;
     });
-    
+
     // Exclude current user from results
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     final currentUserId = userViewModel.user?.id;
@@ -72,7 +72,7 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
     try {
       final users = await Provider.of<FriendViewModel>(context, listen: false)
           .searchUsers(_searchQuery);
-      
+
       setState(() {
         _results = users.where((u) => u.id != currentUserId).toList();
       });
@@ -216,12 +216,25 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
                           ),
                           const SizedBox(width: 18),
                           Expanded(
-                            child: Text(
-                              user.fullName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.fullName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user.email,
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (isFriend)

@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
-import '../../../services/image_service.dart';
-import '../../../viewmodels/user_viewmodel.dart';
 import 'recognition_results.dart';
-import '../generate_recipe_screen.dart';
+import '../../cookbook/generate_recipe_screen.dart';
+import '../../../services/image_service.dart';
 import '../../../theme/colors.dart';
+import '../../../utils/ui_util.dart';
+import '../../../viewmodels/user_viewmodel.dart';
 
 class ActionButton extends StatelessWidget {
-  ActionButton({super.key});
+  final bool isDisabled;
+  ActionButton({super.key, this.isDisabled = false});
 
   final ImageService _imageService = ImageService();
 
@@ -135,14 +137,14 @@ class ActionButton extends StatelessWidget {
         ],
       ),
     );
-  }
+  }  
 
   @override
   Widget build(BuildContext context) {
     return SpeedDial(
       icon: Icons.add,
       activeIcon: Icons.close,
-      backgroundColor: primaryColor,
+      backgroundColor: isDisabled ? disabledColor : primaryColor,
       foregroundColor: Colors.white,
       spacing: 10,
       spaceBetweenChildren: 8,
@@ -150,35 +152,43 @@ class ActionButton extends StatelessWidget {
       animatedIconTheme: const IconThemeData(size: 22.0),
       children: [
         SpeedDialChild(
-          child: const Icon(Icons.restaurant_menu, color: Colors.white),
-          backgroundColor: primarySwatch[300],
+          child: const Icon(Icons.auto_awesome, color: Colors.white),
+          backgroundColor:
+              isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Generate Recipe',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => GenerateRecipeScreen()));
-          },
+          onTap: isDisabled
+              ? () => UIUtil.showUnavailableOffline(context)
+              : () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => GenerateRecipeScreen()));
+                },
         ),
         SpeedDialChild(
           child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-          backgroundColor: primarySwatch[300],
+          backgroundColor:
+              isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Scan Barcode',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: () => _pickImage(context, 'barcode'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'barcode'),
         ),
         SpeedDialChild(
           child: const Icon(Icons.receipt_long, color: Colors.white),
-          backgroundColor: primarySwatch[300],
+          backgroundColor:
+              isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Scan Receipt',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: () => _pickImage(context, 'receipt'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'receipt'),
         ),
         SpeedDialChild(
           child: const Icon(Icons.photo_camera, color: Colors.white),
-          backgroundColor: primarySwatch[300],
+          backgroundColor:
+              isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Capture Photo',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: () => _pickImage(context, 'photo'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'photo'),
         ),
       ],
     );

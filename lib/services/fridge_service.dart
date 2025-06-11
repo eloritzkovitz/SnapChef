@@ -64,8 +64,24 @@ class FridgeService {
     }
   }
 
+  // Update the image URL of a fridge item
+  Future<bool> updateFridgeItemImageURL(
+      String fridgeId, String itemId, String imageURL) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/items/$itemId/image'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'imageURL': imageURL}),
+    );
+    return response.statusCode == 200;
+  }
+
   // Save the new fridge order to the backend
-  Future<void> saveFridgeOrder(String fridgeId, List<String> orderedIngredientIds) async {
+  Future<void> saveFridgeOrder(
+      String fridgeId, List<String> orderedIngredientIds) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.patch(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/items/reorder'),
@@ -156,8 +172,24 @@ class FridgeService {
     }
   }
 
+  // Update the image URL of a grocery item
+  Future<bool> updateGroceryItemImageURL(
+      String fridgeId, String itemId, String imageURL) async {
+    final token = await TokenUtil.getAccessToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/$itemId/image'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'imageURL': imageURL}),
+    );
+    return response.statusCode == 200;
+  }
+
   // Save the new fridge order to the backend
-  Future<void> saveGroceriesOrder(String fridgeId, List<String> orderedGroceriesIds) async {
+  Future<void> saveGroceriesOrder(
+      String fridgeId, List<String> orderedGroceriesIds) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.patch(
       Uri.parse('$baseUrl/api/fridge/$fridgeId/groceries/reorder'),

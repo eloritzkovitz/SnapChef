@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'recipe_result_screen.dart';
+import 'widgets/ingredient_chip_list.dart';
+import 'widgets/ingredient_selection_modal.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../models/ingredient.dart';
 import '../../models/preferences.dart';
 import '../../theme/colors.dart';
-import 'recipe_result_screen.dart';
-import 'widgets/ingredient_chip_list.dart';
-import 'widgets/ingredient_selection_modal.dart';
-import 'widgets/recipe_options_section.dart';
 
 class GenerateRecipeScreen extends StatefulWidget {
   const GenerateRecipeScreen({super.key});
@@ -93,6 +92,11 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     final preferences = userViewModel.user?.preferences ??
         Preferences(allergies: [], dietaryPreferences: {}, notificationPreferences: {});
 
+    // Example lists for dropdowns (replace with your actual lists)
+    final mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+    final cuisines = ['Italian', 'Chinese', 'Indian', 'Mexican'];
+    final difficulties = ['Easy', 'Medium', 'Hard'];
+
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -119,18 +123,143 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        RecipeOptionsSection(
-                          selectedMealType: _selectedMealType,
-                          selectedCuisine: _selectedCuisine,
-                          selectedDifficulty: _selectedDifficulty,
-                          prepTimeController: _prepTimeController,
-                          cookingTimeController: _cookingTimeController,
-                          onMealTypeChanged: (val) =>
-                              setState(() => _selectedMealType = val),
-                          onCuisineChanged: (val) =>
-                              setState(() => _selectedCuisine = val),
-                          onDifficultyChanged: (val) =>
-                              setState(() => _selectedDifficulty = val),
+                        // Redesigned options section
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Meal Type Dropdown
+                            DropdownButtonFormField<String>(
+                              value: _selectedMealType,
+                              decoration: InputDecoration(
+                                labelText: 'Meal Type',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.restaurant, color: Colors.grey),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                              ),
+                              items: mealTypes
+                                  .map((type) => DropdownMenuItem(
+                                        value: type,
+                                        child: Text(type),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) => setState(() => _selectedMealType = val),
+                              isExpanded: true,
+                              isDense: true,
+                              iconEnabledColor: primaryColor,
+                            ),
+                            const SizedBox(height: 8),
+                            // Cuisine Dropdown
+                            DropdownButtonFormField<String>(
+                              value: _selectedCuisine,
+                              decoration: InputDecoration(
+                                labelText: 'Cuisine',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.room_service, color: Colors.grey),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                              ),
+                              items: cuisines
+                                  .map((type) => DropdownMenuItem(
+                                        value: type,
+                                        child: Text(type),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) => setState(() => _selectedCuisine = val),
+                              isExpanded: true,
+                              isDense: true,
+                              iconEnabledColor: primaryColor,
+                            ),
+                            const SizedBox(height: 8),
+                            // Difficulty Dropdown
+                            DropdownButtonFormField<String>(
+                              value: _selectedDifficulty,
+                              decoration: InputDecoration(
+                                labelText: 'Difficulty',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.emoji_events, color: Colors.grey),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                              ),
+                              items: difficulties
+                                  .map((type) => DropdownMenuItem(
+                                        value: type,
+                                        child: Text(type),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) => setState(() => _selectedDifficulty = val),
+                              isExpanded: true,
+                              isDense: true,
+                              iconEnabledColor: primaryColor,
+                            ),
+                            const SizedBox(height: 8),
+                            // Prep Time
+                            TextFormField(
+                              controller: _prepTimeController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Prep Time (min)',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.access_time, color: Colors.grey),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Cooking Time
+                            TextFormField(
+                              controller: _cookingTimeController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Cooking Time (min)',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.timer, color: Colors.grey),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         SizedBox(

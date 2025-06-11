@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/fridge_viewmodel.dart';
@@ -84,12 +85,12 @@ class _RecognitionResultsWidgetState extends State<RecognitionResultsWidget> {
                                       borderRadius: BorderRadius.circular(8),
                                       child: imageUrl != null &&
                                               imageUrl.isNotEmpty
-                                          ? Image.network(
-                                              imageUrl,
+                                          ? CachedNetworkImage(
+                                              imageUrl: imageUrl,
                                               width: 50,
                                               height: 50,
                                               fit: BoxFit.contain,
-                                              errorBuilder: (context, error,
+                                              errorWidget: (context, error,
                                                       stackTrace) =>
                                                   const Icon(
                                                     Icons.image_not_supported,

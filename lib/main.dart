@@ -2,16 +2,22 @@ import 'dart:developer';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
+import 'service_locator.dart';
+import 'database/app_database.dart';
+import 'providers/connectivity_provider.dart';
 import 'services/ingredient_service.dart';
 import 'services/notification_service.dart';
+import 'services/sync_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/firebase_messaging_util.dart';
+import 'utils/navigation_observer.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/shared_recipe_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/ingredient_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
@@ -33,16 +39,11 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+// GetIt service locator instance
+final GetIt getIt = GetIt.instance;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Set navigation bar to orange before app starts
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      systemNavigationBarColor: Color(0xFFF47851),
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
 
   // Initialize the Notification Service
   await NotificationService().initNotification();
@@ -65,69 +66,56 @@ Future<void> main() async {
     log("Error loading .env file: $e");
   }
 
-  // Initialize the viewmodels
-  final authViewModel = AuthViewModel();
-  final userViewModel = UserViewModel();
-  userViewModel.listenForFcmTokenRefresh();
-  final fridgeViewModel = FridgeViewModel();
-  final cookbookViewModel = CookbookViewModel();
-  final friendViewModel = FriendViewModel();
+  // Initialize local database
+  final db = AppDatabase();
 
-  // Run the app with the login status and viewmodels
-  runApp(MyApp(
-    authViewModel: authViewModel,
-    userViewModel: userViewModel,
-    fridgeViewModel: fridgeViewModel,
-    cookbookViewModel: cookbookViewModel,
-    friendViewModel: friendViewModel,
-  ));
+  // Setup GetIt service locator
+  setupLocator(db);
+
+  // Run the app
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final AuthViewModel authViewModel;
-  final UserViewModel userViewModel;
-  final FridgeViewModel fridgeViewModel;
-  final CookbookViewModel cookbookViewModel;
-  final FriendViewModel friendViewModel;
-
-  const MyApp({
-    required this.authViewModel,
-    required this.userViewModel,
-    required this.fridgeViewModel,
-    required this.cookbookViewModel,
-    required this.friendViewModel,
-    super.key,
-  });
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Singletons/Providers
+        Provider<AppDatabase>.value(value: getIt<AppDatabase>()),
+        Provider<SyncManager>.value(value: getIt<SyncManager>()),
+        Provider<IngredientService>.value(value: getIt<IngredientService>()),
+        ChangeNotifierProvider<ConnectivityProvider>.value(
+            value: getIt<ConnectivityProvider>()),
+
+        // ViewModels
         ChangeNotifierProvider(create: (_) => MainViewModel()),
-        ChangeNotifierProvider(create: (_) => authViewModel),
-        ChangeNotifierProvider(create: (_) => userViewModel),
-        ChangeNotifierProvider(create: (_) => fridgeViewModel),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => UserViewModel()),
+        ChangeNotifierProvider(create: (_) => IngredientViewModel()),
+        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => cookbookViewModel),
-        ChangeNotifierProvider(create: (_) => friendViewModel),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
-        Provider<IngredientService>(create: (_) => IngredientService()),
-        ChangeNotifierProvider(
-          create: (context) => IngredientViewModel(
-            Provider.of<IngredientService>(context, listen: false),
-          ),
-        ),
+        ChangeNotifierProvider(create: (_) => SharedRecipeViewModel()),
+        ChangeNotifierProvider(create: (_) => CookbookViewModel()),        
+        ChangeNotifierProvider(create: (_) => FriendViewModel()),
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
       ],
-      child: MaterialApp(
-        theme: appTheme,
-        navigatorObservers: [routeObserver],
-        home: AnimatedSplashScreen(),
-        routes: {
-          '/login': (context) => LoginScreen(),
-          '/signup': (context) => SignupScreen(),
-          '/reset-password': (context) => const ResetPasswordScreen(),
-          '/confirm-reset': (context) => const ConfirmResetScreen(),
-          '/main': (context) => const MainScreen(),
+      child: Consumer<ConnectivityProvider>(
+        builder: (context, connectivity, child) {
+          return MaterialApp(
+            theme: appTheme,
+            navigatorObservers: [StatusBarObserver(context), routeObserver],
+            home: AnimatedSplashScreen(),
+            routes: {
+              '/login': (context) => LoginScreen(),
+              '/signup': (context) => SignupScreen(),
+              '/reset-password': (context) => const ResetPasswordScreen(),
+              '/confirm-reset': (context) => const ConfirmResetScreen(),
+              '/main': (context) => const MainScreen(),
+            },
+          );
         },
       ),
     );

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../constants/ui_constants.dart';
+import '../providers/connectivity_provider.dart';
 
 class SnapChefAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget title;
@@ -18,6 +21,8 @@ class SnapChefAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
+
     return Container(
       decoration: const BoxDecoration(
         border: Border(
@@ -27,16 +32,30 @@ class SnapChefAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-      child: AppBar(
-        title: title,
-        actions: actions,
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
-        elevation: elevation,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isOffline) const SizedBox(height: kOfflineBannerHeight),
+          AppBar(
+            title: title,
+            actions: actions,
+            backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
+            elevation: elevation,
+            shape: const Border(
+              bottom: BorderSide(
+                color: Color(0x14000000),
+                width: 1,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize {
+    return const Size.fromHeight(kToolbarHeight + kOfflineBannerHeight + 1);
+  }
 }

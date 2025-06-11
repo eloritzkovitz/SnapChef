@@ -1,101 +1,107 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import '../database/app_database.dart' as db;
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
-import '../models/shared_recipe.dart';
-import '../services/cookbook_service.dart';
+import '../providers/connectivity_provider.dart';
+import '../providers/sync_provider.dart';
+import '../repositories/cookbook_repository.dart';
+import '../services/sync_service.dart';
+import '../utils/sort_filter_mixin.dart';
 
-class CookbookViewModel extends ChangeNotifier {
+class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
-  List<Recipe> filteredRecipes = [];
-  List<SharedRecipe>? sharedWithMeRecipes = [];
-  List<SharedRecipe>? sharedByMeRecipes = [];
-  final CookbookService _cookbookService = CookbookService();
 
-  String _filter = '';
-  String? _selectedCategory;
-  String? _selectedCuisine;
-  String? _selectedDifficulty;
-  RangeValues? _prepTimeRange;
-  RangeValues? _cookingTimeRange;
-  RangeValues? _ratingRange;
-  String? _selectedSortOption;
-  String? _selectedSource;
+  final db.AppDatabase database = GetIt.I<db.AppDatabase>();
+  final ConnectivityProvider connectivityProvider =
+      GetIt.I<ConnectivityProvider>();
+  final CookbookRepository cookbookRepository = GetIt.I<CookbookRepository>();
 
-  String? get selectedCategory => _selectedCategory;
-  String? get selectedCuisine => _selectedCuisine;
-  String? get selectedDifficulty => _selectedDifficulty;
-  RangeValues? get prepTimeRange => _prepTimeRange;
-  RangeValues? get cookingTimeRange => _cookingTimeRange;
-  RangeValues? get ratingRange => _ratingRange;
-  String? get selectedSortOption => _selectedSortOption;
-  String? get selectedSource => _selectedSource;
+  final SyncProvider syncProvider = GetIt.I<SyncProvider>();
+  final SyncManager syncManager = GetIt.I<SyncManager>();
+
+  String? selectedCuisine;
+  String? selectedDifficulty;
+  RangeValues? prepTimeRange;
+  RangeValues? cookingTimeRange;
+  RangeValues? ratingRange;
+  String? selectedSource;
 
   bool _isLoading = false;
-
   bool get isLoading => _isLoading;
 
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
-  // Fetch all recipes in the cookbook
+  @override
+  void dispose() {
+    syncProvider.disposeSync();
+    syncManager.unregister(syncProvider.syncPendingActions);
+    super.dispose();
+  }
+
+  CookbookViewModel() {
+    syncManager.register(syncProvider.syncPendingActions);
+    syncProvider.initSync(connectivityProvider);
+    syncProvider.loadPendingActions();
+  }
+
+  // --- Cookbook logic ---
+
+  /// Fetches all recipes in the cookbook.
   Future<void> fetchCookbookRecipes(String cookbookId) async {
     _isLoading = true;
     notifyListeners();
 
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    await syncProvider.syncPendingActions();
+
     try {
-      final items = await _cookbookService.fetchCookbookRecipes(cookbookId);
+      // 1. Fetch remote recipes
+      final remoteRecipes =
+          await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
+      // 2. Fetch local recipes
+      final localRecipes =
+          await cookbookRepository.fetchCookbookRecipesLocal(cookbookId);
+
+      // 3. Merge: keep local-only recipes (not in remote)
+      final remoteIds = remoteRecipes.map((r) => r.id).toSet();
+      final localOnlyRecipes =
+          localRecipes.where((r) => !remoteIds.contains(r.id)).toList();
 
       _recipes.clear();
-      if (items.isNotEmpty) {
-        _recipes.addAll(
-          items.map((item) {
-            return Recipe(
-              id: item['_id'] ?? '',
-              title: item['title'],
-              description: item['description'],
-              mealType: item['mealType'],
-              cuisineType: item['cuisineType'],
-              difficulty: item['difficulty'],
-              prepTime: item['prepTime'],
-              cookingTime: item['cookingTime'],
-              ingredients: (item['ingredients'] as List<dynamic>)
-                  .map((ingredient) => Ingredient.fromJson(ingredient))
-                  .toList(),
-              instructions: List<String>.from(item['instructions']),
-              imageURL:
-                  item['imageURL'] ?? 'assets/images/placeholder_image.png',
-              rating: item['rating'] != null
-                  ? (item['rating'] as num).toDouble()
-                  : null,
-              isFavorite: item['isFavorite'] ?? false,
-              source: item['source'] == 'ai'
-                  ? RecipeSource.ai
-                  : item['source'] == 'shared'
-                      ? RecipeSource.shared
-                      : RecipeSource.user,
-            );
-          }).toList(),
-        );
-      }
+      _recipes.addAll(remoteRecipes);
+      _recipes.addAll(localOnlyRecipes);
 
-      _applyFiltersAndSorting();
+      await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+
+      applyFiltersAndSorting();
     } catch (e) {
       log('Error fetching cookbook recipes: $e');
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Fetch recipes shared with the user
-  Future<void> fetchSharedRecipes(String cookbookId) async {
-    final result = await _cookbookService.fetchSharedRecipes(cookbookId);
-    sharedWithMeRecipes = result['sharedWithMe'] ?? [];
-    sharedByMeRecipes = result['sharedByMe'] ?? [];
-    notifyListeners();
+  /// Loads recipes from local DB.
+  Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
+    final localRecipes =
+        await cookbookRepository.fetchCookbookRecipesLocal(userId);
+    _recipes.clear();
+    _recipes.addAll(localRecipes);
+    applyFiltersAndSorting();
   }
 
-  // Add a recipe to the cookbook
+  /// Adds a recipe to the cookbook.
   Future<bool> addRecipeToCookbook({
     required String cookbookId,
     required String title,
@@ -113,50 +119,51 @@ class CookbookViewModel extends ChangeNotifier {
     String? raw,
   }) async {
     try {
-      final recipeData = {
-        'title': title,
-        'description': description,
-        'mealType': mealType,
-        'cuisineType': cuisineType,
-        'difficulty': difficulty,
-        'prepTime': prepTime,
-        'cookingTime': cookingTime,
-        'ingredients':
-            ingredients.map((ingredient) => ingredient.toJson()).toList(),
-        'instructions': instructions,
-        'imageURL': imageURL,
-        'rating': rating,
-        'isFavorite': false,
-        'source': source == RecipeSource.ai
-            ? 'ai'
-            : source == RecipeSource.shared
-                ? 'shared'
-                : 'user',
-        'raw': raw,
-      };
+      final recipe = Recipe(
+        id: DateTime.now().toString(),
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: source,
+      );
 
-      final success =
-          await _cookbookService.addRecipeToCookbook(recipeData, cookbookId);
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        // Save locally and queue for sync
+        await cookbookRepository.addRecipeToCookbookLocal(cookbookId, recipe);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'add',
+          'cookbookId': cookbookId,
+          'recipe': recipe.toJson(),
+        });
+        await syncProvider.savePendingActions();
+        _recipes.add(recipe);
+        await cookbookRepository.storeCookbookRecipesLocal(
+            cookbookId, _recipes);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
+      final success = await cookbookRepository.addRecipeToCookbookRemote(
+        cookbookId,
+        recipe,
+        raw: raw,
+      );
       if (success) {
-        _recipes.add(
-          Recipe(
-            id: DateTime.now().toString(),
-            title: title,
-            description: description,
-            mealType: mealType,
-            cuisineType: cuisineType,
-            difficulty: difficulty,
-            prepTime: prepTime,
-            cookingTime: cookingTime,
-            ingredients: ingredients,
-            instructions: instructions,
-            imageURL: imageURL ?? '',
-            rating: rating,
-            isFavorite: false,
-            source: source,
-          ),
-        );
-        _applyFiltersAndSorting();
+        _recipes.add(recipe);
+        await cookbookRepository.storeCookbookRecipesLocal(
+            cookbookId, _recipes);
+        applyFiltersAndSorting();
         notifyListeners();
       }
       return success;
@@ -166,7 +173,7 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Update a recipe in the cookbook
+  /// Updates a recipe in the cookbook.
   Future<bool> updateRecipe({
     required String cookbookId,
     required String recipeId,
@@ -183,40 +190,56 @@ class CookbookViewModel extends ChangeNotifier {
     double? rating,
   }) async {
     try {
-      final updatedData = {
-        'title': title,
-        'description': description,
-        'mealType': mealType,
-        'cuisineType': cuisineType,
-        'difficulty': difficulty,
-        'prepTime': prepTime,
-        'cookingTime': cookingTime,
-        'ingredients':
-            ingredients.map((ingredient) => ingredient.toJson()).toList(),
-        'instructions': instructions,
-        'imageURL': imageURL,
-        'rating': rating,
-      };
+      final updatedRecipe = Recipe(
+        id: recipeId,
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: RecipeSource.user,
+      );
 
-      final success = await _cookbookService.updateCookbookRecipe(
-          cookbookId, recipeId, updatedData);
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        await cookbookRepository.updateRecipeLocal(cookbookId, updatedRecipe);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'update',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+          'updatedRecipe': updatedRecipe.toJson(),
+        });
+        await syncProvider.savePendingActions();
+        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+        if (index != -1) {
+          _recipes[index] = updatedRecipe;
+          await cookbookRepository.storeCookbookRecipesLocal(
+              cookbookId, _recipes);
+          applyFiltersAndSorting();
+          notifyListeners();
+        }
+        return true;
+      }
+
+      final success = await cookbookRepository.updateRecipeRemote(
+        cookbookId,
+        recipeId,
+        updatedRecipe,
+      );
       if (success) {
         final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
         if (index != -1) {
-          _recipes[index] = _recipes[index].copyWith(
-            title: title,
-            description: description,
-            mealType: mealType,
-            cuisineType: cuisineType,
-            difficulty: difficulty,
-            prepTime: prepTime,
-            cookingTime: cookingTime,
-            ingredients: ingredients,
-            instructions: instructions,
-            imageURL: imageURL ?? _recipes[index].imageURL,
-            rating: rating,
-          );
-          _applyFiltersAndSorting();
+          _recipes[index] = updatedRecipe;
+          await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+          applyFiltersAndSorting();
+          notifyListeners();
         }
       }
       return success;
@@ -226,19 +249,19 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Regenerate the image for a recipe in the cookbook
+  /// Regenerates the image for a recipe in the cookbook.
   Future<bool> regenerateRecipeImage({
     required String cookbookId,
     required String recipeId,
     required Map<String, dynamic> payload,
   }) async {
     try {
-      final newImageUrl = await _cookbookService.regenerateRecipeImage(
+      final newImageUrl = await cookbookRepository.regenerateRecipeImage(
           cookbookId, recipeId, payload);
       final index = _recipes.indexWhere((r) => r.id == recipeId);
       if (index != -1) {
         _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
-        _applyFiltersAndSorting();
+        applyFiltersAndSorting();
         notifyListeners();
       }
       return true;
@@ -248,20 +271,39 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Toggle the favorite status of a recipe
+  /// Toggles the favorite status of a recipe.
   Future<bool> toggleRecipeFavoriteStatus(
       String cookbookId, String recipeId) async {
     try {
-      final success = await _cookbookService.toggleRecipeFavoriteStatus(
+      final isOffline = connectivityProvider.isOffline;
+      final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+      if (index == -1) return false;
+
+      if (isOffline) {
+        await cookbookRepository.toggleRecipeFavoriteStatusLocal(
+            recipeId, !_recipes[index].isFavorite);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'toggleFavorite',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+        });
+        await syncProvider.savePendingActions();
+        _recipes[index] =
+            _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
+        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
+      final success = await cookbookRepository.toggleRecipeFavoriteStatusRemote(
           cookbookId, recipeId);
       if (success) {
-        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
-        if (index != -1) {
-          _recipes[index] = _recipes[index].copyWith(
-              isFavorite: !_recipes[index].isFavorite);
-          _applyFiltersAndSorting();
-          notifyListeners();
-        }
+        _recipes[index] =
+            _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
+        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+        applyFiltersAndSorting();
+        notifyListeners();
       }
       return success;
     } catch (e) {
@@ -270,14 +312,14 @@ class CookbookViewModel extends ChangeNotifier {
     }
   }
 
-  // Reorder a recipe in the cookbook
+  /// Reorders a recipe in the cookbook.
   Future<void> reorderRecipe(
       int oldIndex, int newIndex, String cookbookId) async {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
-    final recipe = filteredRecipes.removeAt(oldIndex);
-    filteredRecipes.insert(newIndex, recipe);
+    final recipe = filteredItems.removeAt(oldIndex);
+    filteredItems.insert(newIndex, recipe);
 
     // Also reorder in the main _recipes list to keep everything in sync
     final oldId = recipe.id;
@@ -285,11 +327,11 @@ class CookbookViewModel extends ChangeNotifier {
     if (oldMainIndex != -1) {
       final mainRecipe = _recipes.removeAt(oldMainIndex);
 
-      // Find the new index in the main list based on the next recipe in filteredRecipes
+      // Find the new index in the main list based on the next recipe in filteredItems
       int newMainIndex;
-      if (newIndex + 1 < filteredRecipes.length) {
-        // Insert before the next recipe in filteredRecipes
-        final nextId = filteredRecipes[newIndex + 1].id;
+      if (newIndex + 1 < filteredItems.length) {
+        // Insert before the next recipe in filteredItems
+        final nextId = filteredItems[newIndex + 1].id;
         newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
         if (newMainIndex == -1) {
           newMainIndex = _recipes.length;
@@ -301,72 +343,123 @@ class CookbookViewModel extends ChangeNotifier {
       _recipes.insert(newMainIndex, mainRecipe);
     }
 
+    final isOffline = connectivityProvider.isOffline;
+    final orderedIds = _recipes.map((r) => r.id).toList();
+
+    if (isOffline) {
+      await cookbookRepository.saveRecipeOrderLocal(orderedIds);
+      syncProvider.addPendingAction('cookbook', {
+        'action': 'reorder',
+        'cookbookId': cookbookId,
+        'orderedIds': orderedIds,
+      });
+      await syncProvider.savePendingActions();
+      await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+      notifyListeners();
+      return;
+    }
+
     // Save the new order to backend
     await saveRecipeOrder(cookbookId);
-
+    await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
     notifyListeners();
   }
 
-  // Save the new order to backend
+  /// Saves the new order to backend.
   Future<void> saveRecipeOrder(String cookbookId) async {
     try {
       // Send the list of recipe IDs in the new order
       final orderedIds = _recipes.map((r) => r.id).toList();
-      await _cookbookService.saveRecipeOrder(cookbookId, orderedIds);
+      await cookbookRepository.saveRecipeOrderRemote(cookbookId, orderedIds);
     } catch (e) {
       log('Error saving recipe order: $e');
     }
   }
 
-  // Share a recipe with a friend
+  /// Shares a recipe with a friend,
   Future<void> shareRecipeWithFriend({
     required String cookbookId,
     required String recipeId,
     required String friendId,
   }) async {
-    await _cookbookService.shareRecipeWithFriend(
+    await cookbookRepository.shareRecipeWithFriend(
       cookbookId: cookbookId,
       recipeId: recipeId,
       friendId: friendId,
     );
   }
 
-  // Remove a shared recipe
-  Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
-      {required bool isSharedByMe}) async {
-    try {
-      // Call the service to delete the shared recipe
-      await _cookbookService.deleteSharedRecipe(cookbookId, sharedRecipeId);
-
-      // Remove from the correct list
-      if (isSharedByMe) {
-        sharedByMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
-      } else {
-        sharedWithMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
-      }
-      notifyListeners();
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Delete a recipe from the cookbook
+  /// Deletes a recipe from the cookbook.
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     try {
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        await cookbookRepository.deleteRecipeLocal(recipeId);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'delete',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+        });
+        await syncProvider.savePendingActions();
+        _recipes.removeWhere((recipe) => recipe.id == recipeId);
+        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
       final success =
-          await _cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
+          await cookbookRepository.deleteRecipeRemote(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        _applyFiltersAndSorting();
+        await cookbookRepository.storeCookbookRecipesLocal(cookbookId, _recipes);
+        applyFiltersAndSorting();
+        notifyListeners();
       }
       return success;
     } catch (e) {
       log('Error deleting recipe: $e');
       return false;
     }
-  }  
+  }
 
-  // Get a list of all categories
+  /// Searches recipes by name.
+  List<Recipe> searchRecipes(String query) {
+    return _recipes
+        .where((recipe) =>
+            recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // --- SortFilterMixin implementation ---
+  @override
+  List<Recipe> get sourceList => _recipes;
+
+  @override
+  bool filterByCategory(Recipe item, String? category) =>
+      category == null || category.isEmpty
+          ? true
+          : item.mealType.toLowerCase() == category.toLowerCase();
+
+  @override
+  bool filterBySearch(Recipe item, String filter) =>
+      item.title.toLowerCase().contains(filter.toLowerCase());
+
+  @override
+  int sortItems(Recipe a, Recipe b, String? sortOption) {
+    if (sortOption == 'Name') {
+      return a.title.compareTo(b.title);
+    } else if (sortOption == 'Rating') {
+      return (b.rating ?? 0).compareTo(a.rating ?? 0);
+    } else if (sortOption == 'PrepTime') {
+      return a.prepTime.compareTo(b.prepTime);
+    } else if (sortOption == 'CookingTime') {
+      return a.cookingTime.compareTo(b.cookingTime);
+    }
+    return 0;
+  }
+
+  // --- Category/cuisine/difficulty getters for UI ---
   List<String> getCategories() {
     final categories =
         _recipes.map((recipe) => recipe.mealType).toSet().toList();
@@ -374,7 +467,6 @@ class CookbookViewModel extends ChangeNotifier {
     return categories;
   }
 
-  // Get a list of all cuisines
   List<String> getCuisines() {
     final cuisines =
         _recipes.map((recipe) => recipe.cuisineType).toSet().toList();
@@ -382,7 +474,6 @@ class CookbookViewModel extends ChangeNotifier {
     return cuisines;
   }
 
-  // Get a list of all difficulties
   List<String> getDifficulties() {
     final difficulties =
         _recipes.map((recipe) => recipe.difficulty).toSet().toList();
@@ -390,7 +481,6 @@ class CookbookViewModel extends ChangeNotifier {
     return difficulties;
   }
 
-  // Get min/max for prep/cooking time and rating
   int get minPrepTime => _recipes.isEmpty
       ? 0
       : _recipes.map((r) => r.prepTime).reduce((a, b) => a < b ? a : b);
@@ -410,154 +500,96 @@ class CookbookViewModel extends ChangeNotifier {
       ? 0
       : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
 
-  // Filter recipes by category
-  void filterByCategory(String? category) {
-    _selectedCategory = category;
-    _applyFiltersAndSorting();
-  }
+  @override
+  void applyFiltersAndSorting() {
+    // Start with all recipes
+    filteredItems = List<Recipe>.from(_recipes);
 
-  // Filter recipes by cuisine
-  void filterByCuisine(String? cuisine) {
-    _selectedCuisine = cuisine;
-    _applyFiltersAndSorting();
-  }
+    // Category (meal type)
+    if (selectedCategory != null && selectedCategory!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.mealType.toLowerCase() == selectedCategory!.toLowerCase())
+          .toList();
+    }
 
-  // Filter recipes by difficulty
-  void filterByDifficulty(String? difficulty) {
-    _selectedDifficulty = difficulty;
-    _applyFiltersAndSorting();
-  }
+    // Cuisine
+    if (selectedCuisine != null && selectedCuisine!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.cuisineType.toLowerCase() == selectedCuisine!.toLowerCase())
+          .toList();
+    }
 
-  // Filter recipes by prep time range
-  void filterByPrepTime(RangeValues? range) {
-    _prepTimeRange = range;
-    _applyFiltersAndSorting();
-  }
+    // Difficulty
+    if (selectedDifficulty != null && selectedDifficulty!.isNotEmpty) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.difficulty.toLowerCase() == selectedDifficulty!.toLowerCase())
+          .toList();
+    }
 
-  // Filter recipes by cooking time range
-  void filterByCookingTime(RangeValues? range) {
-    _cookingTimeRange = range;
-    _applyFiltersAndSorting();
-  }
+    // Prep Time
+    if (prepTimeRange != null) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.prepTime >= prepTimeRange!.start.toInt() &&
+              r.prepTime <= prepTimeRange!.end.toInt())
+          .toList();
+    }
 
-  // Filter recipes by rating range
-  void filterByRating(RangeValues? range) {
-    _ratingRange = range;
-    _applyFiltersAndSorting();
-  }
+    // Cooking Time
+    if (cookingTimeRange != null) {
+      filteredItems = filteredItems
+          .where((r) =>
+              r.cookingTime >= cookingTimeRange!.start.toInt() &&
+              r.cookingTime <= cookingTimeRange!.end.toInt())
+          .toList();
+    }
 
-  // Filter recipes by source
-  void filterBySource(String? source) {
-    _selectedSource = source;
-    _applyFiltersAndSorting();
-  }
-
-  // Sort recipes by selected option
-  void sortRecipes(String sortOption) {
-    _selectedSortOption = sortOption;
-    _applyFiltersAndSorting();
-  }
-
-  // Set a filter for recipe titles
-  void setFilter(String filter) {
-    _filter = filter;
-    _applyFiltersAndSorting();
-  }
-
-  // Apply filters and sorting to the recipes
-  void _applyFiltersAndSorting() {
-    filteredRecipes = List.from(_recipes);
-
-    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.mealType.toLowerCase() ==
-            _selectedCategory!.toLowerCase();
+    // Rating
+    if (ratingRange != null) {
+      filteredItems = filteredItems.where((r) {
+        final rating = r.rating ?? 0;
+        return rating >= ratingRange!.start && rating <= ratingRange!.end;
       }).toList();
     }
 
-    if (_selectedCuisine != null && _selectedCuisine!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.cuisineType.toLowerCase() ==
-            _selectedCuisine!.toLowerCase();
-      }).toList();
-    }
-
-    if (_selectedDifficulty != null && _selectedDifficulty!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.difficulty.toLowerCase() ==
-            _selectedDifficulty!.toLowerCase();
-      }).toList();
-    }
-
-    if (_prepTimeRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.prepTime >= _prepTimeRange!.start.toInt() &&
-            recipe.prepTime <= _prepTimeRange!.end.toInt();
-      }).toList();
-    }
-
-    if (_cookingTimeRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.cookingTime >= _cookingTimeRange!.start.toInt() &&
-            recipe.cookingTime <= _cookingTimeRange!.end.toInt();
-      }).toList();
-    }
-
-    if (_ratingRange != null) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        final rating = recipe.rating ?? 0;
-        return rating >= _ratingRange!.start && rating <= _ratingRange!.end;
-      }).toList();
-    }
-
-    if (_selectedSource != null && _selectedSource!.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        if (_selectedSource == 'ai') {
-          return recipe.source == RecipeSource.ai;
-        } else if (_selectedSource == 'user' || _selectedSource == 'manual') {
-          return recipe.source == RecipeSource.user;
+    // Source
+    if (selectedSource != null && selectedSource!.isNotEmpty) {
+      filteredItems = filteredItems.where((r) {
+        if (selectedSource == 'ai') {
+          return r.source == RecipeSource.ai;
+        } else if (selectedSource == 'user' || selectedSource == 'manual') {
+          return r.source == RecipeSource.user;
         }
         return true;
       }).toList();
     }
 
-    if (_filter.isNotEmpty) {
-      filteredRecipes = filteredRecipes.where((recipe) {
-        return recipe.title.toLowerCase().contains(_filter.toLowerCase());
-      }).toList();
+    if (filter.isNotEmpty) {
+      filteredItems =
+          filteredItems.where((item) => filterBySearch(item, filter)).toList();
     }
 
-    if (_selectedSortOption == 'Name') {
-      filteredRecipes.sort((a, b) => a.title.compareTo(b.title));
-    } else if (_selectedSortOption == 'Rating') {
-      filteredRecipes.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
-    } else if (_selectedSortOption == 'PrepTime') {
-      filteredRecipes.sort((a, b) => a.prepTime.compareTo(b.prepTime));
-    } else if (_selectedSortOption == 'CookingTime') {
-      filteredRecipes.sort((a, b) => a.cookingTime.compareTo(b.cookingTime));
+    if (selectedSortOption != null && selectedSortOption!.isNotEmpty) {
+      filteredItems.sort((a, b) => sortItems(a, b, selectedSortOption));
     }
+
     notifyListeners();
   }
 
-  // Search recipes by name
-  List<Recipe> searchRecipes(String query) {
-    return _recipes
-        .where((recipe) =>
-            recipe.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
-
-  // Reset all filters
+  @override
   void clearFilters() {
-    _selectedCategory = null;
-    _selectedCuisine = null;
-    _selectedDifficulty = null;
-    _prepTimeRange = null;
-    _cookingTimeRange = null;
-    _ratingRange = null;
-    _filter = '';
-    _selectedSortOption = null;
-    _selectedSource = null;
-    _applyFiltersAndSorting();
+    selectedCategory = null;
+    selectedSortOption = null;
+    filter = '';
+    selectedCuisine = null;
+    selectedDifficulty = null;
+    prepTimeRange = null;
+    cookingTimeRange = null;
+    ratingRange = null;
+    selectedSource = null;
+    applyFiltersAndSorting();
   }
 }

@@ -1,30 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:snapchef/database/app_database.dart' as db;
 import '../services/ingredient_service.dart';
+import '../database/daos/ingredient_dao.dart';
+import '../models/ingredient.dart';
 
 class IngredientViewModel extends ChangeNotifier {
-  List<dynamic>? _ingredients;
-  Map<String, dynamic>? _ingredientMap;
+  List<Ingredient> _ingredients = [];
+  Map<String, Ingredient>? _ingredientMap;
   bool _loading = false;
 
-  List<dynamic>? get ingredients => _ingredients;
-  Map<String, dynamic>? get ingredientMap => _ingredientMap;
+  List<Ingredient> get ingredients => _ingredients;
+  Map<String, Ingredient>? get ingredientMap => _ingredientMap;
   bool get loading => _loading;
 
-  final IngredientService _service;
+  final IngredientService _service = GetIt.I<IngredientService>();
+  final IngredientDao _ingredientDao = GetIt.I<db.AppDatabase>().ingredientDao;
 
-  IngredientViewModel(this._service);
-
-  /// Fetches all ingredients from the service and updates the state.
+  /// Fetches all ingredients from the service and updates the state and local DB if changed.
   Future<void> fetchIngredients() async {
     _loading = true;
     notifyListeners();
-    _ingredients = await _service.getAllIngredients();
-    // Build the map for fast lookup (case-insensitive, trimmed)
-    _ingredientMap = {
-      for (var ing in _ingredients!)
-        ing['name'].toString().trim().toLowerCase(): ing
-    };
-    _loading = false;
-    notifyListeners();
+
+    try {
+      // Try fetching from backend with a timeout
+      final fetchedJson = await _service
+          .getAllIngredients()
+          .timeout(const Duration(seconds: 3));
+      final fetchedIngredients = fetchedJson
+          .map<Ingredient>((json) => Ingredient.fromJson(json))
+          .toList();
+
+      // Load local ingredients from DB
+      final localIngredients = await _ingredientDao.getAllIngredients();
+
+      // Compare by id and content
+      final localIngredientsModel = localIngredients
+          .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
+          .toList();
+      bool isDifferent = fetchedIngredients.length != localIngredients.length ||
+          !_listEqualsByContent(fetchedIngredients, localIngredientsModel);
+
+      if (isDifferent) {
+        // Remove local ingredients not in fetched list
+        final fetchedIds = fetchedIngredients.map((e) => e.id).toSet();
+        for (final local in localIngredients) {
+          if (!fetchedIds.contains(local.id)) {
+            await _ingredientDao.deleteIngredient(local.id);
+          }
+        }
+
+        // Insert or update fetched ingredients
+        for (final ing in fetchedIngredients) {
+          await _ingredientDao.insertIngredient(ing.toCompanion());
+        }
+
+        _ingredients = fetchedIngredients;
+        _ingredientMap = {
+          for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
+        };
+      } else {
+        _ingredients = localIngredients
+            .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
+            .toList();
+        _ingredientMap = {
+          for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
+        };
+      }
+    } catch (e) {
+      // Fallback to local DB if backend fails or times out
+      final localIngredients = await _ingredientDao.getAllIngredients();
+      _ingredients = localIngredients
+          .map<Ingredient>((e) => Ingredient.fromJson(e.toJson()))
+          .toList();
+      _ingredientMap = {
+        for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
+      };
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  // Helper to compare lists by id and content
+  bool _listEqualsByContent(List<Ingredient> a, List<Ingredient> b) {
+    if (a.length != b.length) return false;
+    final bMap = {for (var ing in b) ing.id: ing};
+    for (final ingA in a) {
+      final ingB = bMap[ingA.id];
+      if (ingB == null ||
+          ingA.name != ingB.name ||
+          ingA.category != ingB.category ||
+          ingA.imageURL != ingB.imageURL ||
+          ingA.count != ingB.count) {
+        return false;
+      }
+    }
+    return true;
   }
 }

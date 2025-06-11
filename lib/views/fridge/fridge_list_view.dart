@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 
@@ -40,23 +41,24 @@ class FridgeListView extends StatelessWidget {
           key: ValueKey(ingredient.id),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          leading: (ingredient.imageURL != null && ingredient.imageURL.isNotEmpty)
-              ? Image.network(
-                  ingredient.imageURL,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: Icon(Icons.image_not_supported, size: 36),
-                  ),
-                )
-              : SizedBox(
-                  width: 50,
-                  height: 50,
-                  child: Icon(Icons.image_not_supported, size: 36),
-                ),
+          leading:
+              (ingredient.imageURL != null && ingredient.imageURL.isNotEmpty)
+                  ? CachedNetworkImage(
+                      imageUrl: ingredient.imageURL,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.contain,
+                      errorWidget: (context, error, stackTrace) => SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: Icon(Icons.image_not_supported, size: 36),
+                      ),
+                    )
+                  : SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: Icon(Icons.image_not_supported, size: 36),
+                    ),
           title: Row(
             children: [
               Expanded(
@@ -82,10 +84,12 @@ class FridgeListView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                icon:
+                    const Icon(Icons.remove_circle_outline, color: Colors.red),
                 onPressed: () {
                   if (ingredient.count > 1) {
-                    viewModel.decreaseCount(index, fridgeId);
+                    viewModel.changeCount(
+                        filteredIndex: index, fridgeId: fridgeId, delta: -1);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -96,12 +100,14 @@ class FridgeListView extends StatelessWidget {
               ),
               Text(
                 '${ingredient.count}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline, color: Colors.green),
                 onPressed: () {
-                  viewModel.increaseCount(index, fridgeId);
+                  viewModel.changeCount(
+                      filteredIndex: index, fridgeId: fridgeId, delta: 1);
                 },
               ),
               IconButton(
