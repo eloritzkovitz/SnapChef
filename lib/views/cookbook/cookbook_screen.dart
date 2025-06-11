@@ -235,7 +235,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             label: 'Generate Recipe',
             labelStyle: const TextStyle(fontSize: 12),
             onTap: isOffline
-                ? () => UIUtil().showOfflineSnackbar(context)
+                ? () => UIUtil.showUnavailableOffline(context)
                 : () {
                     Navigator.push(
                         context,

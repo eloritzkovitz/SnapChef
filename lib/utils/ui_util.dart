@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class UIUtil {
+
+  // --- SnackBar Utility Methods ---
+
   /// Show error message in a SnackBar.
   static void showError(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
@@ -8,11 +11,27 @@ class UIUtil {
   }
 
   /// Show unavailable offline message in a SnackBar.
-  void showOfflineSnackbar(BuildContext context) {
+  static void showUnavailableOffline(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Unavailable offline.')),
     );
   }
+
+  /// Show unavailable offline message in a SnackBar.
+  static void showOffline(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You are offline.')),
+    );
+  }
+
+  /// Show "Back online" message in a SnackBar.
+  static void showBackOnline(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Back online!')),
+    );
+  }
+
+  // --- String Formatting and Utility Methods ---
 
   /// Formats a string to capitalize the first letter in each word.
   String capitalize(String s) {
@@ -38,7 +57,7 @@ class UIUtil {
   /// Formats a raw date string to a more readable format.
   static String formatDate(DateTime? date) {
     if (date == null) return '';
-    try {      
+    try {
       return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
     } catch (e) {
       return 'Invalid date';

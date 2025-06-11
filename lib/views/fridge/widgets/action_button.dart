@@ -158,7 +158,7 @@ class ActionButton extends StatelessWidget {
           label: 'Generate Recipe',
           labelStyle: const TextStyle(fontSize: 12),
           onTap: isDisabled
-              ? () => UIUtil().showOfflineSnackbar(context)
+              ? () => UIUtil.showUnavailableOffline(context)
               : () {
                   Navigator.push(
                       context,
@@ -172,7 +172,7 @@ class ActionButton extends StatelessWidget {
               isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Scan Barcode',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: isDisabled ? () => UIUtil().showOfflineSnackbar(context) : () => _pickImage(context, 'barcode'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'barcode'),
         ),
         SpeedDialChild(
           child: const Icon(Icons.receipt_long, color: Colors.white),
@@ -180,7 +180,7 @@ class ActionButton extends StatelessWidget {
               isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Scan Receipt',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: isDisabled ? () => UIUtil().showOfflineSnackbar(context) : () => _pickImage(context, 'receipt'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'receipt'),
         ),
         SpeedDialChild(
           child: const Icon(Icons.photo_camera, color: Colors.white),
@@ -188,7 +188,7 @@ class ActionButton extends StatelessWidget {
               isDisabled ? disabledSecondaryColor : primarySwatch[300],
           label: 'Capture Photo',
           labelStyle: const TextStyle(fontSize: 12),
-          onTap: isDisabled ? () => UIUtil().showOfflineSnackbar(context) : () => _pickImage(context, 'photo'),
+          onTap: isDisabled ? () => UIUtil.showUnavailableOffline(context) : () => _pickImage(context, 'photo'),
         ),
       ],
     );

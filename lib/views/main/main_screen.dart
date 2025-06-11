@@ -6,6 +6,7 @@ import '../cookbook/cookbook_screen.dart';
 import '../profile/profile_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../../providers/connectivity_provider.dart';
+import '../../utils/ui_util.dart';
 import '../../viewmodels/main_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
@@ -23,6 +24,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   bool _hasInitializedFridge = false;
   bool _hasInitializedCookbook = false;
+  bool? _wasOffline;
 
   @override
   void initState() {
@@ -37,6 +39,18 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    // Check connectivity status and show snackbar if changed
+    final isOffline = context.watch<ConnectivityProvider>().isOffline;
+    if (_wasOffline != null && _wasOffline != isOffline) {
+      if (isOffline) {
+        // Show offline snackbar
+        UIUtil.showOffline(context);
+      } else {
+       UIUtil.showBackOnline(context);
+      }
+    }
+    _wasOffline = isOffline;
 
     // Initialize fridge ingredients
     if (!_hasInitializedFridge) {
