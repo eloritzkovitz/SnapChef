@@ -7,6 +7,8 @@ import 'package:snapchef/models/user.dart';
 import 'package:snapchef/utils/image_util.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 
+import '../../../utils/ui_util.dart';
+
 class NotificationListItem extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback? onDelete;
@@ -34,8 +36,8 @@ class NotificationListItem extends StatelessWidget {
       color = Colors.orange;
       User? sender;
       try {
-        sender = userViewModel.friends
-            .firstWhere((u) => u.id == (notification as ShareNotification).senderId);
+        sender = userViewModel.friends.firstWhere(
+            (u) => u.id == (notification as ShareNotification).senderId);
       } catch (_) {
         sender = null;
       }
@@ -68,8 +70,8 @@ class NotificationListItem extends StatelessWidget {
       color = Colors.green;
       User? friend;
       try {
-        friend = userViewModel.friends
-            .firstWhere((u) => u.id == (notification as FriendNotification).senderId);
+        friend = userViewModel.friends.firstWhere(
+            (u) => u.id == (notification as FriendNotification).senderId);
       } catch (_) {
         friend = null;
       }
@@ -112,7 +114,7 @@ class NotificationListItem extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 24),        
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: confirmDismiss,
@@ -121,7 +123,7 @@ class NotificationListItem extends StatelessWidget {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-        ),        
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           child: Row(
@@ -156,11 +158,8 @@ class NotificationListItem extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${notification.scheduledTime.toLocal().hour.toString().padLeft(2, '0')}:${notification.scheduledTime.toLocal().minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                UIUtil.formatNotificationRelative(notification.scheduledTime),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),

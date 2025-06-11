@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class UIUtil {
-
   // --- SnackBar Utility Methods ---
 
   /// Show error message in a SnackBar.
@@ -63,4 +62,41 @@ class UIUtil {
       return 'Invalid date';
     }
   }
+
+  /// Returns a short relative time string for a scheduled date.  
+  static String formatNotificationRelative(DateTime scheduled) {
+  final now = DateTime.now();
+  final diff = scheduled.difference(now);
+
+  // Use absolute value for formatting
+  final absDiff = diff.isNegative ? -diff : diff;
+
+  String unit;
+  int value;
+
+  if (absDiff.inSeconds < 60) {
+    value = absDiff.inSeconds;
+    unit = 's';
+  } else if (absDiff.inMinutes < 60) {
+    value = absDiff.inMinutes;
+    unit = 'm';
+  } else if (absDiff.inHours < 24) {
+    value = absDiff.inHours;
+    unit = 'h';
+  } else if (absDiff.inDays < 7) {
+    value = absDiff.inDays;
+    unit = 'd';
+  } else if (absDiff.inDays < 30) {
+    value = (absDiff.inDays / 7).floor();
+    unit = 'w';
+  } else if (absDiff.inDays < 365) {
+    value = (absDiff.inDays / 30).floor();
+    unit = 'mo';
+  } else {
+    value = (absDiff.inDays / 365).floor();
+    unit = 'y';
+  }
+  
+  return diff.isNegative ? '$value$unit' : '$value$unit';
+}
 }
