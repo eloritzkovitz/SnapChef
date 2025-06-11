@@ -148,27 +148,44 @@ class NotificationsViewModel extends ChangeNotifier {
     final isOffline = connectivityProvider.isOffline;
 
     if (isOffline) {
-      // Load from local storage
       _notifications = await _notificationService.getStoredNotifications();
       _isLoading = false;
       notifyListeners();
       return;
     }
 
+    // 1. Fetch from backend
     final backendNotifications = await _backendService.fetchNotifications();
 
-    // Cancel all scheduled notifications in the plugin to avoid duplicates
-    await _notificationService.notificationsPlugin.cancelAll();
+    // 2. Get pending notification actions (add/edit) from SyncProvider
+    final pendingActions = await syncProvider.getPendingActions('notifications');
 
-    // Schedule only backend notifications locally
-    for (final notif in backendNotifications) {
-      await _notificationService.scheduleNotification(notif);
+    // 3. Apply pending actions to backendNotifications
+    List<AppNotification> mergedNotifications = List.from(backendNotifications);
+    for (final action in pendingActions) {
+      switch (action['action']) {
+        case 'add':
+          mergedNotifications.insert(
+              0, AppNotification.fromJson(action['notification']));
+          break;
+        case 'edit':
+          final idx = mergedNotifications
+              .indexWhere((n) => n.id == action['notification']['id']);
+          if (idx != -1) {
+            mergedNotifications[idx] =
+                AppNotification.fromJson(action['notification']);
+          }
+          break;
+        case 'delete':
+          mergedNotifications
+              .removeWhere((n) => n.id == action['notificationId']);
+          break;
+      }
     }
 
-    // Overwrite local storage with backend notifications
-    await _notificationService.saveStoredNotifications(backendNotifications);
-
-    _notifications = backendNotifications;
+    // 4. Save merged list to local storage and update _notifications
+    await _notificationService.saveStoredNotifications(mergedNotifications);
+    _notifications = mergedNotifications;
     _isLoading = false;
     notifyListeners();
   }
@@ -184,7 +201,7 @@ class NotificationsViewModel extends ChangeNotifier {
     if (connectivityProvider.isOffline) {
       // Queue the action for later sync
       GetIt.I<SyncProvider>().addPendingAction(
-        'notification',
+        'notifications',
         {
           'action': 'add',
           'notification': notification.toJson(),
@@ -213,7 +230,7 @@ class NotificationsViewModel extends ChangeNotifier {
       String id, AppNotification updatedNotification) async {
     if (connectivityProvider.isOffline) {
       GetIt.I<SyncProvider>().addPendingAction(
-        'notification',
+        'notifications',
         {
           'action': 'edit',
           'notification': updatedNotification.toJson()..['id'] = id,
@@ -236,7 +253,7 @@ class NotificationsViewModel extends ChangeNotifier {
   Future<void> deleteNotification(String id) async {
     if (connectivityProvider.isOffline) {
       GetIt.I<SyncProvider>().addPendingAction(
-        'notification',
+        'notifications',
         {
           'action': 'delete',
           'notificationId': id,

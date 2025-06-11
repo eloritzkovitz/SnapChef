@@ -46,6 +46,12 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
+  /// Returns the pending actions for a given queue.
+  Future<List<Map<String, dynamic>>> getPendingActions(String queue) async {
+    await loadPendingActions();
+    return pendingActionQueues[queue] ?? [];
+  }
+
   /// Adds an action to a specific queue.
   void addPendingAction(String queue, Map<String, dynamic> action) {
     pendingActionQueues.putIfAbsent(queue, () => []);
