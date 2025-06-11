@@ -67,7 +67,12 @@ class UserViewModel extends ChangeNotifier {
       // Store friends in local DB
       if (userProfile != null && userProfile.friends.isNotEmpty) {
         for (final friend in userProfile.friends) {
-          await userRepository.storeFriendLocal(friend, userProfile.id);
+          // Fetch full profile from remote and store locally
+          final fullProfile =
+              await userRepository.fetchUserProfileRemote(friend.id);
+          if (fullProfile != null) {
+            await userRepository.storeFriendLocal(fullProfile, userProfile.id);
+          }
         }
       }
 
@@ -191,7 +196,7 @@ class UserViewModel extends ChangeNotifier {
     await userRepository.storeUserLocal(_user!);
   }
 
-  /// Updates FCM Token for the current user.  
+  /// Updates FCM Token for the current user.
   Future<void> updateFcmToken(String? token) async {
     if (token == null || token.isEmpty) return;
     try {
