@@ -4,7 +4,7 @@ import '../../../theme/colors.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 import '../../../providers/connectivity_provider.dart';
 import '../../fridge/ingredient_search_delegate.dart';
-import '../../fridge/generate_recipe_screen.dart';
+import '../../cookbook/generate_recipe_screen.dart';
 import '../../cookbook/add_recipe_screen.dart';
 
 class QuickActions extends StatelessWidget {

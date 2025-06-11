@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'recognition_results.dart';
-import '../generate_recipe_screen.dart';
+import '../../cookbook/generate_recipe_screen.dart';
 import '../../../services/image_service.dart';
 import '../../../theme/colors.dart';
 import '../../../utils/ui_util.dart';

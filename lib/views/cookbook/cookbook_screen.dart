@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/shared_recipe_viewmodel.dart';
 import 'add_recipe_screen.dart';
+import 'generate_recipe_screen.dart';
 import 'recipe_search_delegate.dart';
 import 'shared_recipes_screen.dart';
 import 'view_recipe_screen.dart';
@@ -14,9 +14,9 @@ import '../../main.dart';
 import '../../providers/connectivity_provider.dart';
 import '../../theme/colors.dart';
 import '../../utils/ui_util.dart';
-import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
-import '../../views/fridge/generate_recipe_screen.dart';
+import '../../viewmodels/shared_recipe_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class CookbookScreen extends StatefulWidget {
   const CookbookScreen({super.key});

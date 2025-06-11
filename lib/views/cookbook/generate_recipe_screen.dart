@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'recipe_result_screen.dart';
+import 'widgets/ingredient_chip_list.dart';
+import 'widgets/ingredient_selection_modal.dart';
+import 'widgets/recipe_options_section.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/recipe_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../models/ingredient.dart';
 import '../../models/preferences.dart';
 import '../../theme/colors.dart';
-import 'recipe_result_screen.dart';
-import 'widgets/ingredient_chip_list.dart';
-import 'widgets/ingredient_selection_modal.dart';
-import 'widgets/recipe_options_section.dart';
 
 class GenerateRecipeScreen extends StatefulWidget {
   const GenerateRecipeScreen({super.key});
