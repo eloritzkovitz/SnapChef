@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
+import 'providers/sync_actions/cookbook_sync_actions.dart';
 import 'providers/sync_actions/fridge_sync_actions.dart';
 import 'providers/sync_actions/grocery_sync_actions.dart';
 import 'providers/sync_provider.dart';
@@ -40,8 +41,9 @@ void setupLocator(AppDatabase db) {
   getIt.registerLazySingleton<FridgeRepository>(() => FridgeRepository());
   
   // Cookbook/Shared Recipes
-  getIt.registerLazySingleton<CookbookService>(() => CookbookService());
-  getIt.registerLazySingleton<CookbookRepository>(() => CookbookRepository());
+  getIt.registerLazySingleton<CookbookService>(() => CookbookService());  
+  getIt.registerLazySingleton<CookbookRepository>(() => CookbookRepository()); 
+  getIt.registerLazySingleton<CookbookSyncActions>(() => CookbookSyncActions(getIt<CookbookRepository>()));
   getIt.registerLazySingleton<SharedRecipeService>(() => SharedRecipeService());
   getIt.registerLazySingleton<SharedRecipeRepository>(() => SharedRecipeRepository());
 }

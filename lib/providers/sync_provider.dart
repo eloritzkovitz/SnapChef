@@ -3,10 +3,11 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/connectivity_provider.dart';
-import '../providers/sync_actions/fridge_sync_actions.dart';
-import '../providers/sync_actions/grocery_sync_actions.dart';
+import 'sync_actions/cookbook_sync_actions.dart';
+import 'sync_actions/fridge_sync_actions.dart';
+import 'sync_actions/grocery_sync_actions.dart';
 import 'sync_actions/notification_sync_actions.dart';
+import '../providers/connectivity_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -17,6 +18,7 @@ class SyncProvider extends ChangeNotifier {
   // Get sync actions
   FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
   GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
+  CookbookSyncActions get cookbookSyncActions => getIt<CookbookSyncActions>();
   NotificationSyncActions get notificationSyncActions => getIt<NotificationSyncActions>();
 
   ConnectivityProvider? _syncConnectivityProvider;
@@ -77,6 +79,9 @@ class SyncProvider extends ChangeNotifier {
         break;
       case 'grocery':
         await grocerySyncActions.handleGroceryAction(action);
+        break;
+      case 'cookbook':
+        await cookbookSyncActions.handleCookbookAction(action);
         break;
       case 'notifications':
        await notificationSyncActions.handleNotificationAction(action);
