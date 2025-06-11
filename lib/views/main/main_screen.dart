@@ -8,10 +8,7 @@ import '../notifications/notifications_screen.dart';
 import '../../providers/connectivity_provider.dart';
 import '../../utils/ui_util.dart';
 import '../../viewmodels/main_viewmodel.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
-import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/ingredient_viewmodel.dart';
 import '../../widgets/offline_banner.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,9 +18,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  bool _hasInitializedFridge = false;
-  bool _hasInitializedCookbook = false;
+class _MainScreenState extends State<MainScreen> {  
   bool? _wasOffline;
 
   @override
@@ -59,41 +54,7 @@ class _MainScreenState extends State<MainScreen> {
         }
       });
     }
-    _wasOffline = isOffline;
-
-    // Initialize fridge ingredients
-    if (!_hasInitializedFridge) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final userViewModel = context.read<UserViewModel>();
-        final fridgeViewModel = context.read<FridgeViewModel>();
-        final ingredientViewModel =
-            Provider.of<IngredientViewModel>(context, listen: false);
-
-        final fridgeId = userViewModel.fridgeId;
-        if (fridgeId != null) {
-          await ingredientViewModel.fetchIngredients();
-          fridgeViewModel.fetchFridgeIngredients(fridgeId, ingredientViewModel);
-          fridgeViewModel.fetchGroceries(fridgeId, ingredientViewModel);
-        }
-      });
-
-      _hasInitializedFridge = true;
-    }
-
-    // Initialize cookbook recipes
-    if (!_hasInitializedCookbook) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final authViewModel = context.read<UserViewModel>();
-        final cookbookViewModel = context.read<CookbookViewModel>();
-
-        final cookbookId = authViewModel.cookbookId;
-        if (cookbookId != null) {
-          cookbookViewModel.fetchCookbookRecipes(cookbookId);
-        }
-      });
-
-      _hasInitializedCookbook = true;
-    }
+    _wasOffline = isOffline;    
   }
 
   @override
