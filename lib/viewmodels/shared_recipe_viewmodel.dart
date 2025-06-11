@@ -52,6 +52,9 @@ class SharedRecipeViewModel extends ChangeNotifier {
       return;
     }
 
+    // Sync pending actions before fetching remote data
+    await syncProvider.syncPendingActions();
+
     // Fetch from remote and cache locally
     final result =
         await sharedRecipeRepository.fetchSharedRecipesRemote(cookbookId);
@@ -67,6 +70,22 @@ class SharedRecipeViewModel extends ChangeNotifier {
     ];
     if (allShared.isNotEmpty) {
       await sharedRecipeRepository.storeSharedRecipesLocal(allShared);
+    }
+
+    // Merge pending remove actions
+    final pendingActions = await syncProvider.getPendingActions('sharedRecipe');
+    List<SharedRecipe> mergedWithMe = List.from(result['sharedWithMe'] ?? []);
+    List<SharedRecipe> mergedByMe = List.from(result['sharedByMe'] ?? []);
+
+    for (final action in pendingActions) {
+      if (action['action'] == 'removeShared') {
+        final id = action['sharedRecipeId'];
+        if (action['isSharedByMe'] == true) {
+          mergedByMe.removeWhere((r) => r.id == id);
+        } else {
+          mergedWithMe.removeWhere((r) => r.id == id);
+        }
+      }      
     }
 
     sharedWithMeRecipes = result['sharedWithMe'] ?? [];

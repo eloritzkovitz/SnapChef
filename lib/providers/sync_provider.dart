@@ -8,6 +8,7 @@ import 'sync_actions/fridge_sync_actions.dart';
 import 'sync_actions/grocery_sync_actions.dart';
 import 'sync_actions/notification_sync_actions.dart';
 import '../providers/connectivity_provider.dart';
+import 'sync_actions/shared_recipe_sync_actions.dart';
 
 final getIt = GetIt.instance;
 
@@ -19,6 +20,7 @@ class SyncProvider extends ChangeNotifier {
   FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
   GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
   CookbookSyncActions get cookbookSyncActions => getIt<CookbookSyncActions>();
+  SharedRecipeSyncActions get sharedRecipeSyncActions => getIt<SharedRecipeSyncActions>();
   NotificationSyncActions get notificationSyncActions => getIt<NotificationSyncActions>();
 
   ConnectivityProvider? _syncConnectivityProvider;
@@ -82,6 +84,9 @@ class SyncProvider extends ChangeNotifier {
         break;
       case 'cookbook':
         await cookbookSyncActions.handleCookbookAction(action);
+        break;
+      case 'sharedRecipes':
+        await sharedRecipeSyncActions.handleSharedRecipeAction(action);
         break;
       case 'notifications':
        await notificationSyncActions.handleNotificationAction(action);

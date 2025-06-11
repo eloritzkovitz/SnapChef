@@ -4,11 +4,14 @@ import 'providers/connectivity_provider.dart';
 import 'providers/sync_actions/cookbook_sync_actions.dart';
 import 'providers/sync_actions/fridge_sync_actions.dart';
 import 'providers/sync_actions/grocery_sync_actions.dart';
+import 'providers/sync_actions/notification_sync_actions.dart';
+import 'providers/sync_actions/shared_recipe_sync_actions.dart';
 import 'providers/sync_provider.dart';
 import 'repositories/cookbook_repository.dart';
 import 'repositories/fridge_repository.dart';
 import 'repositories/shared_recipe_repository.dart';
 import 'repositories/user_repository.dart';
+import 'services/backend_notification_service.dart';
 import 'services/cookbook_service.dart';
 import 'services/fridge_service.dart';
 import 'services/ingredient_service.dart';
@@ -46,4 +49,8 @@ void setupLocator(AppDatabase db) {
   getIt.registerLazySingleton<CookbookSyncActions>(() => CookbookSyncActions(getIt<CookbookRepository>()));
   getIt.registerLazySingleton<SharedRecipeService>(() => SharedRecipeService());
   getIt.registerLazySingleton<SharedRecipeRepository>(() => SharedRecipeRepository());
+  getIt.registerLazySingleton<SharedRecipeSyncActions>(() => SharedRecipeSyncActions(getIt<SharedRecipeRepository>()));
+
+  // Notifications
+  getIt.registerLazySingleton<NotificationSyncActions>(() => NotificationSyncActions(getIt<BackendNotificationService>()));
 }
