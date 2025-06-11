@@ -16,6 +16,11 @@ class NotificationService {
 
   bool _isInitialized = false;
 
+  // Get the singleton instance of NotificationService
+  Future<List<AppNotification>> getStoredNotifications() async {
+    return await _getStoredNotifications();
+  }
+
   // Initialize notification service
   Future<void> initNotification() async {
     if (_isInitialized) return;

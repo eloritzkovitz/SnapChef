@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/sync_actions/fridge_sync_actions.dart';
 import '../providers/sync_actions/grocery_sync_actions.dart';
+import 'sync_actions/notification_sync_actions.dart';
 
 final getIt = GetIt.instance;
 
@@ -16,6 +17,7 @@ class SyncProvider extends ChangeNotifier {
   // Get sync actions
   FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
   GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
+  NotificationSyncActions get notificationSyncActions => getIt<NotificationSyncActions>();
 
   ConnectivityProvider? _syncConnectivityProvider;
 
@@ -49,7 +51,7 @@ class SyncProvider extends ChangeNotifier {
     pendingActionQueues.putIfAbsent(queue, () => []);
     pendingActionQueues[queue]!.add(action);
     savePendingActions();
-    log('Hi! I have just added action to $queue: $action');
+    log('Action added to $queue: $action');
     notifyListeners();
   }
 
@@ -69,6 +71,9 @@ class SyncProvider extends ChangeNotifier {
         break;
       case 'grocery':
         await grocerySyncActions.handleGroceryAction(action);
+        break;
+      case 'notifications':
+       await notificationSyncActions.handleNotificationAction(action);
         break;
       default:
         log('Unknown queue: $queue');
