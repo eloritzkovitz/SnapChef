@@ -2,23 +2,23 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../database/app_database.dart' as db;
-import '../database/daos/recipe_dao.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
-import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/sync_provider.dart';
 import '../repositories/cookbook_repository.dart';
+import '../services/sync_service.dart';
 import '../utils/sort_filter_mixin.dart';
 
 class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
-  List<SharedRecipe>? sharedWithMeRecipes = [];
-  List<SharedRecipe>? sharedByMeRecipes = [];
 
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
-  final ConnectivityProvider connectivityProvider =
-      GetIt.I<ConnectivityProvider>();
+  final ConnectivityProvider connectivityProvider = GetIt.I<ConnectivityProvider>();
   final CookbookRepository cookbookRepository = GetIt.I<CookbookRepository>();
+
+  final SyncProvider syncProvider = GetIt.I<SyncProvider>();
+  final SyncManager syncManager = GetIt.I<SyncManager>();
 
   String? selectedCuisine;
   String? selectedDifficulty;
@@ -27,14 +27,390 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   RangeValues? ratingRange;
   String? selectedSource;
 
-  RecipeDao get recipeDao => database.recipeDao;
-
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
-  // --- GenericFilterMixin implementation ---
+  @override
+  void dispose() {
+    syncProvider.disposeSync();
+    syncManager.unregister(syncProvider.syncPendingActions);
+    super.dispose();
+  }
+
+  CookbookViewModel() {
+    syncManager.register(syncProvider.syncPendingActions);
+    syncProvider.initSync(connectivityProvider);
+    syncProvider.loadPendingActions();
+  }  
+
+  // --- Cookbook logic ---
+
+  /// Fetches all recipes in the cookbook.
+  Future<void> fetchCookbookRecipes(String cookbookId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final isOffline = connectivityProvider.isOffline;
+    if (isOffline) {
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    await syncProvider.syncPendingActions();
+
+    try {
+      final items =
+          await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
+
+      _recipes.clear();
+      if (items.isNotEmpty) {
+        _recipes.addAll(items);
+        await cookbookRepository.storeCookbookRecipesLocal(
+            cookbookId, _recipes);
+      }
+
+      applyFiltersAndSorting();
+    } catch (e) {
+      log('Error fetching cookbook recipes: $e');
+      await _loadCookbookRecipesFromLocalDb(cookbookId);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Loads recipes from local DB.
+  Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
+    final localRecipes =
+        await cookbookRepository.fetchCookbookRecipesLocal(userId);
+    _recipes.clear();
+    _recipes.addAll(localRecipes);
+    applyFiltersAndSorting();
+  }  
+
+  /// Adds a recipe to the cookbook.
+  Future<bool> addRecipeToCookbook({
+    required String cookbookId,
+    required String title,
+    required String description,
+    required String mealType,
+    required String cuisineType,
+    required String difficulty,
+    required int prepTime,
+    required int cookingTime,
+    required List<Ingredient> ingredients,
+    required List<String> instructions,
+    String? imageURL,
+    double? rating,
+    required RecipeSource source,
+    String? raw,
+  }) async {
+    try {
+      final recipe = Recipe(
+        id: DateTime.now().toString(),
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: source,
+      );
+
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        // Save locally and queue for sync
+        await cookbookRepository
+            .storeCookbookRecipesLocal(cookbookId, [recipe]);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'add',
+          'cookbookId': cookbookId,
+          'recipe': recipe.toJson(),
+        });
+        await syncProvider.savePendingActions();
+        _recipes.add(recipe);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
+      final success = await cookbookRepository.addRecipeToCookbook(
+        cookbookId,
+        recipe,
+        raw: raw,
+      );
+      if (success) {
+        _recipes.add(recipe);
+        applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      log('Error adding recipe to cookbook: $e');
+      return false;
+    }
+  }
+
+  /// Updates a recipe in the cookbook.
+  Future<bool> updateRecipe({
+    required String cookbookId,
+    required String recipeId,
+    required String title,
+    required String description,
+    required String mealType,
+    required String cuisineType,
+    required String difficulty,
+    required int prepTime,
+    required int cookingTime,
+    required List<Ingredient> ingredients,
+    required List<String> instructions,
+    String? imageURL,
+    double? rating,
+  }) async {
+    try {
+      final updatedRecipe = Recipe(
+        id: recipeId,
+        title: title,
+        description: description,
+        mealType: mealType,
+        cuisineType: cuisineType,
+        difficulty: difficulty,
+        prepTime: prepTime,
+        cookingTime: cookingTime,
+        ingredients: ingredients,
+        instructions: instructions,
+        imageURL: imageURL ?? '',
+        rating: rating,
+        isFavorite: false,
+        source: RecipeSource.user,
+      );
+
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        await cookbookRepository
+            .storeCookbookRecipesLocal(cookbookId, [updatedRecipe]);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'update',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+          'updatedRecipe': updatedRecipe.toJson(),
+        });
+        await syncProvider.savePendingActions();
+        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+        if (index != -1) {
+          _recipes[index] = updatedRecipe;
+          applyFiltersAndSorting();
+          notifyListeners();
+        }
+        return true;
+      }
+
+      final success = await cookbookRepository.updateRecipe(
+        cookbookId,
+        recipeId,
+        updatedRecipe,
+      );
+      if (success) {
+        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+        if (index != -1) {
+          _recipes[index] = updatedRecipe;
+          applyFiltersAndSorting();
+          notifyListeners();
+        }
+      }
+      return success;
+    } catch (e) {
+      log('Error updating recipe: $e');
+      return false;
+    }
+  }
+
+  /// Regenerates the image for a recipe in the cookbook.
+  Future<bool> regenerateRecipeImage({
+    required String cookbookId,
+    required String recipeId,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final newImageUrl = await cookbookRepository.regenerateRecipeImage(
+          cookbookId, recipeId, payload);
+      final index = _recipes.indexWhere((r) => r.id == recipeId);
+      if (index != -1) {
+        _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
+        applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      log('Error regenerating recipe image: $e');
+      return false;
+    }
+  }
+
+  /// Toggles the favorite status of a recipe.
+  Future<bool> toggleRecipeFavoriteStatus(
+      String cookbookId, String recipeId) async {
+    try {
+      final isOffline = connectivityProvider.isOffline;
+      final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
+      if (index == -1) return false;
+
+      if (isOffline) {
+        await cookbookRepository.toggleRecipeFavoriteStatus(
+            cookbookId, recipeId);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'toggleFavorite',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+        });
+        await syncProvider.savePendingActions();
+        _recipes[index] =
+            _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
+      final success = await cookbookRepository.toggleRecipeFavoriteStatus(
+          cookbookId, recipeId);
+      if (success) {
+        _recipes[index] =
+            _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
+        applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      log('Error toggling favorite status: $e');
+      return false;
+    }
+  }
+
+  /// Reorders a recipe in the cookbook.
+  Future<void> reorderRecipe(
+      int oldIndex, int newIndex, String cookbookId) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final recipe = filteredItems.removeAt(oldIndex);
+    filteredItems.insert(newIndex, recipe);
+
+    // Also reorder in the main _recipes list to keep everything in sync
+    final oldId = recipe.id;
+    final oldMainIndex = _recipes.indexWhere((r) => r.id == oldId);
+    if (oldMainIndex != -1) {
+      final mainRecipe = _recipes.removeAt(oldMainIndex);
+
+      // Find the new index in the main list based on the next recipe in filteredItems
+      int newMainIndex;
+      if (newIndex + 1 < filteredItems.length) {
+        // Insert before the next recipe in filteredItems
+        final nextId = filteredItems[newIndex + 1].id;
+        newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
+        if (newMainIndex == -1) {
+          newMainIndex = _recipes.length;
+        }
+      } else {
+        // Insert at the end
+        newMainIndex = _recipes.length;
+      }
+      _recipes.insert(newMainIndex, mainRecipe);
+    }
+
+    final isOffline = connectivityProvider.isOffline;
+    final orderedIds = _recipes.map((r) => r.id).toList();
+
+    if (isOffline) {
+      syncProvider.addPendingAction('cookbook', {
+        'action': 'reorder',
+        'cookbookId': cookbookId,
+        'orderedIds': orderedIds,
+      });
+      await syncProvider.savePendingActions();
+      notifyListeners();
+      return;
+    }
+
+    // Save the new order to backend
+    await saveRecipeOrder(cookbookId);
+    notifyListeners();
+  }
+
+  /// Saves the new order to backend.
+  Future<void> saveRecipeOrder(String cookbookId) async {
+    try {
+      // Send the list of recipe IDs in the new order
+      final orderedIds = _recipes.map((r) => r.id).toList();
+      await cookbookRepository.saveRecipeOrder(cookbookId, orderedIds);
+    } catch (e) {
+      log('Error saving recipe order: $e');
+    }
+  }
+
+  /// Shares a recipe with a friend,
+  Future<void> shareRecipeWithFriend({
+    required String cookbookId,
+    required String recipeId,
+    required String friendId,
+  }) async {
+    await cookbookRepository.shareRecipeWithFriend(
+      cookbookId: cookbookId,
+      recipeId: recipeId,
+      friendId: friendId,
+    );
+  }
+
+  /// Deletes a recipe from the cookbook.
+  Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
+    try {
+      final isOffline = connectivityProvider.isOffline;
+      if (isOffline) {
+        await cookbookRepository.deleteRecipeLocal(recipeId);
+        syncProvider.addPendingAction('cookbook', {
+          'action': 'delete',
+          'cookbookId': cookbookId,
+          'recipeId': recipeId,
+        });
+        await syncProvider.savePendingActions();
+        _recipes.removeWhere((recipe) => recipe.id == recipeId);
+        applyFiltersAndSorting();
+        notifyListeners();
+        return true;
+      }
+
+      final success =
+          await cookbookRepository.deleteRecipe(cookbookId, recipeId);
+      if (success) {
+        _recipes.removeWhere((recipe) => recipe.id == recipeId);
+        applyFiltersAndSorting();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      log('Error deleting recipe: $e');
+      return false;
+    }
+  }
+
+  /// Searches recipes by name.
+  List<Recipe> searchRecipes(String query) {
+    return _recipes
+        .where((recipe) =>
+            recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // --- SortFilterMixin implementation ---
   @override
   List<Recipe> get sourceList => _recipes;
 
@@ -102,354 +478,6 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   double get maxRating => _recipes.isEmpty
       ? 0
       : _recipes.map((r) => r.rating ?? 0).reduce((a, b) => a > b ? a : b);
-
-  // --- Cookbook logic (repository-based) ---
-
-  /// Fetches all recipes in the cookbook.
-  Future<void> fetchCookbookRecipes(String cookbookId) async {
-    _isLoading = true;
-    notifyListeners();
-
-    final isOffline = connectivityProvider.isOffline;
-    if (isOffline) {
-      await _loadCookbookRecipesFromLocalDb(cookbookId);
-      _isLoading = false;
-      notifyListeners();
-      return;
-    }
-
-    try {
-      final items =
-          await cookbookRepository.fetchCookbookRecipesRemote(cookbookId);
-
-      _recipes.clear();
-      if (items.isNotEmpty) {
-        _recipes.addAll(items);
-        await cookbookRepository.storeCookbookRecipesLocal(
-            cookbookId, _recipes);
-      }
-
-      applyFiltersAndSorting();
-    } catch (e) {
-      log('Error fetching cookbook recipes: $e');
-      await _loadCookbookRecipesFromLocalDb(cookbookId);
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  /// Loads recipes from local DB using RecipeDao.
-  Future<void> _loadCookbookRecipesFromLocalDb(String userId) async {
-    final localRecipes =
-        await cookbookRepository.fetchCookbookRecipesLocal(userId);
-    _recipes.clear();
-    _recipes.addAll(localRecipes);
-    applyFiltersAndSorting();
-  }
-
-  /// Fetches recipes shared with the user.
-  Future<void> fetchSharedRecipes(String cookbookId, String userId) async {
-    final isOffline = connectivityProvider.isOffline;
-
-    if (isOffline) {
-      // Load from local DB
-      final localShared =
-          await cookbookRepository.fetchSharedRecipesLocal(userId);
-      sharedWithMeRecipes =
-          localShared.where((r) => r.toUser == userId).toList();
-      sharedByMeRecipes =
-          localShared.where((r) => r.fromUser == userId).toList();
-      notifyListeners();
-      return;
-    }
-
-    // Fetch from remote and cache locally
-    final result =
-        await cookbookRepository.fetchSharedRecipesRemote(cookbookId);
-
-    // Store both lists locally
-    final allShared = [
-      ...(result['sharedWithMe'] != null
-          ? List<SharedRecipe>.from(result['sharedWithMe']!)
-          : <SharedRecipe>[]),
-      ...(result['sharedByMe'] != null
-          ? List<SharedRecipe>.from(result['sharedByMe']!)
-          : <SharedRecipe>[]),
-    ];
-    if (allShared.isNotEmpty) {
-      await cookbookRepository.storeSharedRecipesLocal(allShared);
-    }
-
-    sharedWithMeRecipes = result['sharedWithMe'] ?? [];
-    sharedByMeRecipes = result['sharedByMe'] ?? [];
-    notifyListeners();
-  }
-
-  /// Adds a recipe to the cookbook.
-  Future<bool> addRecipeToCookbook({
-    required String cookbookId,
-    required String title,
-    required String description,
-    required String mealType,
-    required String cuisineType,
-    required String difficulty,
-    required int prepTime,
-    required int cookingTime,
-    required List<Ingredient> ingredients,
-    required List<String> instructions,
-    String? imageURL,
-    double? rating,
-    required RecipeSource source,
-    String? raw,
-  }) async {
-    try {
-      final recipe = Recipe(
-        id: DateTime.now().toString(),
-        title: title,
-        description: description,
-        mealType: mealType,
-        cuisineType: cuisineType,
-        difficulty: difficulty,
-        prepTime: prepTime,
-        cookingTime: cookingTime,
-        ingredients: ingredients,
-        instructions: instructions,
-        imageURL: imageURL ?? '',
-        rating: rating,
-        isFavorite: false,
-        source: source,
-      );
-
-      final success = await cookbookRepository.addRecipeToCookbook(
-        cookbookId,
-        recipe,
-        raw: raw,
-      );
-      if (success) {
-        _recipes.add(recipe);
-        applyFiltersAndSorting();
-        notifyListeners();
-      }
-      return success;
-    } catch (e) {
-      log('Error adding recipe to cookbook: $e');
-      return false;
-    }
-  }
-
-  /// Updates a recipe in the cookbook.
-  Future<bool> updateRecipe({
-    required String cookbookId,
-    required String recipeId,
-    required String title,
-    required String description,
-    required String mealType,
-    required String cuisineType,
-    required String difficulty,
-    required int prepTime,
-    required int cookingTime,
-    required List<Ingredient> ingredients,
-    required List<String> instructions,
-    String? imageURL,
-    double? rating,
-  }) async {
-    try {
-      final updatedRecipe = Recipe(
-        id: recipeId,
-        title: title,
-        description: description,
-        mealType: mealType,
-        cuisineType: cuisineType,
-        difficulty: difficulty,
-        prepTime: prepTime,
-        cookingTime: cookingTime,
-        ingredients: ingredients,
-        instructions: instructions,
-        imageURL: imageURL ?? '',
-        rating: rating,
-        isFavorite: false,
-        source: RecipeSource.user,
-      );
-
-      final success = await cookbookRepository.updateRecipe(
-        cookbookId,
-        recipeId,
-        updatedRecipe,
-      );
-      if (success) {
-        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
-        if (index != -1) {
-          _recipes[index] = _recipes[index].copyWith(
-            title: title,
-            description: description,
-            mealType: mealType,
-            cuisineType: cuisineType,
-            difficulty: difficulty,
-            prepTime: prepTime,
-            cookingTime: cookingTime,
-            ingredients: ingredients,
-            instructions: instructions,
-            imageURL: imageURL ?? _recipes[index].imageURL,
-            rating: rating,
-          );
-          applyFiltersAndSorting();
-        }
-      }
-      return success;
-    } catch (e) {
-      log('Error updating recipe: $e');
-      return false;
-    }
-  }
-
-  /// Regenerates the image for a recipe in the cookbook.
-  Future<bool> regenerateRecipeImage({
-    required String cookbookId,
-    required String recipeId,
-    required Map<String, dynamic> payload,
-  }) async {
-    try {
-      final newImageUrl = await cookbookRepository.regenerateRecipeImage(
-          cookbookId, recipeId, payload);
-      final index = _recipes.indexWhere((r) => r.id == recipeId);
-      if (index != -1) {
-        _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
-        applyFiltersAndSorting();
-        notifyListeners();
-      }
-      return true;
-    } catch (e) {
-      log('Error regenerating recipe image: $e');
-      return false;
-    }
-  }
-
-  /// Toggle the favorite status of a recipe.
-  Future<bool> toggleRecipeFavoriteStatus(
-      String cookbookId, String recipeId) async {
-    try {
-      final success = await cookbookRepository.toggleRecipeFavoriteStatus(
-          cookbookId, recipeId);
-      if (success) {
-        final index = _recipes.indexWhere((recipe) => recipe.id == recipeId);
-        if (index != -1) {
-          _recipes[index] =
-              _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
-          applyFiltersAndSorting();
-          notifyListeners();
-        }
-      }
-      return success;
-    } catch (e) {
-      log('Error toggling favorite status: $e');
-      return false;
-    }
-  }
-
-  /// Reorders a recipe in the cookbook.
-  Future<void> reorderRecipe(
-      int oldIndex, int newIndex, String cookbookId) async {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-    final recipe = filteredItems.removeAt(oldIndex);
-    filteredItems.insert(newIndex, recipe);
-
-    // Also reorder in the main _recipes list to keep everything in sync
-    final oldId = recipe.id;
-    final oldMainIndex = _recipes.indexWhere((r) => r.id == oldId);
-    if (oldMainIndex != -1) {
-      final mainRecipe = _recipes.removeAt(oldMainIndex);
-
-      // Find the new index in the main list based on the next recipe in filteredItems
-      int newMainIndex;
-      if (newIndex + 1 < filteredItems.length) {
-        // Insert before the next recipe in filteredItems
-        final nextId = filteredItems[newIndex + 1].id;
-        newMainIndex = _recipes.indexWhere((r) => r.id == nextId);
-        if (newMainIndex == -1) {
-          newMainIndex = _recipes.length;
-        }
-      } else {
-        // Insert at the end
-        newMainIndex = _recipes.length;
-      }
-      _recipes.insert(newMainIndex, mainRecipe);
-    }
-
-    // Save the new order to backend
-    await saveRecipeOrder(cookbookId);
-
-    notifyListeners();
-  }
-
-  /// Saves the new order to backend.
-  Future<void> saveRecipeOrder(String cookbookId) async {
-    try {
-      // Send the list of recipe IDs in the new order
-      final orderedIds = _recipes.map((r) => r.id).toList();
-      await cookbookRepository.saveRecipeOrder(cookbookId, orderedIds);
-    } catch (e) {
-      log('Error saving recipe order: $e');
-    }
-  }
-
-  /// Shares a recipe with a friend,
-  Future<void> shareRecipeWithFriend({
-    required String cookbookId,
-    required String recipeId,
-    required String friendId,
-  }) async {
-    await cookbookRepository.shareRecipeWithFriend(
-      cookbookId: cookbookId,
-      recipeId: recipeId,
-      friendId: friendId,
-    );
-  }
-
-  /// Removes a shared recipe.
-  Future<void> removeSharedRecipe(String cookbookId, String sharedRecipeId,
-      {required bool isSharedByMe}) async {
-    try {
-      // Call the repository to delete the shared recipe
-      await cookbookRepository.removeSharedRecipe(cookbookId, sharedRecipeId);
-
-      // Remove from the correct list
-      if (isSharedByMe) {
-        sharedByMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
-      } else {
-        sharedWithMeRecipes?.removeWhere((r) => r.id == sharedRecipeId);
-      }
-      notifyListeners();
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Deletes a recipe from the cookbook.
-  Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
-    try {
-      final success =
-          await cookbookRepository.deleteRecipe(cookbookId, recipeId);
-      if (success) {
-        _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        applyFiltersAndSorting();
-      }
-      return success;
-    } catch (e) {
-      log('Error deleting recipe: $e');
-      return false;
-    }
-  }
-
-  /// Searches recipes by name.
-  List<Recipe> searchRecipes(String query) {
-    return _recipes
-        .where((recipe) =>
-            recipe.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
 
   @override
   void applyFiltersAndSorting() {
@@ -542,5 +570,5 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     ratingRange = null;
     selectedSource = null;
     applyFiltersAndSorting();
-  }  
+  }
 }

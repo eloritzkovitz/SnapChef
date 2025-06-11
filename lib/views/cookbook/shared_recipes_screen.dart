@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/shared_recipe_viewmodel.dart';
 import 'view_shared_recipe_screen.dart';
 import './widgets/recipe_card.dart';
 import '../../widgets/snapchef_appbar.dart';
@@ -23,9 +24,10 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
   @override
   Widget build(BuildContext context) {
     final cookbookViewModel = Provider.of<CookbookViewModel>(context);
+    final sharedRecipeViewModel = Provider.of<SharedRecipeViewModel>(context);
 
-    final sharedWithMe = cookbookViewModel.sharedWithMeRecipes ?? [];
-    final sharedByMe = cookbookViewModel.sharedByMeRecipes ?? [];
+    final sharedWithMe = sharedRecipeViewModel.sharedWithMeRecipes ?? [];
+    final sharedByMe = sharedRecipeViewModel.sharedByMeRecipes ?? [];
 
     final recipesToShow = showSharedByMe ? sharedByMe : sharedWithMe;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/shared_recipe_viewmodel.dart';
 import 'add_recipe_screen.dart';
 import 'recipe_search_delegate.dart';
 import 'shared_recipes_screen.dart';
@@ -120,7 +121,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
             onPressed: () async {
               final user =
                   Provider.of<UserViewModel>(context, listen: false).user;
-              await Provider.of<CookbookViewModel>(context, listen: false)
+              await Provider.of<SharedRecipeViewModel>(context, listen: false)
                   .fetchSharedRecipes(user?.cookbookId ?? '', user?.id ?? '');
               if (context.mounted) {
                 Navigator.push(

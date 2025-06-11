@@ -4,6 +4,7 @@ import '../../models/recipe.dart';
 import '../../models/shared_recipe.dart';
 import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../viewmodels/shared_recipe_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../widgets/display_recipe_widget.dart';
 
@@ -106,7 +107,7 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
 
     try {
       if (context.mounted) {
-        await Provider.of<CookbookViewModel>(context, listen: false)
+        await Provider.of<SharedRecipeViewModel>(context, listen: false)
             .removeSharedRecipe(cookbookId, widget.sharedRecipe.id,
                 isSharedByMe: widget.isSharedByMe);
       }
@@ -158,13 +159,14 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'add',
-                child: ListTile(
-                  leading: Icon(Icons.bookmark_add),
-                  title: Text('Add to Cookbook'),
+              if (!widget.isSharedByMe)
+                const PopupMenuItem<String>(
+                  value: 'add',
+                  child: ListTile(
+                    leading: Icon(Icons.bookmark_add),
+                    title: Text('Add to Cookbook'),
+                  ),
                 ),
-              ),
               PopupMenuItem<String>(
                 value: 'remove',
                 child: ListTile(

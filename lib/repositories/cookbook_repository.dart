@@ -1,8 +1,6 @@
-import 'package:drift/drift.dart';
 import 'package:get_it/get_it.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
-import '../models/shared_recipe.dart';
 import '../database/app_database.dart' as db;
 import '../services/cookbook_service.dart';
 
@@ -10,8 +8,7 @@ class CookbookRepository {
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
   final CookbookService cookbookService = GetIt.I<CookbookService>();
 
-  // --- Cookbook Recipes ---
-
+  /// Fetches recipes for a specific cookbook from the remote service.
   Future<List<Recipe>> fetchCookbookRecipesRemote(String cookbookId) async {
     final items = await cookbookService.fetchCookbookRecipes(cookbookId);
     return items
@@ -43,6 +40,7 @@ class CookbookRepository {
         .toList();
   }
 
+  /// Fetches recipes for a specific user from the local database.
   Future<List<Recipe>> fetchCookbookRecipesLocal(String userId) async {
     final localRecipes = await database.recipeDao.getCookbookRecipes(userId);
     return localRecipes
@@ -50,71 +48,16 @@ class CookbookRepository {
         .toList();
   }
 
+  /// Stores a list of recipes in the local database.
   Future<void> storeCookbookRecipesLocal(
       String userId, List<Recipe> recipes) async {
     for (final recipe in recipes) {
       await database.recipeDao
           .insertOrUpdateRecipe(recipe.toDbRecipe(userId: userId));
     }
-  }
-
-  // --- Shared Recipes ---
-
-  Future<Map<String, List<SharedRecipe>>> fetchSharedRecipesRemote(
-      String cookbookId) async {
-    final result = await cookbookService.fetchSharedRecipes(cookbookId);
-    return {
-      'sharedWithMe': result['sharedWithMe'] ?? [],
-      'sharedByMe': result['sharedByMe'] ?? [],
-    };
-  }
-
-  Future<List<SharedRecipe>> fetchSharedRecipesLocal(String userId) async {
-    final dbShared =
-        await database.sharedRecipeDao.getSharedRecipesForUser(userId);
-    // You may need to fetch the recipe for each shared recipe
-    List<SharedRecipe> result = [];
-    for (final dbSharedRecipe in dbShared) {
-      final dbRecipe =
-          await database.recipeDao.getRecipeById(dbSharedRecipe.recipeId);
-      if (dbRecipe != null) {
-        result.add(
-          SharedRecipe(
-            id: dbSharedRecipe.id,
-            recipe: Recipe.fromDb(dbRecipe.toJson()),
-            fromUser: dbSharedRecipe.fromUser,
-            toUser: dbSharedRecipe.toUser,
-            sharedAt: DateTime.parse(dbSharedRecipe.sharedAt),
-            status: dbSharedRecipe.status,
-          ),
-        );
-      }
-    }
-    return result;
-  }
-
-  Future<void> storeSharedRecipesLocal(List<SharedRecipe> sharedRecipes) async {
-    for (final shared in sharedRecipes) {
-      // Convert SharedRecipe to Drift's SharedRecipe table entry
-      await database.sharedRecipeDao.insertSharedRecipe(
-        db.SharedRecipesCompanion.insert(
-          id: shared.id,
-          recipeId: shared.recipe.id,
-          fromUser: shared.fromUser,
-          toUser: shared.toUser,
-          sharedAt: shared.sharedAt.toIso8601String(),
-          status: Value(shared.status),                   
-        ),
-      );
-      // Also persist the recipe itself if needed
-      await database.recipeDao.insertOrUpdateRecipe(
-        shared.recipe.toDbRecipe(userId: shared.toUser),
-      );
-    }
   }  
 
-  // --- Add/Update/Delete Recipes ---
-
+  /// Adds a new recipe to the cookbook.
   Future<bool> addRecipeToCookbook(String cookbookId, Recipe recipe,
       {String? raw}) async {
     final recipeData = {
@@ -141,6 +84,7 @@ class CookbookRepository {
     return await cookbookService.addRecipeToCookbook(recipeData, cookbookId);
   }
 
+  /// Updates an existing recipe in the cookbook.
   Future<bool> updateRecipe(
     String cookbookId,
     String recipeId,
@@ -165,27 +109,30 @@ class CookbookRepository {
         cookbookId, recipeId, updatedData);
   }
 
+  /// Deletes a recipe from the cookbook.
   Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
     return await cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
   }
 
+  /// Deletes a recipe from the local database.
   Future<void> deleteRecipeLocal(String recipeId) async {
     await database.recipeDao.deleteRecipe(recipeId);
   }
-
-  // --- Favorite, Order, and Sharing ---
-
+  
+  /// Toggles the favorite status of a recipe in the cookbook.
   Future<bool> toggleRecipeFavoriteStatus(
       String cookbookId, String recipeId) async {
     return await cookbookService.toggleRecipeFavoriteStatus(
         cookbookId, recipeId);
   }
 
+  /// Saves the order of recipes in a cookbook.
   Future<void> saveRecipeOrder(
       String cookbookId, List<String> orderedIds) async {
     await cookbookService.saveRecipeOrder(cookbookId, orderedIds);
   }
 
+  /// Shares a recipe with a friend.
   Future<void> shareRecipeWithFriend({
     required String cookbookId,
     required String recipeId,
@@ -198,13 +145,7 @@ class CookbookRepository {
     );
   }
 
-  Future<void> removeSharedRecipe(
-      String cookbookId, String sharedRecipeId) async {
-    await cookbookService.deleteSharedRecipe(cookbookId, sharedRecipeId);
-  }
-
-  // --- Regenerate Image ---
-
+  /// Regenerates the image for a recipe.
   Future<String> regenerateRecipeImage(
     String cookbookId,
     String recipeId,

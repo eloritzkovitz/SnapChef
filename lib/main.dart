@@ -17,6 +17,7 @@ import 'utils/firebase_messaging_util.dart';
 import 'utils/navigation_observer.dart';
 import 'viewmodels/main_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/shared_recipe_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/ingredient_viewmodel.dart';
 import 'viewmodels/fridge_viewmodel.dart';
@@ -96,7 +97,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => IngredientViewModel()),
         ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
+        ChangeNotifierProvider(create: (_) => SharedRecipeViewModel()),
+        ChangeNotifierProvider(create: (_) => CookbookViewModel()),        
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
       ],
