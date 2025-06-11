@@ -8,7 +8,9 @@ import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../widgets/base_screen.dart';
 import '../../widgets/display_recipe_widget.dart';
+import '../../widgets/snapchef_appbar.dart';
 import './widgets/edit_recipe_modal.dart';
 
 class ViewRecipeScreen extends StatefulWidget {
@@ -451,15 +453,14 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
   Widget build(BuildContext context) {
     final isOffline = Provider.of<ConnectivityProvider>(context).isOffline;
 
-    return Scaffold(
-      appBar: AppBar(
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Recipe Details',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        foregroundColor: Colors.black,        
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {

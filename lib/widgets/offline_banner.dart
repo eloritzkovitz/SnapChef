@@ -15,21 +15,27 @@ class OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,      
-      width: double.infinity,
-      color: color,
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              message,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ],
+    return DefaultTextStyle(
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 16.0,
+        fontFamily: 'Roboto',
+      ),
+      child: Container(
+        height: 32,
+        width: double.infinity,
+        color: color,
+        alignment: Alignment.center,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(message),
+            ],
+          ),
         ),
       ),
     );

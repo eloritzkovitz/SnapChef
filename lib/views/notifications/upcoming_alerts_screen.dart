@@ -9,6 +9,9 @@ import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/views/notifications/widgets/alert_list_item.dart';
 import 'package:snapchef/theme/colors.dart';
 
+import '../../widgets/base_screen.dart';
+import '../../widgets/snapchef_appbar.dart';
+
 class UpcomingAlertsScreen extends StatelessWidget {
   const UpcomingAlertsScreen({super.key});
 
@@ -20,13 +23,12 @@ class UpcomingAlertsScreen extends StatelessWidget {
 
     return ChangeNotifierProvider(
       create: (_) => NotificationsViewModel(),
-      child: Scaffold(
-        appBar: AppBar(
+      child: BaseScreen(
+        appBar: SnapChefAppBar(
           title: const Text('Upcoming Alerts',
               style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          iconTheme: const IconThemeData(color: Colors.black),
+          foregroundColor: Colors.black,          
         ),
         body: Consumer<NotificationsViewModel>(
           builder: (context, viewModel, child) {

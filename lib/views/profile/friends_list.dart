@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../widgets/base_screen.dart';
+import '../../widgets/snapchef_appbar.dart';
 import 'public_profile_screen.dart';
 import 'widgets/friend_card.dart';
 import 'widgets/friend_search_modal.dart';
@@ -106,8 +108,8 @@ class _FriendsListState extends State<FriendsList> {
       return friend.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
-    return Scaffold(
-      appBar: AppBar(
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Friends',
           style: TextStyle(

@@ -6,6 +6,8 @@ import '../../models/recipe.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
+import '../../widgets/base_screen.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   final String? cookbookId;
@@ -134,17 +136,15 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
 
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
-    return Scaffold(
-      appBar: AppBar(
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Add Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -382,7 +382,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                 minHeight: 120,
                               ),
                               child: Container(
-                                decoration: BoxDecoration(                                  
+                                decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Scrollbar(
@@ -393,7 +393,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     maxLines: null,
                                     expands: true,
                                     scrollController: _recipeScrollController,
-                                    decoration: InputDecoration(                                      
+                                    decoration: InputDecoration(
                                       labelStyle:
                                           const TextStyle(color: Colors.grey),
                                       filled: true,

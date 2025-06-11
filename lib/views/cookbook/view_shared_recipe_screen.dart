@@ -6,7 +6,9 @@ import '../../utils/image_util.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/shared_recipe_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../widgets/base_screen.dart';
 import '../../widgets/display_recipe_widget.dart';
+import '../../widgets/snapchef_appbar.dart';
 
 class ViewSharedRecipeScreen extends StatefulWidget {
   final SharedRecipe sharedRecipe;
@@ -140,15 +142,14 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
             : widget.sharedRecipe.fromUser);
     final sharedByProfilePic = userViewModel.sharedUserProfilePic;
 
-    return Scaffold(
-      appBar: AppBar(
+    return BaseScreen(
+      appBar: SnapChefAppBar(
         title: const Text(
           'Shared Recipe',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        foregroundColor: Colors.black,        
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) async {
