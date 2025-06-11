@@ -28,11 +28,18 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void initState() {
-    super.initState();    
+    super.initState();
     // Listen for FCM token refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<UserViewModel>(context, listen: false)
           .listenForFcmTokenRefresh();
+
+      // Show offline snackbar if entering main screen and already offline
+      final isOffline =
+          Provider.of<ConnectivityProvider>(context, listen: false).isOffline;
+      if (isOffline) {
+        UIUtil.showOffline(context);
+      }
     });
   }
 
@@ -40,15 +47,17 @@ class _MainScreenState extends State<MainScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Check connectivity status and show snackbar if changed
+    // Check connectivity status and show appropriate banner
     final isOffline = context.watch<ConnectivityProvider>().isOffline;
     if (_wasOffline != null && _wasOffline != isOffline) {
-      if (isOffline) {
-        // Show offline snackbar
-        UIUtil.showOffline(context);
-      } else {
-       UIUtil.showBackOnline(context);
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (isOffline) {
+          UIUtil.showOffline(context);
+        } else {
+          UIUtil.showBackOnline(context);
+        }
+      });
     }
     _wasOffline = isOffline;
 
@@ -116,8 +125,7 @@ class _MainScreenState extends State<MainScreen> {
               right: 0,
               child: SafeArea(
                 bottom: false,
-                child: OfflineBanner(                  
-                ),
+                child: OfflineBanner(),
               ),
             ),
         ],
