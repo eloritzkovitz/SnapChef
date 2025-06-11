@@ -143,6 +143,7 @@ class Recipe {
           : source == RecipeSource.shared
               ? 'shared'
               : 'user',
+      order: 0,
     );
   }
 

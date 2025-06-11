@@ -1760,6 +1760,13 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
       'source', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<int> order = GeneratedColumn<int>(
+      'order', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1776,7 +1783,8 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         imageURL,
         rating,
         isFavorite,
-        source
+        source,
+        order
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1885,6 +1893,10 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
     } else if (isInserting) {
       context.missing(_sourceMeta);
     }
+    if (data.containsKey('order')) {
+      context.handle(
+          _orderMeta, order.isAcceptableOrUnknown(data['order']!, _orderMeta));
+    }
     return context;
   }
 
@@ -1924,6 +1936,8 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_favorite'])!,
       source: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      order: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}order'])!,
     );
   }
 
@@ -1949,6 +1963,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
   final double? rating;
   final bool isFavorite;
   final String source;
+  final int order;
   const Recipe(
       {required this.id,
       required this.userId,
@@ -1964,7 +1979,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       this.imageURL,
       this.rating,
       required this.isFavorite,
-      required this.source});
+      required this.source,
+      required this.order});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1987,6 +2003,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     }
     map['is_favorite'] = Variable<bool>(isFavorite);
     map['source'] = Variable<String>(source);
+    map['order'] = Variable<int>(order);
     return map;
   }
 
@@ -2010,6 +2027,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           rating == null && nullToAbsent ? const Value.absent() : Value(rating),
       isFavorite: Value(isFavorite),
       source: Value(source),
+      order: Value(order),
     );
   }
 
@@ -2032,6 +2050,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       rating: serializer.fromJson<double?>(json['rating']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       source: serializer.fromJson<String>(json['source']),
+      order: serializer.fromJson<int>(json['order']),
     );
   }
   @override
@@ -2053,6 +2072,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       'rating': serializer.toJson<double?>(rating),
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'source': serializer.toJson<String>(source),
+      'order': serializer.toJson<int>(order),
     };
   }
 
@@ -2071,7 +2091,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           Value<String?> imageURL = const Value.absent(),
           Value<double?> rating = const Value.absent(),
           bool? isFavorite,
-          String? source}) =>
+          String? source,
+          int? order}) =>
       Recipe(
         id: id ?? this.id,
         userId: userId ?? this.userId,
@@ -2088,6 +2109,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
         rating: rating.present ? rating.value : this.rating,
         isFavorite: isFavorite ?? this.isFavorite,
         source: source ?? this.source,
+        order: order ?? this.order,
       );
   Recipe copyWithCompanion(RecipesCompanion data) {
     return Recipe(
@@ -2115,6 +2137,7 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       isFavorite:
           data.isFavorite.present ? data.isFavorite.value : this.isFavorite,
       source: data.source.present ? data.source.value : this.source,
+      order: data.order.present ? data.order.value : this.order,
     );
   }
 
@@ -2135,7 +2158,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           ..write('imageURL: $imageURL, ')
           ..write('rating: $rating, ')
           ..write('isFavorite: $isFavorite, ')
-          ..write('source: $source')
+          ..write('source: $source, ')
+          ..write('order: $order')
           ..write(')'))
         .toString();
   }
@@ -2156,7 +2180,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       imageURL,
       rating,
       isFavorite,
-      source);
+      source,
+      order);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2175,7 +2200,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           other.imageURL == this.imageURL &&
           other.rating == this.rating &&
           other.isFavorite == this.isFavorite &&
-          other.source == this.source);
+          other.source == this.source &&
+          other.order == this.order);
 }
 
 class RecipesCompanion extends UpdateCompanion<Recipe> {
@@ -2194,6 +2220,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
   final Value<double?> rating;
   final Value<bool> isFavorite;
   final Value<String> source;
+  final Value<int> order;
   final Value<int> rowid;
   const RecipesCompanion({
     this.id = const Value.absent(),
@@ -2211,6 +2238,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.rating = const Value.absent(),
     this.isFavorite = const Value.absent(),
     this.source = const Value.absent(),
+    this.order = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RecipesCompanion.insert({
@@ -2229,6 +2257,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.rating = const Value.absent(),
     this.isFavorite = const Value.absent(),
     required String source,
+    this.order = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         userId = Value(userId),
@@ -2258,6 +2287,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     Expression<double>? rating,
     Expression<bool>? isFavorite,
     Expression<String>? source,
+    Expression<int>? order,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2276,6 +2306,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       if (rating != null) 'rating': rating,
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (source != null) 'source': source,
+      if (order != null) 'order': order,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2296,6 +2327,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       Value<double?>? rating,
       Value<bool>? isFavorite,
       Value<String>? source,
+      Value<int>? order,
       Value<int>? rowid}) {
     return RecipesCompanion(
       id: id ?? this.id,
@@ -2313,6 +2345,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       rating: rating ?? this.rating,
       isFavorite: isFavorite ?? this.isFavorite,
       source: source ?? this.source,
+      order: order ?? this.order,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2365,6 +2398,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
+    if (order.present) {
+      map['order'] = Variable<int>(order.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2389,6 +2425,7 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
           ..write('rating: $rating, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('source: $source, ')
+          ..write('order: $order, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4431,6 +4468,7 @@ typedef $$RecipesTableCreateCompanionBuilder = RecipesCompanion Function({
   Value<double?> rating,
   Value<bool> isFavorite,
   required String source,
+  Value<int> order,
   Value<int> rowid,
 });
 typedef $$RecipesTableUpdateCompanionBuilder = RecipesCompanion Function({
@@ -4449,6 +4487,7 @@ typedef $$RecipesTableUpdateCompanionBuilder = RecipesCompanion Function({
   Value<double?> rating,
   Value<bool> isFavorite,
   Value<String> source,
+  Value<int> order,
   Value<int> rowid,
 });
 
@@ -4507,6 +4546,9 @@ class $$RecipesTableFilterComposer
 
   ColumnFilters<String> get source => $composableBuilder(
       column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get order => $composableBuilder(
+      column: $table.order, builder: (column) => ColumnFilters(column));
 }
 
 class $$RecipesTableOrderingComposer
@@ -4564,6 +4606,9 @@ class $$RecipesTableOrderingComposer
 
   ColumnOrderings<String> get source => $composableBuilder(
       column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get order => $composableBuilder(
+      column: $table.order, builder: (column) => ColumnOrderings(column));
 }
 
 class $$RecipesTableAnnotationComposer
@@ -4619,6 +4664,9 @@ class $$RecipesTableAnnotationComposer
 
   GeneratedColumn<String> get source =>
       $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<int> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
 }
 
 class $$RecipesTableTableManager extends RootTableManager<
@@ -4659,6 +4707,7 @@ class $$RecipesTableTableManager extends RootTableManager<
             Value<double?> rating = const Value.absent(),
             Value<bool> isFavorite = const Value.absent(),
             Value<String> source = const Value.absent(),
+            Value<int> order = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               RecipesCompanion(
@@ -4677,6 +4726,7 @@ class $$RecipesTableTableManager extends RootTableManager<
             rating: rating,
             isFavorite: isFavorite,
             source: source,
+            order: order,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -4695,6 +4745,7 @@ class $$RecipesTableTableManager extends RootTableManager<
             Value<double?> rating = const Value.absent(),
             Value<bool> isFavorite = const Value.absent(),
             required String source,
+            Value<int> order = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               RecipesCompanion.insert(
@@ -4713,6 +4764,7 @@ class $$RecipesTableTableManager extends RootTableManager<
             rating: rating,
             isFavorite: isFavorite,
             source: source,
+            order: order,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

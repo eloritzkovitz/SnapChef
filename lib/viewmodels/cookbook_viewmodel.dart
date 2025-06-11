@@ -130,8 +130,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       final isOffline = connectivityProvider.isOffline;
       if (isOffline) {
         // Save locally and queue for sync
-        await cookbookRepository
-            .storeCookbookRecipesLocal(cookbookId, [recipe]);
+        await cookbookRepository.addRecipeToCookbookLocal(cookbookId, recipe);
         syncProvider.addPendingAction('cookbook', {
           'action': 'add',
           'cookbookId': cookbookId,
@@ -144,7 +143,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
         return true;
       }
 
-      final success = await cookbookRepository.addRecipeToCookbook(
+      final success = await cookbookRepository.addRecipeToCookbookRemote(
         cookbookId,
         recipe,
         raw: raw,
@@ -197,8 +196,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
 
       final isOffline = connectivityProvider.isOffline;
       if (isOffline) {
-        await cookbookRepository
-            .storeCookbookRecipesLocal(cookbookId, [updatedRecipe]);
+        await cookbookRepository.updateRecipeLocal(cookbookId, updatedRecipe);
         syncProvider.addPendingAction('cookbook', {
           'action': 'update',
           'cookbookId': cookbookId,
@@ -215,7 +213,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
         return true;
       }
 
-      final success = await cookbookRepository.updateRecipe(
+      final success = await cookbookRepository.updateRecipeRemote(
         cookbookId,
         recipeId,
         updatedRecipe,
@@ -266,8 +264,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       if (index == -1) return false;
 
       if (isOffline) {
-        await cookbookRepository.toggleRecipeFavoriteStatus(
-            cookbookId, recipeId);
+        await cookbookRepository.toggleRecipeFavoriteStatusLocal(recipeId, !_recipes[index].isFavorite);
         syncProvider.addPendingAction('cookbook', {
           'action': 'toggleFavorite',
           'cookbookId': cookbookId,
@@ -281,7 +278,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
         return true;
       }
 
-      final success = await cookbookRepository.toggleRecipeFavoriteStatus(
+      final success = await cookbookRepository.toggleRecipeFavoriteStatusRemote(
           cookbookId, recipeId);
       if (success) {
         _recipes[index] =
@@ -331,6 +328,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     final orderedIds = _recipes.map((r) => r.id).toList();
 
     if (isOffline) {
+      await cookbookRepository.saveRecipeOrderLocal(orderedIds);
       syncProvider.addPendingAction('cookbook', {
         'action': 'reorder',
         'cookbookId': cookbookId,
@@ -351,7 +349,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     try {
       // Send the list of recipe IDs in the new order
       final orderedIds = _recipes.map((r) => r.id).toList();
-      await cookbookRepository.saveRecipeOrder(cookbookId, orderedIds);
+      await cookbookRepository.saveRecipeOrderRemote(cookbookId, orderedIds);
     } catch (e) {
       log('Error saving recipe order: $e');
     }
@@ -389,7 +387,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       }
 
       final success =
-          await cookbookRepository.deleteRecipe(cookbookId, recipeId);
+          await cookbookRepository.deleteRecipeRemote(cookbookId, recipeId);
       if (success) {
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
         applyFiltersAndSorting();

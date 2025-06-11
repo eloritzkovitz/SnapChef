@@ -58,7 +58,7 @@ class CookbookRepository {
   }  
 
   /// Adds a new recipe to the cookbook.
-  Future<bool> addRecipeToCookbook(String cookbookId, Recipe recipe,
+  Future<bool> addRecipeToCookbookRemote(String cookbookId, Recipe recipe,
       {String? raw}) async {
     final recipeData = {
       'title': recipe.title,
@@ -84,8 +84,13 @@ class CookbookRepository {
     return await cookbookService.addRecipeToCookbook(recipeData, cookbookId);
   }
 
+  /// Adds a new recipe to the local database.
+  Future<void> addRecipeToCookbookLocal(String userId, Recipe recipe) async {
+    await database.recipeDao.insertOrUpdateRecipe(recipe.toDbRecipe(userId: userId));
+  }
+
   /// Updates an existing recipe in the cookbook.
-  Future<bool> updateRecipe(
+  Future<bool> updateRecipeRemote(
     String cookbookId,
     String recipeId,
     Recipe updatedRecipe,
@@ -109,8 +114,13 @@ class CookbookRepository {
         cookbookId, recipeId, updatedData);
   }
 
+  /// Updates an existing recipe in the local database only.
+  Future<void> updateRecipeLocal(String userId, Recipe updatedRecipe) async {
+    await database.recipeDao.insertOrUpdateRecipe(updatedRecipe.toDbRecipe(userId: userId));
+  }
+
   /// Deletes a recipe from the cookbook.
-  Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
+  Future<bool> deleteRecipeRemote(String cookbookId, String recipeId) async {
     return await cookbookService.deleteCookbookRecipe(cookbookId, recipeId);
   }
 
@@ -120,16 +130,26 @@ class CookbookRepository {
   }
   
   /// Toggles the favorite status of a recipe in the cookbook.
-  Future<bool> toggleRecipeFavoriteStatus(
+  Future<bool> toggleRecipeFavoriteStatusRemote(
       String cookbookId, String recipeId) async {
     return await cookbookService.toggleRecipeFavoriteStatus(
         cookbookId, recipeId);
   }
 
+  /// Toggles the favorite status of a recipe in the local database.
+  Future<void> toggleRecipeFavoriteStatusLocal(String recipeId, bool isFavorite) async {
+    await database.recipeDao.toggleFavorite(recipeId, isFavorite);
+  }
+
   /// Saves the order of recipes in a cookbook.
-  Future<void> saveRecipeOrder(
+  Future<void> saveRecipeOrderRemote(
       String cookbookId, List<String> orderedIds) async {
     await cookbookService.saveRecipeOrder(cookbookId, orderedIds);
+  }
+
+  /// Saves the order of recipes in the local database.
+  Future<void> saveRecipeOrderLocal(List<String> orderedIds) async {
+    await database.recipeDao.saveRecipeOrder(orderedIds);
   }
 
   /// Shares a recipe with a friend.

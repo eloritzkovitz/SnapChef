@@ -16,6 +16,7 @@ class Recipes extends Table {
   RealColumn get rating => real().nullable()();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   TextColumn get source => text()();
+  IntColumn get order => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
