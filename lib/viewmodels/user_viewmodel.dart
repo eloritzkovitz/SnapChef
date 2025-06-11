@@ -8,6 +8,7 @@ import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
+import '../services/user_service.dart';
 import '../utils/ui_util.dart';
 import '../database/app_database.dart' as db;
 import '../providers/connectivity_provider.dart';
@@ -266,6 +267,40 @@ class UserViewModel extends ChangeNotifier {
       // If remote fetch fails, fallback to local
       return await userRepository.fetchFriendLocal(_user?.id ?? '', userId);
     }
+  }
+
+  String? sharedUserName;
+  String? sharedUserProfilePic;
+
+  /// Fetches the relevant user info for a shared recipe (remote first, then local).
+  Future<void> fetchUserInfo({
+    required String userId,
+    required String currentUserId,
+  }) async {
+    final userService = GetIt.I<UserService>();
+    try {
+      // Try remote fetch first
+      final user = await userService.getUserProfile(userId);
+      sharedUserName = '${user.firstName} ${user.lastName}'.trim();
+      sharedUserProfilePic = user.profilePicture;
+    } catch (e) {
+      // If remote fails, try local lookup
+      try {
+        final friendMap = await userRepository.getFriendsMap(currentUserId);
+        final friend = friendMap[userId];
+        if (friend != null) {
+          sharedUserName = friend.friendName;
+          sharedUserProfilePic = friend.friendProfilePicture;
+        } else {
+          sharedUserName = null;
+          sharedUserProfilePic = null;
+        }
+      } catch (_) {
+        sharedUserName = null;
+        sharedUserProfilePic = null;
+      }
+    }
+    notifyListeners();
   }
 
   /// Fetches user statistics for the current user or a specific userId.

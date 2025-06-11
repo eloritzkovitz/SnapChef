@@ -64,6 +64,13 @@ class UserRepository {
     return friends.map((f) => model.User.fromFriendDb(f)).toList();
   }
 
+  /// Returns a map of friendId to User for fast lookup.
+  Future<Map<String, db.Friend>> getFriendsMap(String currentUserId) async {
+    final friends = await database.friendDao.getFriendsForUser(currentUserId);
+    final friendMap = {for (var f in friends) f.friendId: f};
+    return friendMap;
+  }
+
   // --- Remote API Methods ---
 
   /// Fetches the current user from remote API.

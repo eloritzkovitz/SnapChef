@@ -103,8 +103,7 @@ class CookbookRepository {
           fromUser: shared.fromUser,
           toUser: shared.toUser,
           sharedAt: shared.sharedAt.toIso8601String(),
-          status: Value(shared.status),
-          // Add other fields as needed
+          status: Value(shared.status),                   
         ),
       );
       // Also persist the recipe itself if needed
@@ -112,14 +111,7 @@ class CookbookRepository {
         shared.recipe.toDbRecipe(userId: shared.toUser),
       );
     }
-  }
-
-  /// Returns a map of friendId to User for fast lookup.
-  Future<Map<String, db.Friend>> getFriendsMap(String currentUserId) async {
-    final friends = await database.friendDao.getFriendsForUser(currentUserId);
-    final friendMap = {for (var f in friends) f.friendId: f};
-    return friendMap;
-  }
+  }  
 
   // --- Add/Update/Delete Recipes ---
 

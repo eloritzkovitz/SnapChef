@@ -8,7 +8,6 @@ import '../models/recipe.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
 import '../repositories/cookbook_repository.dart';
-import '../services/user_service.dart';
 import '../utils/sort_filter_mixin.dart';
 
 class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
@@ -543,39 +542,5 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     ratingRange = null;
     selectedSource = null;
     applyFiltersAndSorting();
-  }
-
-  String? sharedUserName;
-  String? sharedUserProfilePic;
-
-  /// Fetches the relevant user info for a shared recipe (remote first, then local).
-  Future<void> fetchSharedUserInfo({
-    required String userId,
-    required String currentUserId,
-  }) async {
-    final userService = GetIt.I<UserService>();
-    try {
-      // Try remote fetch first
-      final user = await userService.getUserProfile(userId);
-      sharedUserName = '${user.firstName} ${user.lastName}'.trim();
-      sharedUserProfilePic = user.profilePicture;
-    } catch (e) {
-      // If remote fails, try local lookup
-      try {
-        final friendMap = await cookbookRepository.getFriendsMap(currentUserId);
-        final friend = friendMap[userId];
-        if (friend != null) {
-          sharedUserName = friend.friendName;
-          sharedUserProfilePic = friend.friendProfilePicture;
-        } else {
-          sharedUserName = null;
-          sharedUserProfilePic = null;
-        }
-      } catch (_) {
-        sharedUserName = null;
-        sharedUserProfilePic = null;
-      }
-    }
-    notifyListeners();
-  }
+  }  
 }

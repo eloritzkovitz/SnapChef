@@ -31,14 +31,12 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
 
     // Fetch user info
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      final cookbookViewModel =
-          Provider.of<CookbookViewModel>(context, listen: false);
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);      
       final userId = widget.isSharedByMe
           ? widget.sharedRecipe.toUser
           : widget.sharedRecipe.fromUser;
       final currentUserId = userViewModel.user?.id ?? '';
-      cookbookViewModel.fetchSharedUserInfo(
+      userViewModel.fetchUserInfo(
         userId: userId,
         currentUserId: currentUserId,
       );
@@ -134,12 +132,12 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipe = widget.sharedRecipe.recipe;
-    final cookbookViewModel = Provider.of<CookbookViewModel>(context);
-    final sharedBy = cookbookViewModel.sharedUserName ??
+    final userViewModel = Provider.of<UserViewModel>(context);
+    final sharedBy = userViewModel.sharedUserName ??
         (widget.isSharedByMe
             ? widget.sharedRecipe.toUser
             : widget.sharedRecipe.fromUser);
-    final sharedByProfilePic = cookbookViewModel.sharedUserProfilePic;
+    final sharedByProfilePic = userViewModel.sharedUserProfilePic;
 
     return Scaffold(
       appBar: AppBar(
