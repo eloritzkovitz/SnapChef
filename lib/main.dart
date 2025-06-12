@@ -26,6 +26,7 @@ import 'viewmodels/cookbook_viewmodel.dart';
 import 'viewmodels/notifications_viewmodel.dart';
 import 'viewmodels/friend_viewmodel.dart';
 import 'views/auth/login_screen.dart';
+import 'views/auth/otp_verification_screen.dart';
 import 'views/auth/reset_password_screen.dart';
 import 'views/auth/confirm_reset_screen.dart';
 import 'views/auth/signup_screen.dart';
@@ -98,9 +99,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FridgeViewModel()),
         ChangeNotifierProvider(create: (_) => RecipeViewModel()),
         ChangeNotifierProvider(create: (_) => SharedRecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => CookbookViewModel()),        
+        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
         ChangeNotifierProvider(create: (_) => FriendViewModel()),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),        
+        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
       ],
       child: Consumer<ConnectivityProvider>(
         builder: (context, connectivity, child) {
@@ -113,7 +114,17 @@ class MyApp extends StatelessWidget {
               '/signup': (context) => SignupScreen(),
               '/reset-password': (context) => const ResetPasswordScreen(),
               '/confirm-reset': (context) => const ConfirmResetScreen(),
-              '/main': (context) => const MainScreen(),
+              '/main': (context) => const MainScreen(),             
+            },
+            onGenerateRoute: (settings) {
+              if (settings.name == '/verify') {
+                final args = settings.arguments as Map<String, dynamic>?;
+                final email = args?['email'] ?? '';
+                return MaterialPageRoute(
+                  builder: (context) => OtpVerificationScreen(email: email),
+                );
+              }
+              return null;
             },
           );
         },

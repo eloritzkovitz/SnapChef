@@ -16,9 +16,9 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);    
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
 
-    return Scaffold(      
+    return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -85,7 +85,7 @@ class LoginScreen extends StatelessWidget {
                     }
                     return null;
                   },
-                ),                
+                ),
                 // Forgot Password Button
                 Align(
                   alignment: Alignment.centerRight,
@@ -109,14 +109,14 @@ class LoginScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              authViewModel.login(
+                              await authViewModel.login(
                                 emailController.text,
                                 passwordController.text,
                                 context,
                                 userViewModel.fetchUserData,
-                              );
+                              );                              
                             }
                           },
                           style: ElevatedButton.styleFrom(
