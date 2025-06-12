@@ -4,28 +4,19 @@ import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import 'view_recipe_screen.dart';
 import './widgets/recipe_card.dart';
+import '../../widgets/snapchef_search_delegate.dart';
 
-class RecipeSearchDelegate extends SearchDelegate {
+class RecipeSearchDelegate extends SnapChefSearchDelegate {
+  RecipeSearchDelegate() : super(label: 'Search recipes');
+
   @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
+  List<Widget> buildActions(BuildContext context) {    
+    return super.buildActions(context)!;
   }
 
   @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
+  Widget? buildLeading(BuildContext context) {    
+    return super.buildLeading(context);
   }
 
   @override

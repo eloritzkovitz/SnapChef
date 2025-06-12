@@ -6,57 +6,44 @@ import '../../theme/colors.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
 import '../../viewmodels/ingredient_viewmodel.dart';
+import '../../widgets/snapchef_search_delegate.dart';
 
-class IngredientSearchDelegate extends SearchDelegate {
-  @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
+class IngredientSearchDelegate extends SnapChefSearchDelegate<Ingredient> {
+  IngredientSearchDelegate() : super(label: 'Search ingredients');
 
   @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
+  Widget buildSuggestions(BuildContext context) {
     final ingredientViewModel = Provider.of<IngredientViewModel>(context);
     final allIngredients = ingredientViewModel.ingredients;
 
     if (ingredientViewModel.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (query.isEmpty) {
-      return const Center(child: Text('Please enter a search term'));
-    }
 
-    final filteredResults = allIngredients.where((ingredient) {
-      final name = ingredient.name.toString().toLowerCase();
-      final category = ingredient.category.toString().toLowerCase();
-      final searchQuery = query.toLowerCase();
-      return name.contains(searchQuery) || category.contains(searchQuery);
-    }).toList();
+    final filteredSuggestions = query.isEmpty
+        ? allIngredients
+        : allIngredients.where((ingredient) {
+            final name = ingredient.name.toLowerCase();
+            final category = ingredient.category.toLowerCase();
+            final searchQuery = query.toLowerCase();
+            return name.contains(searchQuery) || category.contains(searchQuery);
+          }).toList();
 
-    if (filteredResults.isEmpty) {
-      return const Center(child: Text('No ingredients found'));
+    if (filteredSuggestions.isEmpty) {
+      return Center(
+        child: Text(
+          query.isEmpty
+              ? 'Start typing to search for ingredients'
+              : 'No suggestions available',
+          style: const TextStyle(color: Colors.grey),
+        ),
+      );
     }
 
     return ListView.builder(
-      itemCount: filteredResults.length,
+      itemCount: filteredSuggestions.length,
       itemBuilder: (context, index) {
-        final ingredient = filteredResults[index];
+        final ingredient = filteredSuggestions[index];
         return ListTile(
           leading: (ingredient.imageURL.toString().isNotEmpty)
               ? CachedNetworkImage(
@@ -92,66 +79,8 @@ class IngredientSearchDelegate extends SearchDelegate {
   }
 
   @override
-  Widget buildSuggestions(BuildContext context) {
-    final ingredientViewModel = Provider.of<IngredientViewModel>(context);
-    final allIngredients = ingredientViewModel.ingredients;
-
-    if (ingredientViewModel.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (query.isEmpty) {
-      return const Center(
-          child: Text('Start typing to search for ingredients'));
-    }
-
-    final filteredSuggestions = allIngredients.where((ingredient) {
-      final name = ingredient.name.toString().toLowerCase();
-      final category = ingredient.category.toString().toLowerCase();
-      final searchQuery = query.toLowerCase();
-      return name.contains(searchQuery) || category.contains(searchQuery);
-    }).toList();
-
-    if (filteredSuggestions.isEmpty) {
-      return const Center(child: Text('No suggestions available'));
-    }
-
-    return ListView.builder(
-      itemCount: filteredSuggestions.length,
-      itemBuilder: (context, index) {
-        final ingredient = filteredSuggestions[index];
-        return ListTile(
-          leading: (ingredient.imageURL.toString().isNotEmpty)
-              ? CachedNetworkImage(
-                  imageUrl: ingredient.imageURL,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.contain,
-                  errorWidget: (context, error, stackTrace) => SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Icon(Icons.image_not_supported, size: 32),
-                  ),
-                )
-              : SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.image_not_supported, size: 32),
-                ),
-          title: Text(ingredient.name),
-          subtitle: Text('Category: ${ingredient.category}'),
-          trailing: IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              _showAddToFridgeDialog(context, ingredient);
-            },
-          ),
-          onTap: () {
-            query = ingredient.name;
-            showResults(context);
-          },
-        );
-      },
-    );
+  Widget buildResults(BuildContext context) {    
+    return buildSuggestions(context);
   }
 
   void _showAddToFridgeDialog(BuildContext context, Ingredient ingredient) {
@@ -162,8 +91,7 @@ class IngredientSearchDelegate extends SearchDelegate {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             backgroundColor: Colors.white,
             title: Text(
               'Add ${ingredient.name}',
@@ -263,8 +191,7 @@ class IngredientSearchDelegate extends SearchDelegate {
             ),
             actions: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
