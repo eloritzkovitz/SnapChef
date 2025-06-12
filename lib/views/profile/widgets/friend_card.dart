@@ -40,13 +40,7 @@ class FriendCard extends StatelessWidget {
                       friend.profilePicture!.isNotEmpty)
                   ? NetworkImage(
                       ImageUtil().getFullImageUrl(friend.profilePicture!))
-                  : const AssetImage('assets/images/default_profile.png')
-                      as ImageProvider,
-              child: (friend.profilePicture == null ||
-                      friend.profilePicture!.isEmpty)
-                  ? Image.asset('assets/images/default_profile.png',
-                      fit: BoxFit.cover)
-                  : null,
+                  : const AssetImage('assets/images/default_profile.png'),
             ),
             const SizedBox(width: 18),
             Expanded(

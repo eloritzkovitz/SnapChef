@@ -6,6 +6,7 @@ import '../../../models/user.dart';
 import '../../../utils/image_util.dart';
 import '../../../viewmodels/friend_viewmodel.dart';
 import '../../../viewmodels/user_viewmodel.dart';
+import '../../../widgets/search_box.dart';
 
 class FriendSearchModal extends StatefulWidget {
   final void Function(String message)? onShowSnackBar;
@@ -151,23 +152,11 @@ class _FriendSearchModalState extends State<FriendSearchModal> {
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Search users by name',
-                hintText: 'Enter first or last name',
-                suffixIcon: _isLoading
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : const Icon(Icons.search),
-              ),
+            child: SearchBox(
+              labelText: 'Search users',
+              hintText: 'Enter first, last name or email',
               onChanged: (value) => _onSearchChanged(value, context),
+              isLoading: _isLoading,
             ),
           ),
           if (_error != null)

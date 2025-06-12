@@ -59,7 +59,6 @@ class AuthViewModel extends ChangeNotifier {
   ) async {
     _setLoading(true);
     try {
-      // Call the AuthService login method
       await _authService.login(email, password);
 
       // Fetch the user profile after login using UserViewModel
@@ -68,7 +67,18 @@ class AuthViewModel extends ChangeNotifier {
       // If login is successful, navigate to the main screen
       if (context.mounted) Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      final error = e.toString();
+      if (context.mounted) {
+        if (error.contains('Please verify your email')) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/verify',
+            arguments: {'email': email},
+          );
+        } else {
+          UIUtil.showError(context, error);
+        }
+      }
     } finally {
       _setLoading(false);
     }

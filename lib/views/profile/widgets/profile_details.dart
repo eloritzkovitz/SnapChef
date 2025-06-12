@@ -95,18 +95,24 @@ class _ProfileDetailsState extends State<ProfileDetails> {
               children: [
                 CircleAvatar(
                   radius: 80,
+                  backgroundColor: Colors.grey[200],
                   backgroundImage: (widget.user.profilePicture != null &&
                           widget.user.profilePicture!.isNotEmpty)
                       ? CachedNetworkImageProvider(
                           ImageUtil()
                               .getFullImageUrl(widget.user.profilePicture!),
                         )
-                      : const AssetImage('assets/images/default_profile.png')
-                          as ImageProvider,
-                  onBackgroundImageError: (_, __) {},
-                  child: widget.user.profilePicture == null ||
-                          widget.user.profilePicture!.isEmpty
-                      ? Image.asset('assets/images/default_profile.png')
+                      : null,
+                  child: (widget.user.profilePicture == null ||
+                          widget.user.profilePicture!.isEmpty)
+                      ? ClipOval(
+                          child: Image.asset(
+                            'assets/images/default_profile.png',
+                            width: 160,
+                            height: 160,
+                            fit: BoxFit.cover,
+                          ),
+                        )
                       : null,
                 ),
               ],
