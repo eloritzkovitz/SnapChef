@@ -12,12 +12,7 @@ class RecipeSearchDelegate extends SnapChefSearchDelegate {
   @override
   List<Widget> buildActions(BuildContext context) {    
     return super.buildActions(context)!;
-  }
-
-  @override
-  Widget? buildLeading(BuildContext context) {    
-    return super.buildLeading(context);
-  }
+  }  
 
   @override
   Widget buildResults(BuildContext context) {
