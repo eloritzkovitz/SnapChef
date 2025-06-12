@@ -8,14 +8,16 @@ import 'package:http/http.dart' as http;
 import 'package:snapchef/providers/sync_provider.dart';
 import 'package:snapchef/viewmodels/auth_viewmodel.dart';
 
-class ConnectivityProvider extends ChangeNotifier {
+class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _isOffline = false;
   bool get isOffline => _isOffline;
 
   final Connectivity _connectivity = Connectivity();
   Timer? _timer;
+  AppLifecycleState _appState = AppLifecycleState.resumed;
 
   ConnectivityProvider() {
+    WidgetsBinding.instance.addObserver(this);
     _connectivity.onConnectivityChanged.listen((result) {
       _checkInternetAndServer();
     });
@@ -29,13 +31,24 @@ class ConnectivityProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appState = state;
+    if (state == AppLifecycleState.resumed) {
+      _checkInternetAndServer();
+    }
   }
 
   /// Checks internet connectivity and server availability.
   /// Updates [_isOffline] and notifies listeners if the status changes.
   Future<void> _checkInternetAndServer() async {
+    if (_appState != AppLifecycleState.resumed) return;
+
     bool offline = false;
 
     // First, check if any network is available
