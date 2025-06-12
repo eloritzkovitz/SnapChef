@@ -7,7 +7,7 @@ import '../utils/token_util.dart';
 class AuthService {
   final String baseUrl = dotenv.env['SERVER_IP'] ?? '';
 
-  // Google Sign-In
+  /// Logs in a user with Google Sign-In using the provided ID token.
   Future<Map<String, dynamic>> googleSignIn(String idToken) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/google'),
@@ -21,11 +21,18 @@ class AuthService {
           data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
-      throw Exception('Google Sign-In failed');
+      String errorMsg = 'Google Sign-In failed';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['message'] != null) {
+          errorMsg = 'Google Sign-In failed: ${data['message']}';
+        }
+      } catch (_) {}
+      throw Exception(errorMsg);
     }
   }
 
-  // Login
+  /// Logs in a user with email and password.
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/login'),
@@ -39,11 +46,18 @@ class AuthService {
           data['accessToken'], data['refreshToken'], data['_id']);
       return data;
     } else {
-      throw Exception('Login failed');
+      String errorMsg = 'Login failed';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['message'] != null) {
+          errorMsg = 'Login failed: ${data['message']}';
+        }
+      } catch (_) {}
+      throw Exception(errorMsg);
     }
   }
 
-  // Signup
+  /// Signs up a new user with the provided details.
   Future<Map<String, dynamic>> signup(
       String firstName, String lastName, String email, String password) async {
     final response = await http.post(
@@ -60,27 +74,45 @@ class AuthService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Signup failed');
+      String errorMsg = 'Signup failed';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['message'] != null) {
+          errorMsg = 'Signup failed: ${data['message']}';
+        }
+      } catch (_) {}
+      throw Exception(errorMsg);
     }
   }
 
-  // Logout
+  /// Logs the user out.
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refreshToken');
 
     if (refreshToken != null) {
-      await http.post(
+      final response = await http.post(
         Uri.parse('$baseUrl/api/auth/logout'),
         body: jsonEncode({'refreshToken': refreshToken}),
         headers: {'Content-Type': 'application/json'},
       );
+      if (response.statusCode != 200) {
+        String errorMsg = 'Logout failed';
+        try {
+          final data = jsonDecode(response.body);
+          if (data is Map && data['message'] != null) {
+            errorMsg = 'Logout failed: ${data['message']}';
+          }
+        } catch (_) {}
+        throw Exception(errorMsg);
+      }
     }
 
     await prefs.clear();
   }
 
-  // Refresh tokens
+  /// Refreshes the access token using the refresh token.
+  /// If the refresh token is invalid or expired, it clears the tokens.
   Future<void> refreshTokens() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refreshToken');
@@ -107,7 +139,7 @@ class AuthService {
     }
   }
 
-  // Send OTP for email verification
+  /// Sends an OTP to the user's email for verification.
   Future<void> verifyOTP(String email, String otp) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/verify-otp'),
@@ -120,7 +152,7 @@ class AuthService {
     }
   }
 
-  // Resend OTP
+  /// Resends the OTP to the user's email.
   Future<void> resendOTP(String email) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/resend-otp'),
@@ -133,7 +165,7 @@ class AuthService {
     }
   }
 
-  // Request password reset (send reset code to email)
+  /// Requests a password reset link to be sent to the user's email.
   Future<void> requestPasswordReset(String email) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/request-password-reset'),
@@ -145,7 +177,7 @@ class AuthService {
     }
   }
 
-  // Confirm password reset (with code/OTP and new password)
+  /// Confirms the password reset using the provided OTP and new password.
   Future<void> confirmPasswordReset(
       String email, String otp, String newPassword) async {
     final response = await http.post(
