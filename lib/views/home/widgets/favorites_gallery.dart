@@ -105,6 +105,83 @@ class FavoritesGallery extends StatelessWidget {
                       ),
                     ],
                   )
+                else if (favoriteRecipes.length == 1)
+                  // Show a single card without scroll/slider
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ViewRecipeScreen(
+                            recipe: favoriteRecipes[0],
+                            cookbookId: Provider.of<UserViewModel>(
+                                        context,
+                                        listen: false)
+                                    .cookbookId ??
+                                '',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: favoriteRecipes[0].imageURL != null &&
+                                  favoriteRecipes[0].imageURL!.isNotEmpty
+                              ? Image.network(
+                                  ImageUtil()
+                                      .getFullImageUrl(favoriteRecipes[0].imageURL),
+                                  width: cardSize,
+                                  height: cardSize,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: cardSize,
+                                      height: cardSize,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.image_not_supported,
+                                          size: 60, color: Colors.grey),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  width: cardSize,
+                                  height: cardSize,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image,
+                                      size: 60, color: Colors.grey),
+                                ),
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            favoriteRecipes[0].title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        RatingBarIndicator(
+                          rating: (favoriteRecipes[0].rating?.toDouble() ?? 0.0),
+                          itemBuilder: (context, _) =>
+                              const Icon(Icons.star, color: primaryColor),
+                          itemCount: 5,
+                          itemSize: 32.0,
+                          unratedColor: Colors.grey[300],
+                          direction: Axis.horizontal,
+                        ),
+                      ],
+                    ),
+                  )
                 else
                   CarouselSlider.builder(
                     itemCount: favoriteRecipes.length,
