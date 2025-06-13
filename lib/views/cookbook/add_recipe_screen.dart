@@ -385,6 +385,7 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
                                 ),
+                                clipBehavior: Clip.hardEdge,
                                 child: Scrollbar(
                                   controller: _recipeScrollController,
                                   thumbVisibility: true,
@@ -394,15 +395,15 @@ class _AddManualRecipeScreenState extends State<AddRecipeScreen> {
                                     expands: true,
                                     scrollController: _recipeScrollController,
                                     decoration: InputDecoration(
-                                      labelStyle:
-                                          const TextStyle(color: Colors.grey),
+                                      isDense: true,
+                                      labelStyle: const TextStyle(color: Colors.grey),
                                       filled: true,
                                       fillColor: Colors.grey[200],
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide.none,
-                                      ),
-                                      contentPadding: const EdgeInsets.all(12),
+                                      ),                                      
+                                      contentPadding: const EdgeInsets.fromLTRB(12, -10, 12, 12),
                                       hintText: '''# My Recipe
 
 This is a description of my recipe.
