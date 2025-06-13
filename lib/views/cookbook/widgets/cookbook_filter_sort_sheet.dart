@@ -49,7 +49,8 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
     final difficulties =
         vm.getDifficulties().where((e) => e.trim().isNotEmpty).toSet().toList();
 
-    return Padding(
+    return SafeArea(
+        child: Padding(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
@@ -276,6 +277,6 @@ class _CookbookFilterSortSheetState extends State<CookbookFilterSortSheet> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

@@ -70,7 +70,7 @@ class GroceriesList extends StatelessWidget {
                 builder: (context) {
                   final vm =
                       Provider.of<FridgeViewModel>(context, listen: false);
-                  return FilterSortSheet(
+                  return FridgeFilterSortSheet(
                     selectedCategory:
                         vm.groceriesController.selectedCategory ?? '',
                     selectedSort:
