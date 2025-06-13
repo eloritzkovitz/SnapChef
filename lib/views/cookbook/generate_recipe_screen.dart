@@ -90,7 +90,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
     final fridgeViewModel = Provider.of<FridgeViewModel>(context);
 
     final preferences = userViewModel.user?.preferences ??
-        Preferences(allergies: [], dietaryPreferences: {}, notificationPreferences: {});
+        Preferences(
+            allergies: [], dietaryPreferences: {}, notificationPreferences: {});
 
     // Example lists for dropdowns (replace with your actual lists)
     final mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
@@ -139,7 +140,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                prefixIcon: const Icon(Icons.restaurant, color: Colors.grey),
+                                prefixIcon: const Icon(Icons.restaurant,
+                                    color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
@@ -151,7 +153,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                         child: Text(type),
                                       ))
                                   .toList(),
-                              onChanged: (val) => setState(() => _selectedMealType = val),
+                              onChanged: (val) =>
+                                  setState(() => _selectedMealType = val),
                               isExpanded: true,
                               isDense: true,
                               iconEnabledColor: primaryColor,
@@ -169,7 +172,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                prefixIcon: const Icon(Icons.room_service, color: Colors.grey),
+                                prefixIcon: const Icon(Icons.room_service,
+                                    color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
@@ -181,7 +185,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                         child: Text(type),
                                       ))
                                   .toList(),
-                              onChanged: (val) => setState(() => _selectedCuisine = val),
+                              onChanged: (val) =>
+                                  setState(() => _selectedCuisine = val),
                               isExpanded: true,
                               isDense: true,
                               iconEnabledColor: primaryColor,
@@ -199,7 +204,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                prefixIcon: const Icon(Icons.emoji_events, color: Colors.grey),
+                                prefixIcon: const Icon(Icons.emoji_events,
+                                    color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
@@ -211,7 +217,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                         child: Text(type),
                                       ))
                                   .toList(),
-                              onChanged: (val) => setState(() => _selectedDifficulty = val),
+                              onChanged: (val) =>
+                                  setState(() => _selectedDifficulty = val),
                               isExpanded: true,
                               isDense: true,
                               iconEnabledColor: primaryColor,
@@ -230,7 +237,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                prefixIcon: const Icon(Icons.access_time, color: Colors.grey),
+                                prefixIcon: const Icon(Icons.access_time,
+                                    color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
@@ -251,7 +259,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                prefixIcon: const Icon(Icons.timer, color: Colors.grey),
+                                prefixIcon:
+                                    const Icon(Icons.timer, color: Colors.grey),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: primaryColor),
@@ -285,13 +294,26 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        IngredientChipList(
-                          ingredients: recipeViewModel.selectedIngredients,
-                          onRemove: (ingredient) =>
-                              recipeViewModel.removeIngredient(ingredient),
-                        ),
-                        if (recipeViewModel.selectedIngredients.isNotEmpty)
-                          const SizedBox(height: 16),
+                        recipeViewModel.selectedIngredients.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'Please add ingredients in order to generate recipes',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  IngredientChipList(
+                                    ingredients:
+                                        recipeViewModel.selectedIngredients,
+                                    onRemove: (ingredient) => recipeViewModel
+                                        .removeIngredient(ingredient),
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
                       ],
                     ),
                   ),
@@ -303,7 +325,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                     onPressed: recipeViewModel.isLoading ||
                             recipeViewModel.selectedIngredients.isEmpty
                         ? null
-                        : () async {                            
+                        : () async {
                             await recipeViewModel.generateRecipe(
                               mealType: _selectedMealType,
                               cuisine: _selectedCuisine,
@@ -317,7 +339,8 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                   : null,
                               preferences: preferences.toRecipeJson(),
                             );
-                            if (recipeViewModel.recipe.isNotEmpty && context.mounted) {
+                            if (recipeViewModel.recipe.isNotEmpty &&
+                                context.mounted) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -340,7 +363,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
                                             : null,
                                   ),
                                 ),
-                              ).then((_) {                                
+                              ).then((_) {
                                 _resetFields();
                               });
                             }
