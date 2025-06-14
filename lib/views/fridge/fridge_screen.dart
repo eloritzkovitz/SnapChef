@@ -159,7 +159,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
                 builder: (context) {
                   final vm =
                       Provider.of<FridgeViewModel>(context, listen: false);
-                  return FilterSortSheet(
+                  return FridgeFilterSortSheet(
                     selectedCategory:
                         vm.fridgeController.selectedCategory ?? '',
                     selectedSort: vm.fridgeController.selectedSortOption ?? '',

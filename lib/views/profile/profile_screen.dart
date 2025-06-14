@@ -13,7 +13,10 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
+
+class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
@@ -21,6 +24,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final userViewModel = Provider.of<UserViewModel>(context, listen: false);
       userViewModel.fetchUserData();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    userViewModel.fetchUserData();
   }
 
   // Open the side menu with a sliding animation

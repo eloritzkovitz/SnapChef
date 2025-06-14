@@ -79,6 +79,11 @@ class UserViewModel extends ChangeNotifier {
       // Update FCM token after fetching user data
       final fcmToken = await FirebaseMessaging.instance.getToken();
       await updateFcmToken(fcmToken);
+
+      // Fetch user statistics after fetching user data
+      if (_user != null) {
+        await fetchUserStats(userId: _user!.id);
+      }
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -102,6 +107,10 @@ class UserViewModel extends ChangeNotifier {
           // Update FCM token after refreshing user data
           final fcmToken = await FirebaseMessaging.instance.getToken();
           await updateFcmToken(fcmToken);
+
+          if (_user != null) {
+            await fetchUserStats(userId: _user!.id);
+          }
         } catch (refreshError) {
           log('Failed to refresh tokens: $refreshError');
         }

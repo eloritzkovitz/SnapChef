@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
 import '../home/home_screen.dart';
 import '../fridge/fridge_screen.dart';
 import '../cookbook/cookbook_screen.dart';
@@ -28,6 +29,9 @@ class _MainScreenState extends State<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<UserViewModel>(context, listen: false)
           .listenForFcmTokenRefresh();
+
+      // Fetch ingredients once when main screen is loaded
+      Provider.of<IngredientViewModel>(context, listen: false).fetchIngredients();
 
       // Show offline snackbar if entering main screen and already offline
       final isOffline =

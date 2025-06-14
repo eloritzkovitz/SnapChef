@@ -30,19 +30,6 @@ class ProfileDetails extends StatefulWidget {
 
 class _ProfileDetailsState extends State<ProfileDetails> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-      userViewModel.fetchUserStats(userId: widget.user.id);
-
-      final ingredientViewModel =
-          Provider.of<IngredientViewModel>(context, listen: false);
-      ingredientViewModel.fetchIngredients();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Consumer2<UserViewModel, IngredientViewModel>(
       builder: (context, userViewModel, ingredientViewModel, _) {

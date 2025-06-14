@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/colors.dart';
 
-class FilterSortSheet extends StatefulWidget {
+class FridgeFilterSortSheet extends StatefulWidget {
   final String selectedCategory;
   final String selectedSort;
   final List<String> categories;
@@ -10,7 +10,7 @@ class FilterSortSheet extends StatefulWidget {
   final String categoryLabel;
   final String sortLabel;
 
-  const FilterSortSheet({
+  const FridgeFilterSortSheet({
     super.key,
     required this.selectedCategory,
     required this.selectedSort,
@@ -22,10 +22,10 @@ class FilterSortSheet extends StatefulWidget {
   });
 
   @override
-  State<FilterSortSheet> createState() => _FilterSortSheetState();
+  State<FridgeFilterSortSheet> createState() => _FilterSortSheetState();
 }
 
-class _FilterSortSheetState extends State<FilterSortSheet> {
+class _FilterSortSheetState extends State<FridgeFilterSortSheet> {
   late String selectedCategory;
   late String selectedSort;
 
@@ -38,9 +38,11 @@ class _FilterSortSheetState extends State<FilterSortSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = widget.categories.where((e) => e.trim().isNotEmpty).toSet().toList();
+    final categories =
+        widget.categories.where((e) => e.trim().isNotEmpty).toSet().toList();
 
-    return Padding(
+    return SafeArea(
+        child: Padding(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
@@ -53,22 +55,24 @@ class _FilterSortSheetState extends State<FilterSortSheet> {
           children: [
             // Category filter
             DropdownButtonFormField<String>(
-              value: categories.contains(selectedCategory) ? selectedCategory : '',
+              value:
+                  categories.contains(selectedCategory) ? selectedCategory : '',
               decoration: InputDecoration(
                 labelText: widget.categoryLabel,
                 prefixIcon: Icon(Icons.category, color: primaryColor),
               ),
               items: [
-                const DropdownMenuItem(value: '', child: Text('All Categories')),
+                const DropdownMenuItem(
+                    value: '', child: Text('All Categories')),
                 ...categories.map((cat) => DropdownMenuItem(
-                  value: cat,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      Text(cat),
-                    ],
-                  ),
-                )),
+                      value: cat,
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 8),
+                          Text(cat),
+                        ],
+                      ),
+                    )),
               ],
               onChanged: (val) => setState(() => selectedCategory = val ?? ''),
             ),
@@ -83,7 +87,8 @@ class _FilterSortSheetState extends State<FilterSortSheet> {
               items: const [
                 DropdownMenuItem(value: '', child: Text('No Sorting')),
                 DropdownMenuItem(value: 'Name', child: Text('Sort by Name')),
-                DropdownMenuItem(value: 'Quantity', child: Text('Sort by Quantity')),
+                DropdownMenuItem(
+                    value: 'Quantity', child: Text('Sort by Quantity')),
               ],
               onChanged: (val) => setState(() => selectedSort = val ?? ''),
             ),
@@ -116,6 +121,6 @@ class _FilterSortSheetState extends State<FilterSortSheet> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
