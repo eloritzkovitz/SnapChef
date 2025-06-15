@@ -4,8 +4,15 @@ import '../services/auth_service.dart';
 import '../../utils/ui_util.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final AuthService _authService = AuthService();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final AuthService _authService;
+  final GoogleSignIn _googleSignIn;
+
+  // Constructor with optional parameters for dependency injection
+  AuthViewModel({
+    AuthService? authService,
+    GoogleSignIn? googleSignIn,
+  })  : _authService = authService ?? AuthService(),
+        _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   bool _isLoading = false;
   bool isLoggingOut = false;

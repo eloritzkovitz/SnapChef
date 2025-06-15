@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:snapchef/utils/image_util.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 void main() {
+  setUpAll(() async {
+    await dotenv.load();
+  });
   group('ImageUtil', () {
     final util = ImageUtil();
 
