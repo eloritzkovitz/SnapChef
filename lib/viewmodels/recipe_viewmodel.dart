@@ -4,7 +4,9 @@ import '../models/ingredient.dart';
 import '../models/recipe.dart';
 
 class RecipeViewModel extends ChangeNotifier {
-  final RecipeService _recipeService = RecipeService();
+  final RecipeService _recipeService;
+  RecipeViewModel({RecipeService? recipeService})
+      : _recipeService = recipeService ?? RecipeService();
 
   bool isLoading = false;
   String recipe = '';
@@ -75,7 +77,7 @@ class RecipeViewModel extends ChangeNotifier {
       recipe = result['recipe'] ?? 'No recipe generated.';
       imageUrl = result['imageUrl'] ?? '';
 
-      // Parse and store the generated recipe as a Recipe object      
+      // Parse and store the generated recipe as a Recipe object
       String title = 'Generated Recipe';
       final lines = recipe.split('\n').map((l) => l.trim()).toList();
       for (final line in lines) {
@@ -119,7 +121,7 @@ class RecipeViewModel extends ChangeNotifier {
     int? cookingTime,
     int? prepTime,
     Map<String, dynamic>? preferences,
-    List<String>? ingredients,    
+    List<String>? ingredients,
   }) async {
     isLoading = true;
     notifyListeners();
