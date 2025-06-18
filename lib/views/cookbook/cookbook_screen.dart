@@ -79,6 +79,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
         actions: [
           // Filter & Sort button
           IconButton(
+            key: const Key('filterSortButton'),
             icon: const Icon(Icons.tune, color: Colors.black),
             tooltip: 'Filter & Sort',
             onPressed: () {
@@ -92,6 +93,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           ),
           // Show favorites button
           IconButton(
+            key: const Key('favoritesToggleButton'),
             icon: Icon(
               showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
               color: showOnlyFavorites ? Colors.black : Colors.black,
@@ -106,6 +108,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           ),
           // Search button
           IconButton(
+            key: const Key('searchButton'),
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
               showSearch(
@@ -116,6 +119,7 @@ class _CookbookScreenState extends State<CookbookScreen> with RouteAware {
           ),
           // Shared recipes button
           IconButton(
+            key: const Key('sharedRecipesButton'),
             icon: const Icon(Icons.people_alt_outlined, color: Colors.black),
             tooltip: 'Shared Recipes',
             onPressed: () async {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:snapchef/models/user.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 
-class MockUserViewModel extends ChangeNotifier implements UserViewModel {  
+class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   User? _user = User(
     id: 'test_user',
     firstName: 'Test',
@@ -24,7 +24,7 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   String? get fridgeId => 'test_fridge_id';
 
   @override
-  String? get cookbookId => null;
+  String? get cookbookId => 'test_cookbook_id';
 
   String? get userId => null;
 
