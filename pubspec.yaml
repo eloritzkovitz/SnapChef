@@ -47,6 +47,7 @@ dependencies:
   cached_network_image: ^3.4.1
   get_it: ^8.0.3
   mockito: ^5.4.6
+  network_image_mock: ^2.1.1
 
 flutter:
   uses-material-design: true
