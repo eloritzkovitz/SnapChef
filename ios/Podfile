@@ -39,4 +39,11 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
+
+  # Add environment variables dynamically to Generated.xcconfig
+  generated_xcconfig_path = File.join(File.dirname(__FILE__), 'Flutter', 'Generated.xcconfig')
+  File.open(generated_xcconfig_path, 'a') do |file|
+    file.puts "GOOGLE_CLIENT_ID=211799055475-674p1ue4ar2to4j2e3i109cjm499j65g.apps.googleusercontent.com"
+    file.puts "GOOGLE_CLIENT_ID_SCHEME=com.googleusercontent.apps.211799055475-674p1ue4ar2to4j2e3i109cjm499j65g"
+  end
 end
