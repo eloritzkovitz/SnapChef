@@ -15,6 +15,12 @@ class MockConnectivityProvider extends ChangeNotifier implements ConnectivityPro
     }
   }
 
+  @override
+  Future<void> checkInternetAndServer({bool offline = false}) async {
+    _isOffline = offline;
+    notifyListeners();
+  }
+
   // Satisfy all other abstract/interface members if needed
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

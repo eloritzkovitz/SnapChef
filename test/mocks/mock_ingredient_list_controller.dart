@@ -4,7 +4,7 @@ import 'package:snapchef/models/ingredient.dart';
 
 class MockIngredientListController extends ChangeNotifier implements IngredientListController {
   List<Ingredient> _filteredItems = [];
-  List<Ingredient> _sourceList = [];
+  final List<Ingredient> _sourceList = [];
   @override
   String filter = '';
   @override
