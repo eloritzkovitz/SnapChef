@@ -6,12 +6,13 @@ import '../../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
 
 class LoginScreen extends StatelessWidget {
+  final Widget? googleButton;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
-  LoginScreen({super.key});
+  LoginScreen({super.key, this.googleButton});
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +117,7 @@ class LoginScreen extends StatelessWidget {
                                 passwordController.text,
                                 context,
                                 userViewModel.fetchUserData,
-                              );                              
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -136,19 +137,20 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: SignInButton(
-                    Buttons.Google,
-                    text: "Sign in with Google",
-                    onPressed: () async {
-                      await authViewModel.googleSignIn(
-                          context, userViewModel.fetchUserData);
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  child: googleButton ??
+                      SignInButton(
+                        Buttons.Google,
+                        text: "Sign in with Google",
+                        onPressed: () async {
+                          await authViewModel.googleSignIn(
+                              context, userViewModel.fetchUserData);
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/signup');

@@ -20,6 +20,13 @@ class UserViewModel extends ChangeNotifier {
   final ConnectivityProvider connectivityProvider =
       GetIt.I<ConnectivityProvider>();
   final UserRepository userRepository = GetIt.I<UserRepository>();
+  final FriendService friendService;
+
+   UserViewModel({FriendService? friendService})
+      : friendService = friendService ?? GetIt.I<FriendService>();
+
+  @visibleForTesting
+  set userForTest(model.User value) => _user = value;
 
   bool _isLoading = false;
   bool isLoggingOut = false;
@@ -360,7 +367,7 @@ class UserViewModel extends ChangeNotifier {
 
   /// Removes a friend by their userId.
   Future<void> removeFriend(String friendId) async {
-    await FriendService().removeFriend(friendId);
+    await friendService.removeFriend(friendId);
     await database.userStatsDao.deleteUserStats(friendId);
     await fetchUserData();
   }

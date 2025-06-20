@@ -12,20 +12,20 @@ class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _isOffline = false;
   bool get isOffline => _isOffline;
 
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
   Timer? _timer;
   AppLifecycleState _appState = AppLifecycleState.resumed;
 
-  ConnectivityProvider() {
+  ConnectivityProvider({Connectivity? connectivity})
+      : _connectivity = connectivity ?? Connectivity() {
     WidgetsBinding.instance.addObserver(this);
     _connectivity.onConnectivityChanged.listen((result) {
-      _checkInternetAndServer();
+      checkInternetAndServer();
     });
-    _checkInternetAndServer();
+    checkInternetAndServer();
 
-    // Poll the server every 10 seconds
     _timer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _checkInternetAndServer();
+      checkInternetAndServer();
     });
   }
 
@@ -40,13 +40,13 @@ class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _appState = state;
     if (state == AppLifecycleState.resumed) {
-      _checkInternetAndServer();
+      checkInternetAndServer();
     }
-  }
+  }  
 
   /// Checks internet connectivity and server availability.
   /// Updates [_isOffline] and notifies listeners if the status changes.
-  Future<void> _checkInternetAndServer() async {
+  Future<void> checkInternetAndServer() async {
     if (_appState != AppLifecycleState.resumed) return;
 
     bool offline = false;

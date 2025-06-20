@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/friend_request.dart';
 import '../models/user.dart';
@@ -5,7 +6,12 @@ import '../services/friend_service.dart';
 import 'user_viewmodel.dart';
 
 class FriendViewModel extends ChangeNotifier {
-  final FriendService _friendService = FriendService();
+  final FriendService _friendService;
+  FriendViewModel({FriendService? friendService})
+      : _friendService = friendService ?? FriendService();
+
+  @visibleForTesting
+  set sentRequestsForTest(List<FriendRequest> value) => _sentRequests = value;
 
   List<FriendRequest> _pendingRequests = [];
   List<FriendRequest> _sentRequests = [];

@@ -14,14 +14,29 @@ import '../utils/token_util.dart';
 import '../viewmodels/user_viewmodel.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
-  final NotificationService _notificationService = NotificationService();
-  final BackendNotificationService _backendService =
-      BackendNotificationService(baseUrl: dotenv.env['SERVER_IP']!);
+  final NotificationService _notificationService;
+  final BackendNotificationService _backendService;
+  final ConnectivityProvider connectivityProvider;
+  final SyncProvider syncProvider;
+  final SyncManager syncManager;
 
-  final ConnectivityProvider connectivityProvider =
-      GetIt.I<ConnectivityProvider>();
-  final SyncProvider syncProvider = GetIt.I<SyncProvider>();
-  final SyncManager syncManager = GetIt.I<SyncManager>();
+  NotificationsViewModel({
+    NotificationService? notificationService,
+    BackendNotificationService? backendNotificationService,
+    ConnectivityProvider? connectivityProvider,
+    SyncProvider? syncProvider,
+    SyncManager? syncManager,
+  })  : _notificationService = notificationService ?? NotificationService(),
+        _backendService = backendNotificationService ??
+            BackendNotificationService(baseUrl: dotenv.env['SERVER_IP']!),
+        connectivityProvider =
+            connectivityProvider ?? GetIt.I<ConnectivityProvider>(),
+        syncProvider = syncProvider ?? GetIt.I<SyncProvider>(),
+        syncManager = syncManager ?? GetIt.I<SyncManager>() {
+    _initialize();
+    _startAutoRefresh();
+    _startAutoCleanup();
+  }
 
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
@@ -44,13 +59,7 @@ class NotificationsViewModel extends ChangeNotifier {
               n.scheduledTime.isBefore(DateTime.now())))
       .toList();
 
-  bool get isLoading => _isLoading;
-
-  NotificationsViewModel() {
-    _initialize();
-    _startAutoRefresh();
-    _startAutoCleanup();
-  }
+  bool get isLoading => _isLoading;  
 
   /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
