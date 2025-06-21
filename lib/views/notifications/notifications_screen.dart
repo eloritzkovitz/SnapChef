@@ -21,9 +21,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Timer? _undoTimer;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchNotifications();
+  }
+
+  @override
   void dispose() {
     _undoTimer?.cancel();
     super.dispose();
+  }
+
+  // Fetch notifications when the screen is initialized
+  void _fetchNotifications() {
+    final notificationsViewModel =
+        Provider.of<NotificationsViewModel>(context, listen: false);
+    notificationsViewModel.syncNotifications();
   }
 
   @override
@@ -78,6 +91,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       notificationsViewModel.notifications)
                     ..sort(
                         (a, b) => b.scheduledTime.compareTo(a.scheduledTime));
+
+                  // Show error message if present
+                  if (notificationsViewModel.errorMessage != null) {
+                    return Center(
+                      child: Text(
+                        'Failed to load notifications.',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    );
+                  }
 
                   // Swipe down to refresh notifications
                   return RefreshIndicator(
