@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../core/base_viewmodel.dart';
+import '../core/session_manager.dart';
 import '../services/auth_service.dart';
-import '../../utils/ui_util.dart';
+import '../utils/ui_util.dart';
 
-class AuthViewModel extends ChangeNotifier {
+class AuthViewModel extends BaseViewModel {
   final AuthService _authService;
   final GoogleSignIn _googleSignIn;
 
@@ -14,17 +16,12 @@ class AuthViewModel extends ChangeNotifier {
   })  : _authService = authService ?? AuthService(),
         _googleSignIn = googleSignIn ?? GoogleSignIn();
 
-  bool _isLoading = false;
-  bool isLoggingOut = false;
-
-  bool get isLoading => _isLoading;
-
   // Google Sign-In
   Future<void> googleSignIn(
     BuildContext context,
     Future<void> Function() fetchUserProfile,
   ) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       // Start the Google Sign-In process
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -53,7 +50,7 @@ class AuthViewModel extends ChangeNotifier {
         UIUtil.showError(context, 'Google Sign-In failed: $e');
       }
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -64,7 +61,7 @@ class AuthViewModel extends ChangeNotifier {
     BuildContext context,
     Future<void> Function() fetchUserProfile,
   ) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.login(email, password);
 
@@ -87,7 +84,7 @@ class AuthViewModel extends ChangeNotifier {
         }
       }
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -99,7 +96,7 @@ class AuthViewModel extends ChangeNotifier {
     String password,
     BuildContext context,
   ) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.signup(firstName, lastName, email, password);
       // Optionally show a success message here
@@ -110,7 +107,7 @@ class AuthViewModel extends ChangeNotifier {
       }
       return false;
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -118,6 +115,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> logout(BuildContext context) async {
     try {
       await _authService.logout();
+      await SessionManager.clearSession();
       notifyListeners();
       if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
@@ -134,21 +132,9 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Set the loading state
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  // Set the logging out state
-  void setLoggingOut(bool value) {
-    isLoggingOut = value;
-    notifyListeners();
-  }
-
   // Verify OTP
   Future<void> verifyOTP(String email, String otp, BuildContext context) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.verifyOTP(email, otp);
       if (context.mounted) {
@@ -160,23 +146,23 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
   // Resend OTP
   Future<void> resendOTP(String email) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.resendOTP(email);
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
   // Request password reset
   Future<void> requestPasswordReset(String email, BuildContext context) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.requestPasswordReset(email);
       if (context.mounted) {
@@ -188,14 +174,14 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
   // Confirm password reset
   Future<void> confirmPasswordReset(String email, String otp,
       String newPassword, BuildContext context) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _authService.confirmPasswordReset(email, otp, newPassword);
       if (context.mounted) {
@@ -208,7 +194,13 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
+  }
+
+  @override
+  void clear() {
+    setError(null);
+    setLoading(false);
   }
 }
