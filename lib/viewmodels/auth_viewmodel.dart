@@ -17,7 +17,7 @@ class AuthViewModel extends BaseViewModel {
         _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   /// Initiates the Google Sign-In process.
-  /// After successful sign-in, it fetches the user profile and navigates to the main screen.  
+  /// After successful sign-in, it fetches the user profile and navigates to the main screen.
   Future<void> googleSignIn(
     BuildContext context,
     Future<void> Function() fetchUserProfile,
@@ -40,8 +40,10 @@ class AuthViewModel extends BaseViewModel {
           // Fetch the user profile after successful sign-in using UserViewModel
           await fetchUserProfile();
 
-          // Navigate to the main screen
-          if (context.mounted) Navigator.pushReplacementNamed(context, '/main');
+          // Create a new session after fetching the profile
+          if (context.mounted) {
+            SessionManager.createSession(context);
+          }
         } else {
           throw Exception('Failed to retrieve Google ID token');
         }
@@ -69,8 +71,10 @@ class AuthViewModel extends BaseViewModel {
       // Fetch the user profile after login using UserViewModel
       await fetchUserProfile();
 
-      // If login is successful, navigate to the main screen
-      if (context.mounted) Navigator.pushReplacementNamed(context, '/main');
+      // If login is successful, create a new session
+      if (context.mounted) {
+        SessionManager.createSession(context);
+      }
     } catch (e) {
       final error = e.toString();
       if (context.mounted) {

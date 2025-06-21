@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/app_database.dart';
@@ -13,6 +14,12 @@ import '../viewmodels/shared_recipe_viewmodel.dart';
 import '../viewmodels/user_viewmodel.dart';
 
 class SessionManager {
+  /// Prepares a new session: resets main tab and navigates to main screen.
+  static void createSession(BuildContext context) {
+    GetIt.I<MainViewModel>().clear();
+    Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+  }
+  
   /// Clears all user session data: database, preferences, tokens, and viewmodels.
   static Future<void> clearSession() async {
     // Clear local database

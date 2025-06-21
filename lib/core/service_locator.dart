@@ -38,9 +38,7 @@ void setupLocator(AppDatabase db) {
   getIt.registerSingleton<ConnectivityProvider>(ConnectivityProvider());
   getIt.registerSingleton<SyncProvider>(SyncProvider());
   getIt.registerSingleton<SyncManager>(SyncManager(getIt<ConnectivityProvider>()));
-
-  // Main
-  getIt.registerLazySingleton<MainViewModel>(() => MainViewModel());
+  getIt.registerSingleton<MainViewModel>(MainViewModel());
   
   // User  
   getIt.registerLazySingleton<AuthViewModel>(() => AuthViewModel());

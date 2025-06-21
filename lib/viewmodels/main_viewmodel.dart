@@ -3,6 +3,7 @@ import '../constants/navigation_constants.dart';
 import '../core/base_viewmodel.dart';
 import '../views/fridge/fridge_screen.dart';
 import '../views/cookbook/cookbook_screen.dart';
+import '../views/home/home_screen.dart';
 import '../views/profile/profile_screen.dart';
 import '../views/notifications/notifications_screen.dart';
 
@@ -10,6 +11,7 @@ class MainViewModel extends BaseViewModel {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
+    const HomeScreen(),
     const FridgeScreen(),
     const CookbookScreen(),
     const ProfileScreen(),

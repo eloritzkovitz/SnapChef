@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
             value: getIt<ConnectivityProvider>()),
 
         // ViewModels
-        ChangeNotifierProvider(create: (_) => MainViewModel()),
+        ChangeNotifierProvider<MainViewModel>.value(value: getIt<MainViewModel>()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => IngredientViewModel()),
