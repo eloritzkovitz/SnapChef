@@ -7,6 +7,9 @@ This folder contains all the main source code for the SnapChef application. Belo
 - [`constants/`](./constants/)  
   Contains app-wide constant values such as strings, keys, and configuration variables.
 
+- [`core/`](./core/)  
+  Contains foundational classes and app-wide architecture components.
+
 - [`database/`](./database/)    
   Local persistence logic, including Drift entities, DAOs, and the database class.
 
