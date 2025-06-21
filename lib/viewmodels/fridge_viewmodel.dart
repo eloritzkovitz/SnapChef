@@ -30,9 +30,7 @@ class FridgeViewModel extends BaseViewModel {
   final SyncManager syncManager = GetIt.I<SyncManager>();
   final FridgeRepository fridgeRepository = GetIt.I<FridgeRepository>();
 
-  FridgeService get fridgeService => fridgeRepository.fridgeService;
-
-  bool _initialized = false;
+  FridgeService get fridgeService => fridgeRepository.fridgeService;  
 
   FridgeViewModel() {
     fridgeController = IngredientListController(_ingredients);
@@ -44,11 +42,14 @@ class FridgeViewModel extends BaseViewModel {
     syncProvider.loadPendingActions();
   }
 
-  void init(String fridgeId, IngredientViewModel ingredientViewModel) {
-    if (_initialized) return;
-    _initialized = true;
-    fetchFridgeIngredients(fridgeId, ingredientViewModel);
-    fetchGroceries(fridgeId, ingredientViewModel);
+  Future<void> fetchData({
+    required String fridgeId,
+    required IngredientViewModel ingredientViewModel,
+  }) async {
+    await Future.wait([
+      fetchFridgeIngredients(fridgeId, ingredientViewModel),
+      fetchGroceries(fridgeId, ingredientViewModel),
+    ]);
   }
 
   @override
@@ -731,8 +732,7 @@ class FridgeViewModel extends BaseViewModel {
     _groceries.clear();
     recognizedIngredients = [];
     fridgeController.clear();
-    groceriesController.clear();
-    _initialized = false;
+    groceriesController.clear();    
     setLoading(false);
     notifyListeners();
   }

@@ -33,7 +33,10 @@ class _FridgeScreenState extends State<FridgeScreen> {
     final ingredientViewModel =
         Provider.of<IngredientViewModel>(context, listen: false);
     if (userViewModel.fridgeId != null) {
-      fridgeViewModel.init(userViewModel.fridgeId!, ingredientViewModel);
+      fridgeViewModel.fetchData(
+        fridgeId: userViewModel.fridgeId!,
+        ingredientViewModel: ingredientViewModel,
+      );
     }
   }
 
