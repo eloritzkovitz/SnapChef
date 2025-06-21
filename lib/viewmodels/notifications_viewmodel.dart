@@ -59,7 +59,7 @@ class NotificationsViewModel extends ChangeNotifier {
               n.scheduledTime.isBefore(DateTime.now())))
       .toList();
 
-  bool get isLoading => _isLoading;  
+  bool get isLoading => _isLoading;
 
   /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
@@ -145,6 +145,16 @@ class NotificationsViewModel extends ChangeNotifier {
           _notifications.insert(0, notif);
           notifyListeners();
         }
+
+        // Refresh the friends list
+        if (notif.type == 'friend_update') {
+          // Fetch the UserViewModel and refresh user data
+          if (context.mounted) {
+            final userViewModel =
+                Provider.of<UserViewModel>(context, listen: false);
+            await userViewModel.fetchUserData();
+          }
+        }
       });
     }
   }
@@ -167,7 +177,8 @@ class NotificationsViewModel extends ChangeNotifier {
     final backendNotifications = await _backendService.fetchNotifications();
 
     // 2. Get pending notification actions (add/edit) from SyncProvider
-    final pendingActions = await syncProvider.getPendingActions('notifications');
+    final pendingActions =
+        await syncProvider.getPendingActions('notifications');
 
     // 3. Apply pending actions to backendNotifications
     List<AppNotification> mergedNotifications = List.from(backendNotifications);

@@ -132,102 +132,107 @@ class _FriendsListState extends State<FriendsList> {
           ],
         ),
         body: SafeArea(
+  child: RefreshIndicator(
+    onRefresh: () async {
+      await Provider.of<UserViewModel>(context, listen: false).fetchUserData();
+    },
+    child: Column(
+      children: [
+        Material(
+          color: Colors.white,
           child: Column(
             children: [
-              Material(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: SearchBox(
-                        labelText: 'Search friends...',
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
-                        isLoading: false,
-                      ),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: SearchBox(
+                  labelText: 'Search friends...',
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  isLoading: false,
                 ),
-              ),
-              Expanded(
-                child: friends.isEmpty
-                    ? Column(
-                        children: [
-                          const Expanded(
-                            child: Center(
-                              child: Text(
-                                "You don't have any friends yet.",
-                                style:
-                                    TextStyle(fontSize: 16, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.person_add),
-                                label: const Text('Add Friends'),
-                                onPressed: isOffline
-                                    ? null
-                                    : () => _openAddFriendModal(context),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: filteredFriends.isEmpty
-                                ? const Center(
-                                    child: Text(
-                                      "No friends found.",
-                                      style: TextStyle(
-                                          fontSize: 16, color: Colors.grey),
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    padding: const EdgeInsets.only(top: 0),
-                                    itemCount: filteredFriends.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(height: 12),
-                                    itemBuilder: (context, index) {
-                                      final friend = filteredFriends[index];
-                                      return FriendCard(
-                                        friend: friend,
-                                        onViewProfile: () =>
-                                            _openPublicProfile(context, friend),
-                                        onRemove: () => _showRemoveFriendDialog(
-                                            context, friend),
-                                      );
-                                    },
-                                  ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.person_add),
-                                label: const Text('Add Friends'),
-                                onPressed: isOffline
-                                    ? null
-                                    : () => _openAddFriendModal(context),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
               ),
             ],
           ),
-        ));
+        ),
+        Expanded(
+          child: friends.isEmpty
+              ? Column(
+                  children: [
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          "You don't have any friends yet.",
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Add Friends'),
+                          onPressed: isOffline
+                              ? null
+                              : () => _openAddFriendModal(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: filteredFriends.isEmpty
+                          ? const Center(
+                              child: Text(
+                                "No friends found.",
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.only(top: 0),
+                              itemCount: filteredFriends.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final friend = filteredFriends[index];
+                                return FriendCard(
+                                  friend: friend,
+                                  onViewProfile: () =>
+                                      _openPublicProfile(context, friend),
+                                  onRemove: () => _showRemoveFriendDialog(
+                                      context, friend),
+                                );
+                              },
+                            ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Add Friends'),
+                          onPressed: isOffline
+                              ? null
+                              : () => _openAddFriendModal(context),
+                        ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
   }
-}
+}  
