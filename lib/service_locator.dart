@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:snapchef/services/friend_service.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/sync_actions/cookbook_sync_actions.dart';
@@ -36,6 +37,7 @@ void setupLocator(AppDatabase db) {
   getIt.registerLazySingleton<AuthViewModel>(() => AuthViewModel());
   getIt.registerLazySingleton<UserService>(() => UserService());
   getIt.registerLazySingleton<UserRepository>(() => UserRepository());
+  getIt.registerLazySingleton<FriendService>(() => FriendService());
   
   // Fridge/Grocery
   getIt.registerLazySingleton<FridgeService>(() => FridgeService());
