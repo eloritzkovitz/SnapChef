@@ -34,6 +34,7 @@ class FridgeViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _initialized = false;
 
   FridgeViewModel() {
     fridgeController = IngredientListController(_ingredients);
@@ -43,6 +44,13 @@ class FridgeViewModel extends ChangeNotifier {
     syncManager.register(syncProvider.syncPendingActions);
     syncProvider.initSync(connectivityProvider);
     syncProvider.loadPendingActions();
+  }
+
+  void init(String fridgeId, IngredientViewModel ingredientViewModel) {
+    if (_initialized) return;
+    _initialized = true;
+    fetchFridgeIngredients(fridgeId, ingredientViewModel);
+    fetchGroceries(fridgeId, ingredientViewModel);
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
 import 'groceries_list.dart';
 import './fridge_list_view.dart';
 import './fridge_grid_view.dart';
@@ -22,6 +23,19 @@ class FridgeScreen extends StatefulWidget {
 
 class _FridgeScreenState extends State<FridgeScreen> {
   bool isListView = false; // State variable to toggle between views
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final fridgeViewModel =
+        Provider.of<FridgeViewModel>(context, listen: false);
+    final ingredientViewModel =
+        Provider.of<IngredientViewModel>(context, listen: false);
+    if (userViewModel.fridgeId != null) {
+      fridgeViewModel.init(userViewModel.fridgeId!, ingredientViewModel);
+    }
+  }
 
   // Open the groceries list in a sliding panel
   void _openGroceriesList(BuildContext rootContext) {
