@@ -399,8 +399,6 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       if (isOffline) {
         await cookbookRepository.deleteRecipeLocal(recipeId);
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        await cookbookRepository.storeCookbookRecipesLocal(
-            cookbookId, _recipes);
         syncProvider.addPendingAction('cookbook', {
           'action': 'delete',
           'cookbookId': cookbookId,
@@ -415,9 +413,9 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       final success =
           await cookbookRepository.deleteRecipeRemote(cookbookId, recipeId);
       if (success) {
+        await cookbookRepository.deleteRecipeLocal(
+            recipeId);
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
-        await cookbookRepository.storeCookbookRecipesLocal(
-            cookbookId, _recipes);
         applyFiltersAndSorting();
         notifyListeners();
       }
