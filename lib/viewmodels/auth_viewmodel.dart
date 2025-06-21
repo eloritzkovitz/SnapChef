@@ -16,7 +16,8 @@ class AuthViewModel extends BaseViewModel {
   })  : _authService = authService ?? AuthService(),
         _googleSignIn = googleSignIn ?? GoogleSignIn();
 
-  // Google Sign-In
+  /// Initiates the Google Sign-In process.
+  /// After successful sign-in, it fetches the user profile and navigates to the main screen.  
   Future<void> googleSignIn(
     BuildContext context,
     Future<void> Function() fetchUserProfile,
@@ -54,7 +55,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Login
+  /// Logs in the user with the provided email and password.
   Future<void> login(
     String email,
     String password,
@@ -88,7 +89,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Signup
+  /// Signs up a new user with the provided details.
   Future<bool> signup(
     String firstName,
     String lastName,
@@ -111,7 +112,8 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Logout
+  /// Logs out the user and clears the session.
+  /// Navigates to the login screen after logout.
   Future<void> logout(BuildContext context) async {
     try {
       await _authService.logout();
@@ -123,7 +125,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Refresh Tokens
+  /// Refreshes the authentication tokens.
   Future<void> refreshTokens() async {
     try {
       await _authService.refreshTokens();
@@ -132,7 +134,8 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Verify OTP
+  /// Verifies the OTP sent to the user's email.
+  /// If successful, navigates to the login screen.
   Future<void> verifyOTP(String email, String otp, BuildContext context) async {
     setLoading(true);
     try {
@@ -150,7 +153,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Resend OTP
+  /// Resends the OTP to the user's email.
   Future<void> resendOTP(String email) async {
     setLoading(true);
     try {
@@ -160,7 +163,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Request password reset
+  /// Requests a password reset by sending a reset code to the user's email.
   Future<void> requestPasswordReset(String email, BuildContext context) async {
     setLoading(true);
     try {
@@ -178,7 +181,7 @@ class AuthViewModel extends BaseViewModel {
     }
   }
 
-  // Confirm password reset
+  /// Confirms the password reset using the provided email, OTP, and new password.
   Future<void> confirmPasswordReset(String email, String otp,
       String newPassword, BuildContext context) async {
     setLoading(true);
