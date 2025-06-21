@@ -26,7 +26,7 @@ class ViewSharedRecipeScreen extends StatefulWidget {
 
 class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
   late String? _currentImageUrl;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +34,7 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
 
     // Fetch user info
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userViewModel = Provider.of<UserViewModel>(context, listen: false);      
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
       final userId = widget.isSharedByMe
           ? widget.sharedRecipe.toUser
           : widget.sharedRecipe.fromUser;
@@ -143,95 +143,98 @@ class _ViewSharedRecipeScreenState extends State<ViewSharedRecipeScreen> {
     final sharedByProfilePic = userViewModel.sharedUserProfilePic;
 
     return BaseScreen(
-      appBar: SnapChefAppBar(
-        title: const Text(
-          'Shared Recipe',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,        
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'add') {
-                _saveRecipeToCookbook(context);
-              } else if (value == 'remove') {
-                await _removeSharedRecipe(context);
-              }
-            },
-            itemBuilder: (context) => [
-              if (!widget.isSharedByMe)
-                const PopupMenuItem<String>(
-                  value: 'add',
-                  child: ListTile(
-                    leading: Icon(Icons.bookmark_add),
-                    title: Text('Add to Cookbook'),
-                  ),
-                ),
-              PopupMenuItem<String>(
-                value: 'remove',
-                child: ListTile(
-                  leading: Icon(Icons.delete_outline),
-                  title: Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
-                ),
-              ),
-            ],
+        appBar: SnapChefAppBar(
+          title: const Text(
+            'Shared Recipe',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: DisplayRecipeWidget(
-                recipeObject: recipe,
-                imageUrl: ImageUtil().getFullImageUrl(_currentImageUrl),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Shadow separator styled like bottom navigation
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 2,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'add') {
+                  _saveRecipeToCookbook(context);
+                } else if (value == 'remove') {
+                  await _removeSharedRecipe(context);
+                }
+              },
+              itemBuilder: (context) => [
+                if (!widget.isSharedByMe)
+                  const PopupMenuItem<String>(
+                    value: 'add',
+                    child: ListTile(
+                      leading: Icon(Icons.bookmark_add),
+                      title: Text('Add to Cookbook'),
+                    ),
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: (sharedByProfilePic != null &&
-                              sharedByProfilePic.isNotEmpty)
-                          ? NetworkImage(
-                              ImageUtil().getFullImageUrl(sharedByProfilePic))
-                          : const AssetImage(
-                                  'assets/images/default_profile.png')
-                              as ImageProvider,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      widget.isSharedByMe
-                          ? 'Shared with: $sharedBy'
-                          : 'Shared by: $sharedBy',
-                      style: const TextStyle(fontSize: 15, color: Colors.grey),
-                    ),
-                  ],
+                PopupMenuItem<String>(
+                  value: 'remove',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outline),
+                    title:
+                        Text(widget.isSharedByMe ? 'Stop Sharing' : 'Remove'),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
-      ),
-    );
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: DisplayRecipeWidget(
+                    recipeObject: recipe,
+                    imageUrl: ImageUtil().getFullImageUrl(_currentImageUrl),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Shadow separator styled like bottom navigation
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: (sharedByProfilePic != null &&
+                                  sharedByProfilePic.isNotEmpty)
+                              ? NetworkImage(ImageUtil()
+                                  .getFullImageUrl(sharedByProfilePic))
+                              : const AssetImage(
+                                      'assets/images/default_profile.png')
+                                  as ImageProvider,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          widget.isSharedByMe
+                              ? 'Shared with: $sharedBy'
+                              : 'Shared by: $sharedBy',
+                          style:
+                              const TextStyle(fontSize: 15, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 }
