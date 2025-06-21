@@ -109,9 +109,9 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               Expanded(
                 child: friendViewModel.isLoading || _loadingUsers
                     ? const Center(child: CircularProgressIndicator())
-                    : friendViewModel.error != null
+                    : friendViewModel.errorMessage != null
                         ? Center(
-                            child: Text(friendViewModel.error!,
+                            child: Text(friendViewModel.errorMessage!,
                                 style: const TextStyle(color: Colors.red)))
                         : requests.isEmpty
                             ? Center(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/base_viewmodel.dart';
 import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../services/auth_service.dart';
@@ -14,7 +15,7 @@ import '../database/app_database.dart' as db;
 import '../providers/connectivity_provider.dart';
 import '../repositories/user_repository.dart';
 
-class UserViewModel extends ChangeNotifier {
+class UserViewModel extends BaseViewModel {
   final AuthService _authService = AuthService();
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
   final ConnectivityProvider connectivityProvider =
@@ -27,13 +28,10 @@ class UserViewModel extends ChangeNotifier {
 
   @visibleForTesting
   set userForTest(model.User value) => _user = value;
-
-  bool _isLoading = false;
-  bool isLoggingOut = false;
+  
   model.User? _user;
   Map<String, dynamic>? _userStats;
-
-  bool get isLoading => _isLoading;
+  
   model.User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
@@ -44,7 +42,7 @@ class UserViewModel extends ChangeNotifier {
   /// Fetches the current user's data.
   /// This method handles both local and remote data fetching.
   Future<void> fetchUserData() async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     // 1. Always load local data first for instant display
@@ -52,7 +50,7 @@ class UserViewModel extends ChangeNotifier {
 
     // 2. If offline, stop here (local data is already shown)
     if (connectivityProvider.isOffline) {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
@@ -125,7 +123,7 @@ class UserViewModel extends ChangeNotifier {
         log('Failed to fetch user data: $e');
       }
     } finally {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -160,7 +158,7 @@ class UserViewModel extends ChangeNotifier {
     String? password,
     File? profilePicture,
   }) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await userRepository.updateUserRemote(
         firstName: firstName,
@@ -173,7 +171,7 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Failed to update profile');
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -239,7 +237,7 @@ class UserViewModel extends ChangeNotifier {
   /// Delete the current user account.
   /// This will remove the user from the remote server and local database.
   Future<void> deleteUser(BuildContext context) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await userRepository.deleteUserRemote();
       _user = null;
@@ -254,21 +252,9 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
-  }
-
-  // Set the loading state
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  // Set the logging out state
-  void setLoggingOut(bool value) {
-    isLoggingOut = value;
-    notifyListeners();
-  }
+  }  
 
   // Fetch another user's profile by userId
   Future<model.User?> fetchUserProfile(String userId) async {
@@ -370,5 +356,15 @@ class UserViewModel extends ChangeNotifier {
     await friendService.removeFriend(friendId);
     await database.userStatsDao.deleteUserStats(friendId);
     await fetchUserData();
+  }
+
+  @override
+  void clear() {
+    _user = null;
+    _userStats = null;    
+    sharedUserName = null;
+    sharedUserProfilePic = null;   
+    setLoggingOut(false); 
+    notifyListeners();
   }
 }

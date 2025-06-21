@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'recipe_result_screen.dart';
 import 'widgets/ingredient_chip_list.dart';
 import 'widgets/ingredient_selection_modal.dart';
-import '../../constants/recipe_options.dart';
+import '../../constants/recipe_constants.dart';
 import '../../models/ingredient.dart';
 import '../../models/preferences.dart';
 import '../../theme/colors.dart';

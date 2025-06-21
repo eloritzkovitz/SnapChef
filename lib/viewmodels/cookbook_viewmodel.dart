@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import '../core/base_viewmodel.dart';
 import '../database/app_database.dart' as db;
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
@@ -10,7 +11,7 @@ import '../repositories/cookbook_repository.dart';
 import '../services/sync_service.dart';
 import '../utils/sort_filter_mixin.dart';
 
-class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
+class CookbookViewModel extends BaseViewModel with SortFilterMixin<Recipe> {
   final List<Recipe> _recipes = [];
 
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
@@ -27,9 +28,6 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
   RangeValues? cookingTimeRange;
   RangeValues? ratingRange;
   String? selectedSource;
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
 
   List<Recipe> get recipes => List.unmodifiable(_recipes);
 
@@ -50,13 +48,13 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
 
   /// Fetches all recipes in the cookbook.
   Future<void> fetchCookbookRecipes(String cookbookId) async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     final isOffline = connectivityProvider.isOffline;
     if (isOffline) {
       await _loadCookbookRecipesFromLocalDb(cookbookId);
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
@@ -87,7 +85,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       log('Error fetching cookbook recipes: $e');
       await _loadCookbookRecipesFromLocalDb(cookbookId);
     } finally {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -413,8 +411,7 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
       final success =
           await cookbookRepository.deleteRecipeRemote(cookbookId, recipeId);
       if (success) {
-        await cookbookRepository.deleteRecipeLocal(
-            recipeId);
+        await cookbookRepository.deleteRecipeLocal(recipeId);
         _recipes.removeWhere((recipe) => recipe.id == recipeId);
         applyFiltersAndSorting();
         notifyListeners();
@@ -594,5 +591,22 @@ class CookbookViewModel extends ChangeNotifier with SortFilterMixin<Recipe> {
     ratingRange = null;
     selectedSource = null;
     applyFiltersAndSorting();
+  }
+
+  @override
+  void clear() {
+    _recipes.clear();
+    selectedCuisine = null;
+    selectedDifficulty = null;
+    prepTimeRange = null;
+    cookingTimeRange = null;
+    ratingRange = null;
+    selectedSource = null;
+    filter = '';
+    selectedCategory = null;
+    selectedSortOption = null;
+    filteredItems = [];
+    setLoading(false);
+    notifyListeners();
   }
 }

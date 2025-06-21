@@ -1,25 +1,23 @@
-import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:snapchef/database/app_database.dart' as db;
+import '../core/base_viewmodel.dart';
 import '../services/ingredient_service.dart';
 import '../database/daos/ingredient_dao.dart';
 import '../models/ingredient.dart';
 
-class IngredientViewModel extends ChangeNotifier {
+class IngredientViewModel extends BaseViewModel {
   List<Ingredient> _ingredients = [];
   Map<String, Ingredient>? _ingredientMap;
-  bool _loading = false;
 
   List<Ingredient> get ingredients => _ingredients;
   Map<String, Ingredient>? get ingredientMap => _ingredientMap;
-  bool get loading => _loading;
 
   final IngredientService _service = GetIt.I<IngredientService>();
   final IngredientDao _ingredientDao = GetIt.I<db.AppDatabase>().ingredientDao;
 
   /// Fetches all ingredients from the service and updates the state and local DB if changed.
   Future<void> fetchIngredients() async {
-    _loading = true;
+    setLoading(true);
     notifyListeners();
 
     try {
@@ -77,7 +75,7 @@ class IngredientViewModel extends ChangeNotifier {
         for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing
       };
     } finally {
-      _loading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -97,5 +95,13 @@ class IngredientViewModel extends ChangeNotifier {
       }
     }
     return true;
+  }
+
+  @override
+  void clear() {
+    _ingredients = [];
+    _ingredientMap = null;
+    setLoading(false);
+    notifyListeners();
   }
 }

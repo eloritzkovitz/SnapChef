@@ -16,7 +16,7 @@ class IngredientSearchDelegate extends SnapChefSearchDelegate<Ingredient> {
     final ingredientViewModel = Provider.of<IngredientViewModel>(context);
     final allIngredients = ingredientViewModel.ingredients;
 
-    if (ingredientViewModel.loading) {
+    if (ingredientViewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 

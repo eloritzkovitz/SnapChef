@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import '../core/base_viewmodel.dart';
 import '../models/notifications/app_notification.dart';
 import '../models/notifications/ingredient_reminder.dart';
 import '../providers/connectivity_provider.dart';
@@ -13,7 +14,7 @@ import '../services/sync_service.dart';
 import '../utils/token_util.dart';
 import '../viewmodels/user_viewmodel.dart';
 
-class NotificationsViewModel extends ChangeNotifier {
+class NotificationsViewModel extends BaseViewModel {
   final NotificationService _notificationService;
   final BackendNotificationService _backendService;
   final ConnectivityProvider connectivityProvider;
@@ -39,7 +40,6 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 
   List<AppNotification> _notifications = [];
-  bool _isLoading = true;
   StreamSubscription<AppNotification>? _wsSubscription;
   Timer? _refreshTimer;
   Timer? _cleanupTimer;
@@ -57,9 +57,7 @@ class NotificationsViewModel extends ChangeNotifier {
           n.type != 'expiry' && n.type != 'grocery' ||
           ((n.type == 'expiry' || n.type == 'grocery') &&
               n.scheduledTime.isBefore(DateTime.now())))
-      .toList();
-
-  bool get isLoading => _isLoading;
+      .toList(); 
 
   /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
@@ -161,14 +159,14 @@ class NotificationsViewModel extends ChangeNotifier {
 
   /// Syncs backend and local notifications.
   Future<void> syncNotifications() async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     final isOffline = connectivityProvider.isOffline;
 
     if (isOffline) {
       _notifications = await _notificationService.getStoredNotifications();
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
@@ -206,7 +204,7 @@ class NotificationsViewModel extends ChangeNotifier {
     // 4. Save merged list to local storage and update _notifications
     await _notificationService.saveStoredNotifications(mergedNotifications);
     _notifications = mergedNotifications;
-    _isLoading = false;
+    setLoading(false);
     notifyListeners();
   }
 
@@ -285,6 +283,20 @@ class NotificationsViewModel extends ChangeNotifier {
     }
     await _backendService.deleteNotification(id);
     _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    _notifications.clear();
+    _refreshTimer?.cancel();
+    _cleanupTimer?.cancel();
+    _wsSubscription?.cancel();
+    _refreshTimer = null;
+    _cleanupTimer = null;
+    _wsSubscription = null;
+    setError(null);
+    setLoading(false);
     notifyListeners();
   }
 }

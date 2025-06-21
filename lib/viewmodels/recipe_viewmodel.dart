@@ -1,14 +1,13 @@
-import 'package:flutter/material.dart';
+import '../core/base_viewmodel.dart';
 import '../services/recipe_service.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
 
-class RecipeViewModel extends ChangeNotifier {
+class RecipeViewModel extends BaseViewModel {
   final RecipeService _recipeService;
   RecipeViewModel({RecipeService? recipeService})
       : _recipeService = recipeService ?? RecipeService();
 
-  bool isLoading = false;
   String recipe = '';
   String imageUrl = '';
   final List<Ingredient> selectedIngredients = [];
@@ -48,7 +47,7 @@ class RecipeViewModel extends ChangeNotifier {
     int? prepTime,
     Map<String, dynamic>? preferences,
   }) async {
-    isLoading = true;
+    setLoading(true);
     recipe = '';
     imageUrl = '';
     generatedRecipe = null;
@@ -106,7 +105,7 @@ class RecipeViewModel extends ChangeNotifier {
       recipe = 'Failed to generate recipe: $error';
       generatedRecipe = null;
     } finally {
-      isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -123,7 +122,7 @@ class RecipeViewModel extends ChangeNotifier {
     Map<String, dynamic>? preferences,
     List<String>? ingredients,
   }) async {
-    isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     try {
@@ -157,8 +156,19 @@ class RecipeViewModel extends ChangeNotifier {
     } catch (error) {
       // Optionally handle error
     } finally {
-      isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
+  }
+
+  @override
+  void clear() {
+    recipe = '';
+    imageUrl = '';
+    selectedIngredients.clear();
+    generatedRecipe = null;
+    setError(null);
+    setLoading(false);
+    notifyListeners();
   }
 }
