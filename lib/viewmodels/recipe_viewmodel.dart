@@ -13,7 +13,7 @@ class RecipeViewModel extends BaseViewModel {
   final List<Ingredient> selectedIngredients = [];
   Recipe? generatedRecipe;
 
-  // Add an ingredient to the selected list
+  /// Adds an ingredient to the selected list.
   void addIngredient(Ingredient ingredient) {
     if (!selectedIngredients.contains(ingredient)) {
       selectedIngredients.add(ingredient);
@@ -21,24 +21,24 @@ class RecipeViewModel extends BaseViewModel {
     }
   }
 
-  // Remove an ingredient from the selected list
+  /// Removes an ingredient from the selected list
   void removeIngredient(Ingredient ingredient) {
     selectedIngredients.remove(ingredient);
     notifyListeners();
   }
 
-  // Check if an ingredient is selected
+  /// Checks if an ingredient is selected.
   bool isIngredientSelected(Ingredient ingredient) {
     return selectedIngredients.contains(ingredient);
   }
 
-  // Clear all selected ingredients
+  /// Clears all selected ingredients.
   void clearSelectedIngredients() {
     selectedIngredients.clear();
     notifyListeners();
   }
 
-  // Generate a recipe based on the selected ingredients and additional options
+  /// Generates a recipe based on the selected ingredients and additional options.  
   Future<void> generateRecipe({
     String? mealType,
     String? cuisine,
@@ -110,7 +110,7 @@ class RecipeViewModel extends BaseViewModel {
     }
   }
 
-  // Regenerate the recipe image
+  /// Regenerates the recipe image based on the current recipe or selected ingredients.
   Future<void> regenerateRecipeImage({
     String? title,
     String? description,
