@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import '../../utils/text_util.dart';
 import '../theme/colors.dart';
 
 class TTSWidget extends StatefulWidget {
@@ -16,75 +17,70 @@ class TTSWidgetState extends State<TTSWidget> {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isPlaying = false;
   bool _isPaused = false;
+  int _currentLine = 0;
+  List<String> _lines = [];
 
-  // Preprocess the text for TTS
-  String preprocessForTTS(String text) {
-    final lines = text.split('\n');
-    final buffer = StringBuffer();
-
-    for (var line in lines) {
-      String l = line.trim();
-      if (l.isEmpty) {
-        buffer.write('. '); // Add a pause for blank lines
-        continue;
-      }
-      // Headings: "# Heading" -> "Heading."
-      l = l.replaceAllMapped(RegExp(r'^#+\s*(.*)'), (m) => '${m[1]}.');
-      // Remove bold/italic markdown
-      l = l.replaceAll(RegExp(r'\*\*|\*|__|_'), '');
-      // List items: "* item" or "- item" -> "• item."
-      l = l.replaceAllMapped(RegExp(r'^[\*\-]\s*'), (m) => 'Next ingredient: ');
-      // Ensure each line ends with a period for a pause
-      if (!l.endsWith('.') && !l.endsWith('!') && !l.endsWith('?')) {
-        l = '$l.';
-      }
-      buffer.write('$l ');
-    }
-    return buffer.toString();
-  }
-
-  // Speak the provided text
+  /// Speaks the provided text using TTS.
+  /// It preprocesses the text into lines if not already done.
   Future<void> _speakText() async {
     if (widget.text.isNotEmpty) {
       await _flutterTts.setLanguage("en-US");
       await _flutterTts.setPitch(1.0);
+      await _flutterTts.awaitSpeakCompletion(true);
 
-      final ttsText = preprocessForTTS(widget.text);
-
-      if (_isPaused) {
-        // Resume TTS if paused
-        await _flutterTts.speak(ttsText);
-      } else {
-        // Start TTS from the beginning
-        await _flutterTts.speak(ttsText);
+      // Only preprocess if starting from the beginning
+      if (_lines.isEmpty) {
+        _lines = preprocessForTTS(widget.text);
       }
 
       setState(() {
         _isPlaying = true;
         _isPaused = false;
       });
+
+      for (; _currentLine < _lines.length; _currentLine++) {
+        if (_isPaused) break;
+        final line = _lines[_currentLine].trim();
+        if (line.isEmpty) {
+          await Future.delayed(const Duration(milliseconds: 700));
+          continue;
+        }
+        await _flutterTts.speak(line);
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      if (!_isPaused) {
+        setState(() {
+          _isPlaying = false;
+          _currentLine = 0;
+          _lines = [];
+        });
+      }
     }
   }
 
-  // Pause the TTS
+  /// Pauses reading the text.
+  /// This will stop the current speech and set the state to paused.
   Future<void> _pauseText() async {
-    await _flutterTts.pause();
+    await _flutterTts.stop();
     setState(() {
       _isPlaying = false;
       _isPaused = true;
     });
   }
 
-  // Stop the TTS
+  /// Stops reading the text.
+  /// This will reset the state and clear the current line and lines.
   Future<void> _stopText() async {
     await _flutterTts.stop();
     setState(() {
       _isPlaying = false;
       _isPaused = false;
+      _currentLine = 0;
+      _lines = [];
     });
   }
 
-  // Stop the TTS when the widget is disposed
   @override
   void dispose() {
     _flutterTts.stop();
@@ -103,7 +99,15 @@ class TTSWidgetState extends State<TTSWidget> {
           child: const Icon(Icons.play_arrow, color: Colors.white),
           backgroundColor: primarySwatch[200],
           label: 'Play',
-          onTap: _speakText,
+          onTap: () {
+            if (_isPaused) {
+              _speakText(); // Resume from where paused
+            } else {
+              _currentLine = 0;
+              _lines = [];
+              _speakText();
+            }
+          },
         ),
         SpeedDialChild(
           child: const Icon(Icons.pause, color: Colors.white),

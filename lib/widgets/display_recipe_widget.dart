@@ -4,9 +4,10 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
 import '../../models/recipe.dart';
-import '../../widgets/tts_widget.dart';
-import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../theme/colors.dart';
+import '../../utils/text_util.dart';
+import '../../viewmodels/cookbook_viewmodel.dart';
+import '../../widgets/tts_widget.dart';
 
 class DisplayRecipeWidget extends StatefulWidget {
   final String? recipeString;
@@ -33,18 +34,6 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
   void initState() {
     super.initState();
     _localRating = widget.recipeObject?.rating;
-  }
-
-  // Strip markdown formatting from the recipe text
-  String stripMarkdown(String markdownText) {
-    return markdownText
-        .replaceAll(RegExp(r'\*\*|__'), '')
-        .replaceAll(RegExp(r'_'), '')
-        .replaceAll(RegExp(r'#+ '), '')
-        .replaceAll(RegExp(r'\[.*?\]\(.*?\)'), '')
-        .replaceAll(RegExp(r'`'), '')
-        .replaceAll(RegExp(r'\n'), ' ')
-        .trim();
   }
 
   @override
@@ -161,7 +150,7 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
         ),
       ),
       floatingActionButton:
-          recipe.isNotEmpty ? TTSWidget(text: stripMarkdown(recipe)) : null,
+          recipe.isNotEmpty ? TTSWidget(text: stripMarkdown(recipe, preserveNewlines: true)) : null,
     );
   }
 }
