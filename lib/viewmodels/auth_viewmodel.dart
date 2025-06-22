@@ -78,13 +78,20 @@ class AuthViewModel extends BaseViewModel {
     } catch (e) {
       final error = e.toString();
       if (context.mounted) {
+        // If the error indicates that the email needs verification,
+        // navigate to the verification screen with the email.
         if (error.contains('Please verify your email')) {
           Navigator.pushReplacementNamed(
             context,
             '/verify',
             arguments: {'email': email},
           );
+          // If the error indicates that there is a mismatch in the details,
+          // show an error message.
+        } else if (error.contains('Wrong username or password')) {          
+          UIUtil.showError(context, 'Wrong username or password. Please try again.');
         } else {
+          // For any other error, show a generic error message.
           UIUtil.showError(context, error);
         }
       }
