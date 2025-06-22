@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
-import './widgets/ingredient_card.dart';
+import '../../../viewmodels/fridge_viewmodel.dart';
+import 'ingredient_card.dart';
 
 class FridgeGridView extends StatelessWidget {
   final List<dynamic> ingredients;

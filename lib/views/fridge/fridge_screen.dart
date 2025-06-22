@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/ingredient_viewmodel.dart';
-import 'groceries_list.dart';
-import './fridge_list_view.dart';
-import './fridge_grid_view.dart';
+import 'groceries_screen.dart';
+import 'widgets/fridge_list_view.dart';
+import 'widgets/fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
@@ -59,7 +59,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
-              child: const GroceriesList(),
+              child: const GroceriesScreen(),
             ),
           ),
         );
