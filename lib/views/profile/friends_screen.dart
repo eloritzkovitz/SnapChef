@@ -8,14 +8,14 @@ import 'widgets/friend_card.dart';
 import 'widgets/friend_search_modal.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
-class FriendsList extends StatefulWidget {
-  const FriendsList({super.key});
+class FriendsScreen extends StatefulWidget {
+  const FriendsScreen({super.key});
 
   @override
-  State<FriendsList> createState() => _FriendsListState();
+  State<FriendsScreen> createState() => _FriendsListState();
 }
 
-class _FriendsListState extends State<FriendsList> {
+class _FriendsListState extends State<FriendsScreen> {
   String _searchQuery = '';
 
   // Opens the modal to add a new friend
