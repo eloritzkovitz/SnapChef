@@ -5,14 +5,20 @@ import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   final Widget? googleButton;
+  const LoginScreen({super.key, this.googleButton});  
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-
-  LoginScreen({super.key, this.googleButton});
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +84,19 @@ class LoginScreen extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                     prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Password is required';
@@ -137,7 +154,7 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: googleButton ??
+                  child: widget.googleButton ??
                       SignInButton(
                         Buttons.Google,
                         text: "Sign in with Google",
