@@ -30,7 +30,7 @@ class SharedRecipeViewModel extends BaseViewModel {
     syncProvider.loadPendingActions();
   }
 
-  /// Fetches recipes shared with the user.
+  /// Fetches recipes shared with or by the user.
   Future<void> fetchSharedRecipes(String cookbookId, String userId) async {
     setLoading(true);
     notifyListeners();
@@ -136,7 +136,6 @@ class SharedRecipeViewModel extends BaseViewModel {
     }
   }
 
-  /// Clears the current state of the ViewModel.
   @override
   void clear() {
     sharedWithMeRecipes = [];
