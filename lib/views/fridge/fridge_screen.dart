@@ -198,7 +198,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
           // Toggle Button for View Mode
           IconButton(
             color: Colors.black,
-            icon: Icon(isListView ? Icons.view_list : Icons.grid_view),
+            icon: Icon(isListView ? Icons.grid_view : Icons.view_list),
             tooltip: isListView ? 'Switch to Grid View' : 'Switch to List View',
             onPressed: () {
               setState(() {
