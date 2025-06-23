@@ -17,6 +17,7 @@ import '../services/cookbook_service.dart';
 import '../services/fridge_service.dart';
 import '../services/ingredient_service.dart';
 import '../services/shared_recipe_service.dart';
+import '../services/socket_service.dart';
 import '../services/sync_service.dart';
 import '../services/user_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
@@ -38,6 +39,7 @@ void setupLocator(AppDatabase db) {
   getIt.registerSingleton<ConnectivityProvider>(ConnectivityProvider());
   getIt.registerSingleton<SyncProvider>(SyncProvider());
   getIt.registerSingleton<SyncManager>(SyncManager(getIt<ConnectivityProvider>()));
+  getIt.registerLazySingleton<SocketService>(() => SocketService());
   getIt.registerSingleton<MainViewModel>(MainViewModel());
   
   // User  
