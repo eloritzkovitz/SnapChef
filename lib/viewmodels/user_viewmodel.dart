@@ -9,6 +9,7 @@ import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
+import '../services/socket_service.dart';
 import '../services/user_service.dart';
 import '../utils/ui_util.dart';
 import '../database/app_database.dart' as db;
@@ -20,18 +21,19 @@ class UserViewModel extends BaseViewModel {
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
   final ConnectivityProvider connectivityProvider =
       GetIt.I<ConnectivityProvider>();
+  final SocketService socketService = GetIt.I<SocketService>();
   final UserRepository userRepository = GetIt.I<UserRepository>();
   final FriendService friendService;
 
-   UserViewModel({FriendService? friendService})
+  UserViewModel({FriendService? friendService})
       : friendService = friendService ?? GetIt.I<FriendService>();
 
   @visibleForTesting
   set userForTest(model.User value) => _user = value;
-  
+
   model.User? _user;
   Map<String, dynamic>? _userStats;
-  
+
   model.User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
@@ -45,17 +47,17 @@ class UserViewModel extends BaseViewModel {
     setLoading(true);
     notifyListeners();
 
-    // 1. Always load local data first for instant display
+    // Always load local data first for instant display
     await _loadUserFromLocalDb();
 
-    // 2. If offline, stop here (local data is already shown)
+    // If offline, stop here (local data is already shown)
     if (connectivityProvider.isOffline) {
       setLoading(false);
       notifyListeners();
       return;
     }
 
-    // 3. If online, fetch from remote and update local data
+    // If online, fetch from remote and update local data
     try {
       final userProfile = await userRepository.fetchUserRemote().timeout(
             const Duration(seconds: 10),
@@ -89,6 +91,10 @@ class UserViewModel extends BaseViewModel {
       if (_user != null) {
         await fetchUserStats(userId: _user!.id);
       }
+
+      // Connect to WebSocket for real-time updates
+      socketService.connect(_user!.id);
+
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -254,7 +260,7 @@ class UserViewModel extends BaseViewModel {
     } finally {
       setLoading(false);
     }
-  }  
+  }
 
   // Fetch another user's profile by userId
   Future<model.User?> fetchUserProfile(String userId) async {
@@ -310,6 +316,15 @@ class UserViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  /// Listens for user statistics updates via a WebSocket or notification stream.
+  void listenForUserStatsUpdates(String userId) {
+    socketService.userStatsStream.listen((data) {
+      if (data['userId'] == userId) {
+        fetchUserStats(userId: userId);
+      }
+    });
+  }
+
   /// Fetches user statistics for the current user or a specific userId.
   /// If offline, fetches from local UserStats table.
   Future<void> fetchUserStats({String? userId}) async {
@@ -361,10 +376,11 @@ class UserViewModel extends BaseViewModel {
   @override
   void clear() {
     _user = null;
-    _userStats = null;    
+    _userStats = null;
     sharedUserName = null;
-    sharedUserProfilePic = null;   
-    setLoggingOut(false); 
+    sharedUserProfilePic = null;
+    setLoggingOut(false);
+    socketService.disconnect();
     notifyListeners();
   }
 }

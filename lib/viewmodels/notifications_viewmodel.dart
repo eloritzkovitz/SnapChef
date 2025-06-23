@@ -10,6 +10,7 @@ import '../providers/connectivity_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/backend_notification_service.dart';
 import '../services/notification_service.dart';
+import '../services/socket_service.dart';
 import '../services/sync_service.dart';
 import '../utils/token_util.dart';
 import '../viewmodels/user_viewmodel.dart';
@@ -57,7 +58,7 @@ class NotificationsViewModel extends BaseViewModel {
           n.type != 'expiry' && n.type != 'grocery' ||
           ((n.type == 'expiry' || n.type == 'grocery') &&
               n.scheduledTime.isBefore(DateTime.now())))
-      .toList(); 
+      .toList();
 
   /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
@@ -111,7 +112,7 @@ class NotificationsViewModel extends BaseViewModel {
     _refreshTimer?.cancel();
     _cleanupTimer?.cancel();
     _wsSubscription?.cancel();
-    _backendService.disconnectWebSocket();
+    SocketService().disconnect();
     super.dispose();
   }
 
@@ -133,10 +134,14 @@ class NotificationsViewModel extends BaseViewModel {
           Provider.of<UserViewModel>(context, listen: false).user?.id;
       if (userId == null) return;
 
-      _backendService.connectToWebSocket(userToken, userId);
+      // Connect the socket (only once per session, ideally in your app's main logic)
+      SocketService().connect(userToken);
+
+      // Cancel previous subscription if any
+      _wsSubscription?.cancel();
 
       _wsSubscription =
-          _backendService.notificationStream?.listen((notif) async {
+          _backendService.notificationStream.listen((notif) async {
         await _notificationService.showNotification(notif.title, notif.body);
         // Prevent duplicates
         if (!_notifications.any((n) => n.id == notif.id)) {
