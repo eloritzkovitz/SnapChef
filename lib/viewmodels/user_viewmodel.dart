@@ -94,7 +94,6 @@ class UserViewModel extends BaseViewModel {
 
       // Connect to WebSocket for real-time updates
       socketService.connect(_user!.id);
-
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -317,10 +316,21 @@ class UserViewModel extends BaseViewModel {
   }
 
   /// Listens for user statistics updates via a WebSocket or notification stream.
+  /// When a user stats update is received, it fetches the updated stats.
   void listenForUserStatsUpdates(String userId) {
     socketService.userStatsStream.listen((data) {
       if (data['userId'] == userId) {
         fetchUserStats(userId: userId);
+      }
+    });
+  }
+
+  /// Listens for friend updates via a WebSocket or notification stream.
+  /// When a friend is added or removed, it fetches the updated user data.
+  void listenForFriendUpdates(String userId) {
+    socketService.friendUpdateStream.listen((event) {
+      if (event['userId'] == userId) {
+        fetchUserData();
       }
     });
   }
