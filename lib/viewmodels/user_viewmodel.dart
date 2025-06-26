@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -40,6 +41,9 @@ class UserViewModel extends BaseViewModel {
   String? get cookbookId => _user?.cookbookId;
   Map<String, dynamic>? get userStats => _userStats;
   List<model.User> get friends => _user?.friends ?? [];
+
+  StreamSubscription? _userStatsSub;
+  StreamSubscription? _friendUpdateSub;
 
   /// Fetches the current user's data.
   /// This method handles both local and remote data fetching.
@@ -90,6 +94,8 @@ class UserViewModel extends BaseViewModel {
       // Fetch user statistics after fetching user data
       if (_user != null) {
         await fetchUserStats(userId: _user!.id);
+        listenForUserStatsUpdates(_user!.id);
+        listenForFriendUpdates(_user!.id);
       }
 
       // Connect to WebSocket for real-time updates
@@ -318,7 +324,8 @@ class UserViewModel extends BaseViewModel {
   /// Listens for user statistics updates via a WebSocket or notification stream.
   /// When a user stats update is received, it fetches the updated stats.
   void listenForUserStatsUpdates(String userId) {
-    socketService.userStatsStream.listen((data) {
+    _userStatsSub?.cancel();
+    _userStatsSub = socketService.userStatsStream.listen((data) {      
       if (data['userId'] == userId) {
         fetchUserStats(userId: userId);
       }
@@ -328,7 +335,8 @@ class UserViewModel extends BaseViewModel {
   /// Listens for friend updates via a WebSocket or notification stream.
   /// When a friend is added or removed, it fetches the updated user data.
   void listenForFriendUpdates(String userId) {
-    socketService.friendUpdateStream.listen((event) {
+    _friendUpdateSub?.cancel();
+    _friendUpdateSub = socketService.friendUpdateStream.listen((event) {
       if (event['userId'] == userId) {
         fetchUserData();
       }
@@ -391,6 +399,8 @@ class UserViewModel extends BaseViewModel {
     sharedUserProfilePic = null;
     setLoggingOut(false);
     socketService.disconnect();
+    _userStatsSub?.cancel();
+    _friendUpdateSub?.cancel();
     notifyListeners();
   }
 }

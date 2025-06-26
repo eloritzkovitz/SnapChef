@@ -12,7 +12,6 @@ import '../services/backend_notification_service.dart';
 import '../services/notification_service.dart';
 import '../services/socket_service.dart';
 import '../services/sync_service.dart';
-import '../utils/token_util.dart';
 import '../viewmodels/user_viewmodel.dart';
 
 class NotificationsViewModel extends BaseViewModel {
@@ -125,9 +124,6 @@ class NotificationsViewModel extends BaseViewModel {
   /// Connects to WebSocket and listens for real-time notifications using context.
   Future<void> connectWebSocketAndListenWithContext(
       BuildContext context) async {
-    final userToken = await TokenUtil.getAccessToken();
-    if (userToken == null) return;
-
     if (context.mounted) {
       // Get userId from the UserViewModel using Provider and the given context
       final userId =
@@ -135,7 +131,7 @@ class NotificationsViewModel extends BaseViewModel {
       if (userId == null) return;
 
       // Connect the socket (only once per session, ideally in your app's main logic)
-      SocketService().connect(userToken);
+      SocketService().connect(userId);
 
       // Cancel previous subscription if any
       _wsSubscription?.cancel();
