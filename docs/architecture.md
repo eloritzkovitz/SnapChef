@@ -14,16 +14,17 @@ SnapChef follows the **MVVM (Model-View-ViewModel)** pattern for clear separatio
 
 ## Main Layers & Responsibilities
 
-| Layer         | Responsibilities                                                                 |
-|---------------|----------------------------------------------------------------------------------|
-| **Models**    | Data classes, serialization/deserialization, and business entities.              |
-| **Views**     | UI screens, pages, and reusable widgets.                                         |
-| **ViewModels**| State management, business logic, and data flow between views and services.      |
-| **Services**  | API communication, authentication, and integration with external services.       |
-| **Database**  | Local persistence using Drift (SQLite ORM), DAOs, and database classes.          |
-| **Utils**     | Helper functions and utilities for formatting, validation, etc.                  |
-| **Theme**     | App-wide theming, color schemes, and text styles.                                |
-| **Constants** | Application-wide constant values and configuration.                              |
+| Layer         | Responsibilities                                                                  |
+|---------------|-----------------------------------------------------------------------------------|
+| **Core**      | Foundational code, base classes, interfaces, and shared logic used across layers. |
+| **Models**    | Data classes, serialization/deserialization, and business entities.               |
+| **Views**     | UI screens, pages, and reusable widgets.                                          |
+| **ViewModels**| State management, business logic, and data flow between views and services.       |
+| **Services**  | API communication, authentication, and integration with external services.        |
+| **Database**  | Local persistence using Drift (SQLite ORM), DAOs, and database classes.           |
+| **Utils**     | Helper functions and utilities for formatting, validation, etc.                   |
+| **Theme**     | App-wide theming, color schemes, and text styles.                                 |
+| **Constants** | Application-wide constant values and configuration.                               |
 
 
 ## Data Flow
