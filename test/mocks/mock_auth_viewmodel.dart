@@ -5,27 +5,50 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   @override
   bool isLoading = false;
 
+  String? _errorMessage;
   bool _isLoggingOut = false;
+
+  @override
+  String? get errorMessage => _errorMessage;
 
   @override
   bool get isLoggingOut => _isLoggingOut;
 
   @override
-  set isLoggingOut(bool value) {
-    _isLoggingOut = value;
+  void setError(String? message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  @override
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
   }
 
   @override
   void setLoggingOut(bool value) {
-    isLoggingOut = value;
+    _isLoggingOut = value;
+    notifyListeners();
   }
 
   @override
-  Future<void> googleSignIn(BuildContext context, Function fetchUserData) async {}
+  void setLoading(bool value) {
+    isLoading = value;
+    notifyListeners();
+  }
 
   @override
-  Future<void> login(String email, String password, BuildContext context, Function fetchUserData) async {}
+  void clear() {
+    isLoading = false;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> googleSignIn(BuildContext context, Future<void> Function() fetchUserProfile) async {}
+
+  @override
+  Future<void> login(String email, String password, BuildContext context, Future<void> Function() fetchUserProfile) async {}
 
   @override
   Future<void> logout(BuildContext context) async {}
@@ -34,7 +57,7 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   Future<void> refreshTokens() async {}
 
   @override
-  Future<bool> signup(String first, String last, String email, String pass, BuildContext context) async => true;
+  Future<bool> signup(String firstName, String lastName, String email, String password, BuildContext context) async => true;
 
   @override
   Future<void> requestPasswordReset(String email, BuildContext context) async {}
@@ -46,5 +69,5 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   Future<void> resendOTP(String email) async {}
 
   @override
-  Future<void> confirmPasswordReset(String email, String otp, String password, BuildContext context) async {}  
+  Future<void> confirmPasswordReset(String email, String otp, String newPassword, BuildContext context) async {}
 }

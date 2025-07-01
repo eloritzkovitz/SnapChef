@@ -7,7 +7,9 @@ import 'package:snapchef/models/notifications/app_notification.dart';
 
 class MockNotificationsViewModel extends ChangeNotifier implements NotificationsViewModel {
   final List<AppNotification> _notifications = [];
-  final bool _isLoading = false;
+  bool _isLoading = false;
+  bool _isLoggingOut = false;
+  String? _errorMessage;
 
   @override
   List<AppNotification> get alerts => _notifications;
@@ -17,7 +19,46 @@ class MockNotificationsViewModel extends ChangeNotifier implements Notifications
 
   @override
   bool get isLoading => _isLoading;
-  
+
+  @override
+  bool get isLoggingOut => _isLoggingOut;
+
+  @override
+  String? get errorMessage => _errorMessage;
+
+  @override
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  @override
+  void setLoggingOut(bool value) {
+    _isLoggingOut = value;
+    notifyListeners();
+  }
+
+  @override
+  void setError(String? message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  @override
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    _notifications.clear();
+    _isLoading = false;
+    _isLoggingOut = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   @override
   Future<void> syncNotifications() async {}
 
@@ -39,16 +80,15 @@ class MockNotificationsViewModel extends ChangeNotifier implements Notifications
   @override
   Future<String> generateUniqueNotificationId() async => 'mock-id';
 
-  // If your UI uses connectWebSocketAndListenWithContext, you can add a dummy:
   @override
   Future<void> connectWebSocketAndListenWithContext(context) async {}
 
-  @override  
+  @override
   ConnectivityProvider get connectivityProvider => throw UnimplementedError();
 
-  @override  
+  @override
   SyncManager get syncManager => throw UnimplementedError();
 
-  @override  
-  SyncProvider get syncProvider => throw UnimplementedError(); 
+  @override
+  SyncProvider get syncProvider => throw UnimplementedError();
 }

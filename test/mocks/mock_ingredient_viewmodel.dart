@@ -13,6 +13,10 @@ class MockIngredientViewModel extends ChangeNotifier implements IngredientViewMo
     ),
   ];
 
+  bool _isLoading = false;
+  bool _isLoggingOut = false;
+  String? _errorMessage;
+
   @override
   List<Ingredient> get ingredients => _ingredients;
 
@@ -20,11 +24,50 @@ class MockIngredientViewModel extends ChangeNotifier implements IngredientViewMo
   Map<String, Ingredient>? get ingredientMap =>
       {for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing};
 
+  // --- BaseViewModel required members ---
   @override
-  bool get loading => false;
+  bool get isLoading => _isLoading;
 
+  @override
+  bool get isLoggingOut => _isLoggingOut;
+
+  @override
+  String? get errorMessage => _errorMessage;
+
+  @override
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  @override
+  void setLoggingOut(bool value) {
+    _isLoggingOut = value;
+    notifyListeners();
+  }
+
+  @override
+  void setError(String? message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  @override
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // --- IngredientViewModel methods ---
   @override
   Future<void> fetchIngredients() async {}
 
-  // If you need to mock additional methods, add them here.
+  @override
+  void clear() {
+    _ingredients.clear();
+    _isLoading = false;
+    _isLoggingOut = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

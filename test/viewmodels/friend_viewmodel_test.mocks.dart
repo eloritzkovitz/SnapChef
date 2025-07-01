@@ -3,20 +3,21 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i7;
-import 'dart:io' as _i11;
-import 'dart:ui' as _i13;
+import 'dart:async' as _i8;
+import 'dart:io' as _i12;
+import 'dart:ui' as _i14;
 
-import 'package:flutter/material.dart' as _i12;
+import 'package:flutter/material.dart' as _i13;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i6;
+import 'package:mockito/src/dummies.dart' as _i7;
 import 'package:snapchef/database/app_database.dart' as _i2;
-import 'package:snapchef/models/friend_request.dart' as _i9;
-import 'package:snapchef/models/user.dart' as _i8;
+import 'package:snapchef/models/friend_request.dart' as _i10;
+import 'package:snapchef/models/user.dart' as _i9;
 import 'package:snapchef/providers/connectivity_provider.dart' as _i3;
-import 'package:snapchef/repositories/user_repository.dart' as _i4;
-import 'package:snapchef/services/friend_service.dart' as _i5;
-import 'package:snapchef/viewmodels/user_viewmodel.dart' as _i10;
+import 'package:snapchef/repositories/user_repository.dart' as _i5;
+import 'package:snapchef/services/friend_service.dart' as _i6;
+import 'package:snapchef/services/socket_service.dart' as _i4;
+import 'package:snapchef/viewmodels/user_viewmodel.dart' as _i11;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -53,9 +54,8 @@ class _FakeConnectivityProvider_1 extends _i1.SmartFake
         );
 }
 
-class _FakeUserRepository_2 extends _i1.SmartFake
-    implements _i4.UserRepository {
-  _FakeUserRepository_2(
+class _FakeSocketService_2 extends _i1.SmartFake implements _i4.SocketService {
+  _FakeSocketService_2(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -64,8 +64,19 @@ class _FakeUserRepository_2 extends _i1.SmartFake
         );
 }
 
-class _FakeFriendService_3 extends _i1.SmartFake implements _i5.FriendService {
-  _FakeFriendService_3(
+class _FakeUserRepository_3 extends _i1.SmartFake
+    implements _i5.UserRepository {
+  _FakeUserRepository_3(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeFriendService_4 extends _i1.SmartFake implements _i6.FriendService {
+  _FakeFriendService_4(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -77,77 +88,77 @@ class _FakeFriendService_3 extends _i1.SmartFake implements _i5.FriendService {
 /// A class which mocks [FriendService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFriendService extends _i1.Mock implements _i5.FriendService {
+class MockFriendService extends _i1.Mock implements _i6.FriendService {
   @override
   String get baseUrl => (super.noSuchMethod(
         Invocation.getter(#baseUrl),
-        returnValue: _i6.dummyValue<String>(
+        returnValue: _i7.dummyValue<String>(
           this,
           Invocation.getter(#baseUrl),
         ),
-        returnValueForMissingStub: _i6.dummyValue<String>(
+        returnValueForMissingStub: _i7.dummyValue<String>(
           this,
           Invocation.getter(#baseUrl),
         ),
       ) as String);
 
   @override
-  _i7.Future<List<_i8.User>> getFriends() => (super.noSuchMethod(
+  _i8.Future<List<_i9.User>> getFriends() => (super.noSuchMethod(
         Invocation.method(
           #getFriends,
           [],
         ),
-        returnValue: _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
+        returnValue: _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
         returnValueForMissingStub:
-            _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
-      ) as _i7.Future<List<_i8.User>>);
+            _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
+      ) as _i8.Future<List<_i9.User>>);
 
   @override
-  _i7.Future<List<_i9.FriendRequest>> getFriendRequests() =>
+  _i8.Future<List<_i10.FriendRequest>> getFriendRequests() =>
       (super.noSuchMethod(
         Invocation.method(
           #getFriendRequests,
           [],
         ),
         returnValue:
-            _i7.Future<List<_i9.FriendRequest>>.value(<_i9.FriendRequest>[]),
+            _i8.Future<List<_i10.FriendRequest>>.value(<_i10.FriendRequest>[]),
         returnValueForMissingStub:
-            _i7.Future<List<_i9.FriendRequest>>.value(<_i9.FriendRequest>[]),
-      ) as _i7.Future<List<_i9.FriendRequest>>);
+            _i8.Future<List<_i10.FriendRequest>>.value(<_i10.FriendRequest>[]),
+      ) as _i8.Future<List<_i10.FriendRequest>>);
 
   @override
-  _i7.Future<List<_i8.User>> searchUsers(String? query) => (super.noSuchMethod(
+  _i8.Future<List<_i9.User>> searchUsers(String? query) => (super.noSuchMethod(
         Invocation.method(
           #searchUsers,
           [query],
         ),
-        returnValue: _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
+        returnValue: _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
         returnValueForMissingStub:
-            _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
-      ) as _i7.Future<List<_i8.User>>);
+            _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
+      ) as _i8.Future<List<_i9.User>>);
 
   @override
-  _i7.Future<String?> sendFriendRequest(String? userId) => (super.noSuchMethod(
+  _i8.Future<String?> sendFriendRequest(String? userId) => (super.noSuchMethod(
         Invocation.method(
           #sendFriendRequest,
           [userId],
         ),
-        returnValue: _i7.Future<String?>.value(),
-        returnValueForMissingStub: _i7.Future<String?>.value(),
-      ) as _i7.Future<String?>);
+        returnValue: _i8.Future<String?>.value(),
+        returnValueForMissingStub: _i8.Future<String?>.value(),
+      ) as _i8.Future<String?>);
 
   @override
-  _i7.Future<void> cancelSentRequest(String? requestId) => (super.noSuchMethod(
+  _i8.Future<void> cancelSentRequest(String? requestId) => (super.noSuchMethod(
         Invocation.method(
           #cancelSentRequest,
           [requestId],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> respondToRequest(
+  _i8.Future<void> respondToRequest(
     String? requestId,
     bool? accept,
   ) =>
@@ -159,25 +170,25 @@ class MockFriendService extends _i1.Mock implements _i5.FriendService {
             accept,
           ],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> removeFriend(String? friendId) => (super.noSuchMethod(
+  _i8.Future<void> removeFriend(String? friendId) => (super.noSuchMethod(
         Invocation.method(
           #removeFriend,
           [friendId],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 }
 
 /// A class which mocks [UserViewModel].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
+class MockUserViewModel extends _i1.Mock implements _i11.UserViewModel {
   @override
   _i2.AppDatabase get database => (super.noSuchMethod(
         Invocation.getter(#database),
@@ -205,60 +216,50 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
       ) as _i3.ConnectivityProvider);
 
   @override
-  _i4.UserRepository get userRepository => (super.noSuchMethod(
+  _i4.SocketService get socketService => (super.noSuchMethod(
+        Invocation.getter(#socketService),
+        returnValue: _FakeSocketService_2(
+          this,
+          Invocation.getter(#socketService),
+        ),
+        returnValueForMissingStub: _FakeSocketService_2(
+          this,
+          Invocation.getter(#socketService),
+        ),
+      ) as _i4.SocketService);
+
+  @override
+  _i5.UserRepository get userRepository => (super.noSuchMethod(
         Invocation.getter(#userRepository),
-        returnValue: _FakeUserRepository_2(
+        returnValue: _FakeUserRepository_3(
           this,
           Invocation.getter(#userRepository),
         ),
-        returnValueForMissingStub: _FakeUserRepository_2(
+        returnValueForMissingStub: _FakeUserRepository_3(
           this,
           Invocation.getter(#userRepository),
         ),
-      ) as _i4.UserRepository);
+      ) as _i5.UserRepository);
 
   @override
-  _i5.FriendService get friendService => (super.noSuchMethod(
+  _i6.FriendService get friendService => (super.noSuchMethod(
         Invocation.getter(#friendService),
-        returnValue: _FakeFriendService_3(
+        returnValue: _FakeFriendService_4(
           this,
           Invocation.getter(#friendService),
         ),
-        returnValueForMissingStub: _FakeFriendService_3(
+        returnValueForMissingStub: _FakeFriendService_4(
           this,
           Invocation.getter(#friendService),
         ),
-      ) as _i5.FriendService);
+      ) as _i6.FriendService);
 
   @override
-  bool get isLoggingOut => (super.noSuchMethod(
-        Invocation.getter(#isLoggingOut),
-        returnValue: false,
-        returnValueForMissingStub: false,
-      ) as bool);
-
-  @override
-  bool get isLoading => (super.noSuchMethod(
-        Invocation.getter(#isLoading),
-        returnValue: false,
-        returnValueForMissingStub: false,
-      ) as bool);
-
-  @override
-  List<_i8.User> get friends => (super.noSuchMethod(
+  List<_i9.User> get friends => (super.noSuchMethod(
         Invocation.getter(#friends),
-        returnValue: <_i8.User>[],
-        returnValueForMissingStub: <_i8.User>[],
-      ) as List<_i8.User>);
-
-  @override
-  set isLoggingOut(bool? _isLoggingOut) => super.noSuchMethod(
-        Invocation.setter(
-          #isLoggingOut,
-          _isLoggingOut,
-        ),
-        returnValueForMissingStub: null,
-      );
+        returnValue: <_i9.User>[],
+        returnValueForMissingStub: <_i9.User>[],
+      ) as List<_i9.User>);
 
   @override
   set sharedUserName(String? _sharedUserName) => super.noSuchMethod(
@@ -279,13 +280,27 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
       );
 
   @override
-  set userForTest(_i8.User? value) => super.noSuchMethod(
+  set userForTest(_i9.User? value) => super.noSuchMethod(
         Invocation.setter(
           #userForTest,
           value,
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  bool get isLoggingOut => (super.noSuchMethod(
+        Invocation.getter(#isLoggingOut),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
 
   @override
   bool get hasListeners => (super.noSuchMethod(
@@ -295,32 +310,32 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
       ) as bool);
 
   @override
-  _i7.Future<void> fetchUserData() => (super.noSuchMethod(
+  _i8.Future<void> fetchUserData() => (super.noSuchMethod(
         Invocation.method(
           #fetchUserData,
           [],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i8.User>> getFriends() => (super.noSuchMethod(
+  _i8.Future<List<_i9.User>> getFriends() => (super.noSuchMethod(
         Invocation.method(
           #getFriends,
           [],
         ),
-        returnValue: _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
+        returnValue: _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
         returnValueForMissingStub:
-            _i7.Future<List<_i8.User>>.value(<_i8.User>[]),
-      ) as _i7.Future<List<_i8.User>>);
+            _i8.Future<List<_i9.User>>.value(<_i9.User>[]),
+      ) as _i8.Future<List<_i9.User>>);
 
   @override
-  _i7.Future<void> updateUser({
+  _i8.Future<void> updateUser({
     required String? firstName,
     required String? lastName,
     String? password,
-    _i11.File? profilePicture,
+    _i12.File? profilePicture,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -333,12 +348,12 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
             #profilePicture: profilePicture,
           },
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateUserPreferences({
+  _i8.Future<void> updateUserPreferences({
     List<String>? allergies,
     Map<String, bool>? dietaryPreferences,
     Map<String, bool>? notificationPreferences,
@@ -353,19 +368,19 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
             #notificationPreferences: notificationPreferences,
           },
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateFcmToken(String? token) => (super.noSuchMethod(
+  _i8.Future<void> updateFcmToken(String? token) => (super.noSuchMethod(
         Invocation.method(
           #updateFcmToken,
           [token],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
   void listenForFcmTokenRefresh() => super.noSuchMethod(
@@ -377,37 +392,28 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
       );
 
   @override
-  _i7.Future<void> deleteUser(_i12.BuildContext? context) =>
+  _i8.Future<void> deleteUser(_i13.BuildContext? context) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteUser,
           [context],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  void setLoggingOut(bool? value) => super.noSuchMethod(
-        Invocation.method(
-          #setLoggingOut,
-          [value],
-        ),
-        returnValueForMissingStub: null,
-      );
-
-  @override
-  _i7.Future<_i8.User?> fetchUserProfile(String? userId) => (super.noSuchMethod(
+  _i8.Future<_i9.User?> fetchUserProfile(String? userId) => (super.noSuchMethod(
         Invocation.method(
           #fetchUserProfile,
           [userId],
         ),
-        returnValue: _i7.Future<_i8.User?>.value(),
-        returnValueForMissingStub: _i7.Future<_i8.User?>.value(),
-      ) as _i7.Future<_i8.User?>);
+        returnValue: _i8.Future<_i9.User?>.value(),
+        returnValueForMissingStub: _i8.Future<_i9.User?>.value(),
+      ) as _i8.Future<_i9.User?>);
 
   @override
-  _i7.Future<void> fetchUserInfo({
+  _i8.Future<void> fetchUserInfo({
     required String? userId,
     required String? currentUserId,
   }) =>
@@ -420,33 +426,96 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
             #currentUserId: currentUserId,
           },
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> fetchUserStats({String? userId}) => (super.noSuchMethod(
+  void listenForUserStatsUpdates(String? userId) => super.noSuchMethod(
+        Invocation.method(
+          #listenForUserStatsUpdates,
+          [userId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void listenForFriendUpdates(String? userId) => super.noSuchMethod(
+        Invocation.method(
+          #listenForFriendUpdates,
+          [userId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i8.Future<void> fetchUserStats({String? userId}) => (super.noSuchMethod(
         Invocation.method(
           #fetchUserStats,
           [],
           {#userId: userId},
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  _i7.Future<void> removeFriend(String? friendId) => (super.noSuchMethod(
+  _i8.Future<void> removeFriend(String? friendId) => (super.noSuchMethod(
         Invocation.method(
           #removeFriend,
           [friendId],
         ),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void clear() => super.noSuchMethod(
+        Invocation.method(
+          #clear,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setLoading(bool? value) => super.noSuchMethod(
+        Invocation.method(
+          #setLoading,
+          [value],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setLoggingOut(bool? value) => super.noSuchMethod(
+        Invocation.method(
+          #setLoggingOut,
+          [value],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setError(String? message) => super.noSuchMethod(
+        Invocation.method(
+          #setError,
+          [message],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearError() => super.noSuchMethod(
+        Invocation.method(
+          #clearError,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -455,7 +524,7 @@ class MockUserViewModel extends _i1.Mock implements _i10.UserViewModel {
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

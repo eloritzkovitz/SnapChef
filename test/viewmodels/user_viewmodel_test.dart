@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/database/app_database.dart' as db;
 import 'package:snapchef/database/daos/user_dao.dart';
 import 'package:snapchef/database/daos/user_stats_dao.dart';
+import 'package:snapchef/services/socket_service.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/models/user.dart' as model;
 import 'package:snapchef/models/preferences.dart';
@@ -16,6 +17,7 @@ import 'package:snapchef/repositories/user_repository.dart';
 import 'package:snapchef/services/auth_service.dart';
 import 'package:snapchef/services/friend_service.dart';
 import 'package:snapchef/services/user_service.dart';
+import '../mocks/mock_socket_service.dart';
 
 @GenerateNiceMocks([
   MockSpec<AuthService>(),
@@ -73,6 +75,7 @@ void main() async {
     GetIt.I.registerSingleton<UserRepository>(mockUserRepository);
     GetIt.I.registerSingleton<UserService>(mockUserService);
     GetIt.I.registerSingleton<FriendService>(mockFriendService);
+    GetIt.I.registerSingleton<SocketService>(MockSocketService());
 
     when(mockDb.userDao).thenReturn(mockUserDao);
     when(mockDb.userStatsDao).thenReturn(mockUserStatsDao);

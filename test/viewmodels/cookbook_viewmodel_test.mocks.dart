@@ -2,7 +2,7 @@
 // in snapchef/test/viewmodels/cookbook_viewmodel_test.dart.
 // Do not manually edit this file.
 
-// ignore_for_file: no_leading_underscores_for_library_prefixes, invalid_use_of_internal_member
+// ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i13;
 import 'dart:ui' as _i22;
 
@@ -880,6 +880,16 @@ class MockAppDatabase extends _i1.Mock implements _i2.AppDatabase {
       ) as _i11.DatabaseConnectionUser);
 
   @override
+  _i13.Future<void> clearAllTables() => (super.noSuchMethod(
+        Invocation.method(
+          #clearAllTables,
+          [],
+        ),
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
+
+  @override
   _i11.Migrator createMigrator() => (super.noSuchMethod(
         Invocation.method(
           #createMigrator,
@@ -1671,6 +1681,16 @@ class MockConnectivityProvider extends _i1.Mock
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  _i13.Future<void> checkInternetAndServer() => (super.noSuchMethod(
+        Invocation.method(
+          #checkInternetAndServer,
+          [],
+        ),
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
   void addListener(_i22.VoidCallback? listener) => super.noSuchMethod(

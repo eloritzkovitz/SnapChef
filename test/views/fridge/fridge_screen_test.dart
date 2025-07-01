@@ -6,6 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:snapchef/database/app_database.dart' hide Ingredient;
 import 'package:snapchef/repositories/fridge_repository.dart';
 import 'package:snapchef/services/fridge_service.dart';
+import 'package:snapchef/services/ingredient_service.dart';
+import 'package:snapchef/viewmodels/ingredient_viewmodel.dart';
 import 'package:snapchef/views/fridge/fridge_screen.dart';
 import 'package:snapchef/views/fridge/widgets/fridge_grid_view.dart';
 import 'package:snapchef/views/fridge/widgets/fridge_list_view.dart';
@@ -15,21 +17,26 @@ import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/viewmodels/fridge_viewmodel.dart';
 import 'package:snapchef/models/ingredient.dart';
 
+import '../../mocks/mock_app_database.dart';
 import '../../mocks/mock_fridge_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
 import '../../mocks/mock_connectivity_provider.dart';
+import '../../mocks/mock_ingredient_service.dart';
 
 // ---- Minimal mocks for GetIt dependencies ----
-class MockAppDatabase extends AppDatabase {}
-
 class MockFridgeRepository extends FridgeRepository {}
 
 class MockFridgeService extends FridgeService {}
+
+class MockIngredientViewModel extends IngredientViewModel {
+  MockIngredientViewModel() : super();
+}
 
 Widget buildTestWidget({
   FridgeViewModel? fridgeViewModel,
   UserViewModel? userViewModel,
   ConnectivityProvider? connectivityProvider,
+  IngredientViewModel? ingredientViewModel,
   Widget? child,
 }) {
   return MultiProvider(
@@ -40,6 +47,8 @@ Widget buildTestWidget({
           create: (_) => userViewModel ?? MockUserViewModel()),
       ChangeNotifierProvider<ConnectivityProvider>(
           create: (_) => connectivityProvider ?? MockConnectivityProvider()),
+      ChangeNotifierProvider<IngredientViewModel>(
+          create: (_) => ingredientViewModel ?? MockIngredientViewModel()),
     ],
     child: MaterialApp(
       home: Scaffold(
@@ -50,21 +59,21 @@ Widget buildTestWidget({
 }
 
 void main() {
-  setUpAll(() async {
+  setUp(() async {
     await dotenv.load();
     GetIt.I.reset();
     GetIt.I.registerSingleton<ConnectivityProvider>(MockConnectivityProvider());
     GetIt.I.registerSingleton<AppDatabase>(MockAppDatabase());
     GetIt.I.registerSingleton<FridgeService>(MockFridgeService());
     GetIt.I.registerSingleton<FridgeRepository>(MockFridgeRepository());
+    GetIt.I.registerSingleton<IngredientService>(MockIngredientService());
   });
 
   group('FridgeScreen', () {
     testWidgets('renders empty state', (tester) async {
       final fridgeViewModel = MockFridgeViewModel();
       fridgeViewModel.fridgeController.filteredItems = [];
-      await tester
-          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
       await tester.pumpAndSettle();
       expect(find.text('No available ingredients'), findsOneWidget);
       expect(find.byIcon(Icons.shopping_cart), findsOneWidget);
@@ -95,8 +104,7 @@ void main() {
             count: 1,
             imageURL: 'https://example.com/milk.png'),
       ];
-      await tester
-          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
       await tester.pumpAndSettle();
       expect(find.byType(FridgeGridView), findsOneWidget);
       await tester.tap(find.byTooltip('Switch to List View'));
@@ -106,8 +114,7 @@ void main() {
 
     testWidgets('opens groceries list', (tester) async {
       final fridgeViewModel = MockFridgeViewModel();
-      await tester
-          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.shopping_cart));
       await tester.pumpAndSettle();

@@ -61,6 +61,13 @@ class MockIngredientListController extends ChangeNotifier implements IngredientL
   // --- Abstract methods from SortFilterMixin ---
 
   @override
+  void clear() {
+    _filteredItems.clear();
+    _sourceList.clear();
+    notifyListeners();
+  }
+
+  @override
   bool filterByCategory(Ingredient item, String? category) {
     return category == null || item.category == category;
   }

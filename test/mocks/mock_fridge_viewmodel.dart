@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:snapchef/viewmodels/fridge_viewmodel.dart';
+import 'package:snapchef/viewmodels/ingredient_viewmodel.dart';
 import 'mock_ingredient_list_controller.dart';
 import 'package:snapchef/models/ingredient.dart';
 
@@ -41,6 +42,12 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
           count: 2,
         ),
       ];
+
+  @override
+  Future<void> fetchData({
+    required String fridgeId,
+    required IngredientViewModel ingredientViewModel,
+  }) async {}
 
   @override
   Future<void> fetchFridgeIngredients(
