@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../core/base_viewmodel.dart';
 import '../models/friend_request.dart';
 import '../models/user.dart';
 import '../services/friend_service.dart';
 import 'user_viewmodel.dart';
 
-class FriendViewModel extends ChangeNotifier {
+class FriendViewModel extends BaseViewModel {
   final FriendService _friendService;
   FriendViewModel({FriendService? friendService})
       : _friendService = friendService ?? FriendService();
@@ -14,14 +15,10 @@ class FriendViewModel extends ChangeNotifier {
   set sentRequestsForTest(List<FriendRequest> value) => _sentRequests = value;
 
   List<FriendRequest> _pendingRequests = [];
-  List<FriendRequest> _sentRequests = [];
-  bool _isLoading = false;
-  String? _error;
+  List<FriendRequest> _sentRequests = [];  
 
   List<FriendRequest> get pendingRequests => _pendingRequests;
-  List<FriendRequest> get sentRequests => _sentRequests;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  List<FriendRequest> get sentRequests => _sentRequests; 
 
   /// IDs of users you have sent a pending request to
   Set<String> get pendingRequestUserIds => _sentRequests
@@ -31,7 +28,7 @@ class FriendViewModel extends ChangeNotifier {
 
   /// Fetch all friend requests involving the current user (sent and received)
   Future<void> getAllFriendRequests(String currentUserId) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       final allRequests = await _friendService
           .getFriendRequests(); // returns all requests involving the user
@@ -45,11 +42,11 @@ class FriendViewModel extends ChangeNotifier {
       _sentRequests =
           allRequests.where((req) => req.from.id == currentUserId).toList();
 
-      _error = null;
+      setError(null);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     }
-    _setLoading(false);
+    setLoading(false);
   }
 
   // Fetch both on demand (call this in your modal init)
@@ -67,8 +64,7 @@ class FriendViewModel extends ChangeNotifier {
     try {
       return await _friendService.searchUsers(query);
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      setError(e.toString());      
       return [];
     }
   }
@@ -83,8 +79,7 @@ class FriendViewModel extends ChangeNotifier {
       await userViewModel.fetchUserData();
       return message;
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      setError(e.toString());      
       return 'Failed to send request';
     }
   }
@@ -92,35 +87,38 @@ class FriendViewModel extends ChangeNotifier {
   // Cancel a sent friend request
   Future<void> cancelFriendRequest(String requestId, String currentUserId,
       UserViewModel userViewModel) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _friendService.cancelSentRequest(requestId);
       await getAllFriendRequests(currentUserId);
       await userViewModel.fetchUserData();
-      _error = null;
+      setError(null);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     }
-    _setLoading(false);
+    setLoading(false);
   }
 
   // Accept or decline a friend request
   Future<void> respondToRequest(String requestId, bool accept,
       String currentUserId, UserViewModel userViewModel) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await _friendService.respondToRequest(requestId, accept);
       await getAllFriendRequests(currentUserId);
       await userViewModel.fetchUserData();
-      _error = null;
+      setError(null);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     }
-    _setLoading(false);
-  }
+    setLoading(false);
+  } 
 
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
+  @override
+  void clear() {
+    _pendingRequests.clear();
+    _sentRequests.clear();
+    setError(null);
+    setLoading(false);
+  } 
 }

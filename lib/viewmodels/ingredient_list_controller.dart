@@ -42,4 +42,10 @@ class IngredientListController extends ChangeNotifier
     categories.sort();
     return categories;
   }
+
+  /// Clears the ingredient list and notifies listeners.
+  void clear() {
+    _source.clear();
+    notifyListeners();
+  }
 }

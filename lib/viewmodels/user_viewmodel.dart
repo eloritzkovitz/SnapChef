@@ -1,39 +1,40 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/base_viewmodel.dart';
 import '../models/user.dart' as model;
 import '../models/preferences.dart';
 import '../services/auth_service.dart';
 import '../services/friend_service.dart';
+import '../services/socket_service.dart';
 import '../services/user_service.dart';
 import '../utils/ui_util.dart';
 import '../database/app_database.dart' as db;
 import '../providers/connectivity_provider.dart';
 import '../repositories/user_repository.dart';
 
-class UserViewModel extends ChangeNotifier {
+class UserViewModel extends BaseViewModel {
   final AuthService _authService = AuthService();
   final db.AppDatabase database = GetIt.I<db.AppDatabase>();
   final ConnectivityProvider connectivityProvider =
       GetIt.I<ConnectivityProvider>();
+  final SocketService socketService = GetIt.I<SocketService>();
   final UserRepository userRepository = GetIt.I<UserRepository>();
   final FriendService friendService;
 
-   UserViewModel({FriendService? friendService})
+  UserViewModel({FriendService? friendService})
       : friendService = friendService ?? GetIt.I<FriendService>();
 
   @visibleForTesting
   set userForTest(model.User value) => _user = value;
 
-  bool _isLoading = false;
-  bool isLoggingOut = false;
   model.User? _user;
   Map<String, dynamic>? _userStats;
 
-  bool get isLoading => _isLoading;
   model.User? get user => _user;
 
   String? get fridgeId => _user?.fridgeId;
@@ -41,23 +42,26 @@ class UserViewModel extends ChangeNotifier {
   Map<String, dynamic>? get userStats => _userStats;
   List<model.User> get friends => _user?.friends ?? [];
 
+  StreamSubscription? _userStatsSub;
+  StreamSubscription? _friendUpdateSub;
+
   /// Fetches the current user's data.
   /// This method handles both local and remote data fetching.
   Future<void> fetchUserData() async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
-    // 1. Always load local data first for instant display
+    // Always load local data first for instant display
     await _loadUserFromLocalDb();
 
-    // 2. If offline, stop here (local data is already shown)
+    // If offline, stop here (local data is already shown)
     if (connectivityProvider.isOffline) {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
 
-    // 3. If online, fetch from remote and update local data
+    // If online, fetch from remote and update local data
     try {
       final userProfile = await userRepository.fetchUserRemote().timeout(
             const Duration(seconds: 10),
@@ -90,7 +94,12 @@ class UserViewModel extends ChangeNotifier {
       // Fetch user statistics after fetching user data
       if (_user != null) {
         await fetchUserStats(userId: _user!.id);
+        listenForUserStatsUpdates(_user!.id);
+        listenForFriendUpdates(_user!.id);
       }
+
+      // Connect to WebSocket for real-time updates
+      socketService.connect(_user!.id);
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
@@ -125,7 +134,7 @@ class UserViewModel extends ChangeNotifier {
         log('Failed to fetch user data: $e');
       }
     } finally {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -160,7 +169,7 @@ class UserViewModel extends ChangeNotifier {
     String? password,
     File? profilePicture,
   }) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await userRepository.updateUserRemote(
         firstName: firstName,
@@ -173,7 +182,7 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       throw Exception('Failed to update profile');
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -239,7 +248,7 @@ class UserViewModel extends ChangeNotifier {
   /// Delete the current user account.
   /// This will remove the user from the remote server and local database.
   Future<void> deleteUser(BuildContext context) async {
-    _setLoading(true);
+    setLoading(true);
     try {
       await userRepository.deleteUserRemote();
       _user = null;
@@ -254,20 +263,8 @@ class UserViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) UIUtil.showError(context, e.toString());
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
-  }
-
-  // Set the loading state
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  // Set the logging out state
-  void setLoggingOut(bool value) {
-    isLoggingOut = value;
-    notifyListeners();
   }
 
   // Fetch another user's profile by userId
@@ -324,6 +321,28 @@ class UserViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Listens for user statistics updates via a WebSocket or notification stream.
+  /// When a user stats update is received, it fetches the updated stats.
+  void listenForUserStatsUpdates(String userId) {
+    _userStatsSub?.cancel();
+    _userStatsSub = socketService.userStatsStream.listen((data) {      
+      if (data['userId'] == userId) {
+        fetchUserStats(userId: userId);
+      }
+    });
+  }
+
+  /// Listens for friend updates via a WebSocket or notification stream.
+  /// When a friend is added or removed, it fetches the updated user data.
+  void listenForFriendUpdates(String userId) {
+    _friendUpdateSub?.cancel();
+    _friendUpdateSub = socketService.friendUpdateStream.listen((event) {
+      if (event['userId'] == userId) {
+        fetchUserData();
+      }
+    });
+  }
+
   /// Fetches user statistics for the current user or a specific userId.
   /// If offline, fetches from local UserStats table.
   Future<void> fetchUserStats({String? userId}) async {
@@ -370,5 +389,18 @@ class UserViewModel extends ChangeNotifier {
     await friendService.removeFriend(friendId);
     await database.userStatsDao.deleteUserStats(friendId);
     await fetchUserData();
+  }
+
+  @override
+  void clear() {
+    _user = null;
+    _userStats = null;
+    sharedUserName = null;
+    sharedUserProfilePic = null;
+    setLoggingOut(false);
+    socketService.disconnect();
+    _userStatsSub?.cancel();
+    _friendUpdateSub?.cancel();
+    notifyListeners();
   }
 }

@@ -32,7 +32,7 @@ part 'app_database.g.dart';
   Recipes,
   SharedRecipes,
   Friends,
-  Notifications  
+  Notifications
 ], daos: [
   UserDao,
   UserStatsDao,
@@ -40,7 +40,7 @@ part 'app_database.g.dart';
   FridgeIngredientDao,
   RecipeDao,
   SharedRecipeDao,
-  FriendDao, 
+  FriendDao,
   NotificationDao
 ])
 class AppDatabase extends _$AppDatabase {
@@ -48,12 +48,28 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  /// Clears all user/session data from every table.
+  Future<void> clearAllTables() async {
+    // Order matters if you have foreign keys!
+    await batch((batch) {
+      batch.deleteAll(users);
+      batch.deleteAll(userStats);
+      batch.deleteAll(ingredients);
+      batch.deleteAll(fridgeIngredients);
+      batch.deleteAll(recipes);
+      batch.deleteAll(sharedRecipes);
+      batch.deleteAll(friends);
+      batch.deleteAll(notifications);
+    });
+  }
 }
 
+/// Opens a connection to the SQLite database.
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'snapchef.sqlite'));
     return NativeDatabase(file);
-  });
+  });  
 }

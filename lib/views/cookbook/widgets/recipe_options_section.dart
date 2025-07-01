@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../constants/recipe_options.dart';
+import '../../../constants/recipe_constants.dart';
 
 class RecipeOptionsSection extends StatelessWidget {
   final String? selectedMealType;

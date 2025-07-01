@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
-import 'service_locator.dart';
+import 'core/service_locator.dart';
 import 'database/app_database.dart';
 import 'providers/connectivity_provider.dart';
 import 'services/ingredient_service.dart';
@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
             value: getIt<ConnectivityProvider>()),
 
         // ViewModels
-        ChangeNotifierProvider(create: (_) => MainViewModel()),
+        ChangeNotifierProvider<MainViewModel>.value(value: getIt<MainViewModel>()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => IngredientViewModel()),

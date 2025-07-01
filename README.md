@@ -2,7 +2,7 @@
 
 # SnapChef - Your AI sous-chef
 
-SnapChef is a mobile application designed to create customized recipes based on available products at home. The application will make use of AI to identify various ingredients (from a taken photo, a scanned receipt or a barcode), and then create cooking recipes based on the given data and other preferences. In addition, the application will provide guidance throughout the process and allow its users to save and rate their recipes, as well as share them with their friends.
+SnapChef is your all-in-one AI-powered kitchen companion. Effortlessly identify ingredients from photos, receipts, or barcodes, and instantly generate personalized recipes tailored to your preferences and pantry. Enjoy step-by-step cooking assistance with voice guidance, organize your groceries, and keep your kitchen stocked with smart reminders. Save, share, and rate your favorite recipes, add your own creations, and connect with friends to exchange meal ideas and collaborate. With SnapChef, managing your meals, groceries, and culinary inspiration has never been easier! 
 
 ## Table of Contents
 - [Features](#features)
@@ -49,10 +49,11 @@ SnapChef is a mobile application designed to create customized recipes based on 
 ### Backend
 - **Node.js** (TypeScript) — Server-side logic
 - **Express.js** — API routing
-- **JWT** — Authentication and authorization
 - **MongoDB** — Database
-- **Jest** — Testing 
+- **JWT** — Authentication and authorization
+- **Nodemailer** — SMTP email delivery for OTP verification
 - **WebSockets** — Real-time updates and communication
+- **Jest** — Testing
 
 ### Frontend
 - **Flutter** (Dart) — Cross-platform mobile app

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants/recipe_options.dart';
+import '../../constants/recipe_constants.dart';
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';

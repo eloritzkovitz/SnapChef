@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/session_manager.dart';
 import '../../theme/colors.dart';
 import '../../viewmodels/cookbook_viewmodel.dart';
 import '../../viewmodels/fridge_viewmodel.dart';
@@ -153,9 +154,11 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacementNamed(
-      isLoggedIn ? '/main' : '/login',
-    );
+    if (isLoggedIn) {
+      SessionManager.createSession(context);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
   }
 
   @override

@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import 'recipe_result_screen.dart';
 import 'widgets/ingredient_chip_list.dart';
 import 'widgets/ingredient_selection_modal.dart';
-import '../../viewmodels/user_viewmodel.dart';
-import '../../viewmodels/recipe_viewmodel.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
+import '../../constants/recipe_constants.dart';
 import '../../models/ingredient.dart';
 import '../../models/preferences.dart';
 import '../../theme/colors.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/recipe_viewmodel.dart';
+import '../../viewmodels/fridge_viewmodel.dart';
 
 class GenerateRecipeScreen extends StatefulWidget {
   const GenerateRecipeScreen({super.key});
@@ -91,12 +92,7 @@ class _GenerateRecipeScreenState extends State<GenerateRecipeScreen> {
 
     final preferences = userViewModel.user?.preferences ??
         Preferences(
-            allergies: [], dietaryPreferences: {}, notificationPreferences: {});
-
-    // Example lists for dropdowns (replace with your actual lists)
-    final mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
-    final cuisines = ['Italian', 'Chinese', 'Indian', 'Mexican'];
-    final difficulties = ['Easy', 'Medium', 'Hard'];
+            allergies: [], dietaryPreferences: {}, notificationPreferences: {});    
 
     return PopScope(
       canPop: true,

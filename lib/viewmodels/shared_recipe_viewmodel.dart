@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import '../core/base_viewmodel.dart';
 import '../models/shared_recipe.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/sync_provider.dart';
 import '../repositories/shared_recipe_repository.dart';
 import '../services/sync_service.dart';
 
-class SharedRecipeViewModel extends ChangeNotifier {
+class SharedRecipeViewModel extends BaseViewModel {
   List<SharedRecipe>? sharedWithMeRecipes = [];
   List<SharedRecipe>? sharedByMeRecipes = [];
 
@@ -15,10 +15,7 @@ class SharedRecipeViewModel extends ChangeNotifier {
   final SharedRecipeRepository sharedRecipeRepository =
       GetIt.I<SharedRecipeRepository>();
   final SyncProvider syncProvider = GetIt.I<SyncProvider>();
-  final SyncManager syncManager = GetIt.I<SyncManager>();
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  final SyncManager syncManager = GetIt.I<SyncManager>();  
 
   @override
   void dispose() {
@@ -33,9 +30,9 @@ class SharedRecipeViewModel extends ChangeNotifier {
     syncProvider.loadPendingActions();
   }
 
-  /// Fetches recipes shared with the user.
+  /// Fetches recipes shared with or by the user.
   Future<void> fetchSharedRecipes(String cookbookId, String userId) async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     final isOffline = connectivityProvider.isOffline;
@@ -90,7 +87,7 @@ class SharedRecipeViewModel extends ChangeNotifier {
 
     sharedWithMeRecipes = result['sharedWithMe'] ?? [];
     sharedByMeRecipes = result['sharedByMe'] ?? [];
-    _isLoading = false;
+    setLoading(false);
     notifyListeners();
   }
 
@@ -137,5 +134,14 @@ class SharedRecipeViewModel extends ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  void clear() {
+    sharedWithMeRecipes = [];
+    sharedByMeRecipes = [];
+    setLoading(false);
+    setLoggingOut(false);
+    clearError();
   }
 }

@@ -1,20 +1,19 @@
-import 'package:flutter/material.dart';
+import '../core/base_viewmodel.dart';
 import '../services/recipe_service.dart';
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
 
-class RecipeViewModel extends ChangeNotifier {
+class RecipeViewModel extends BaseViewModel {
   final RecipeService _recipeService;
   RecipeViewModel({RecipeService? recipeService})
       : _recipeService = recipeService ?? RecipeService();
 
-  bool isLoading = false;
   String recipe = '';
   String imageUrl = '';
   final List<Ingredient> selectedIngredients = [];
   Recipe? generatedRecipe;
 
-  // Add an ingredient to the selected list
+  /// Adds an ingredient to the selected list.
   void addIngredient(Ingredient ingredient) {
     if (!selectedIngredients.contains(ingredient)) {
       selectedIngredients.add(ingredient);
@@ -22,24 +21,24 @@ class RecipeViewModel extends ChangeNotifier {
     }
   }
 
-  // Remove an ingredient from the selected list
+  /// Removes an ingredient from the selected list
   void removeIngredient(Ingredient ingredient) {
     selectedIngredients.remove(ingredient);
     notifyListeners();
   }
 
-  // Check if an ingredient is selected
+  /// Checks if an ingredient is selected.
   bool isIngredientSelected(Ingredient ingredient) {
     return selectedIngredients.contains(ingredient);
   }
 
-  // Clear all selected ingredients
+  /// Clears all selected ingredients.
   void clearSelectedIngredients() {
     selectedIngredients.clear();
     notifyListeners();
   }
 
-  // Generate a recipe based on the selected ingredients and additional options
+  /// Generates a recipe based on the selected ingredients and additional options.  
   Future<void> generateRecipe({
     String? mealType,
     String? cuisine,
@@ -48,7 +47,7 @@ class RecipeViewModel extends ChangeNotifier {
     int? prepTime,
     Map<String, dynamic>? preferences,
   }) async {
-    isLoading = true;
+    setLoading(true);
     recipe = '';
     imageUrl = '';
     generatedRecipe = null;
@@ -106,12 +105,12 @@ class RecipeViewModel extends ChangeNotifier {
       recipe = 'Failed to generate recipe: $error';
       generatedRecipe = null;
     } finally {
-      isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
 
-  // Regenerate the recipe image
+  /// Regenerates the recipe image based on the current recipe or selected ingredients.
   Future<void> regenerateRecipeImage({
     String? title,
     String? description,
@@ -123,7 +122,7 @@ class RecipeViewModel extends ChangeNotifier {
     Map<String, dynamic>? preferences,
     List<String>? ingredients,
   }) async {
-    isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     try {
@@ -157,8 +156,19 @@ class RecipeViewModel extends ChangeNotifier {
     } catch (error) {
       // Optionally handle error
     } finally {
-      isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
+  }
+
+  @override
+  void clear() {
+    recipe = '';
+    imageUrl = '';
+    selectedIngredients.clear();
+    generatedRecipe = null;
+    setError(null);
+    setLoading(false);
+    notifyListeners();
   }
 }

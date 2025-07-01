@@ -1,24 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../models/notifications/app_notification.dart';
 import '../utils/token_util.dart';
+import 'socket_service.dart';
 
 class BackendNotificationService {
   final String baseUrl;
-  io.Socket? _socket;
 
-  // Stream for real-time notifications
-  Stream<AppNotification>? notificationStream;
-  final _notificationStreamController = StreamController<AppNotification>.broadcast();
+  BackendNotificationService({required this.baseUrl});  
 
-  BackendNotificationService({required this.baseUrl}) {
-    notificationStream = _notificationStreamController.stream;
-  }
-
-  // --- HTTP CRUD ---
-
+  /// Fetches all notifications for the user.
+  /// Returns a list of AppNotification objects.
   Future<List<AppNotification>> fetchNotifications() async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.get(
@@ -36,7 +29,10 @@ class BackendNotificationService {
     }
   }
 
-  Future<AppNotification> createNotification(AppNotification notification) async {
+  /// Fetches a single notification by ID.
+  /// Returns the notification if found, otherwise throws an exception.
+  Future<AppNotification> createNotification(
+      AppNotification notification) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.post(
       Uri.parse('$baseUrl/api/notifications'),
@@ -53,7 +49,10 @@ class BackendNotificationService {
     }
   }
 
-  Future<AppNotification> updateNotification(String id, AppNotification notification) async {
+  /// Updates an existing notification by ID.
+  /// Returns the updated notification if successful, otherwise throws an exception.
+  Future<AppNotification> updateNotification(
+      String id, AppNotification notification) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.put(
       Uri.parse('$baseUrl/api/notifications/$id'),
@@ -70,6 +69,8 @@ class BackendNotificationService {
     }
   }
 
+  /// Deletes a notification by ID.
+  /// Returns void if successful, otherwise throws an exception.
   Future<void> deleteNotification(String id) async {
     final token = await TokenUtil.getAccessToken();
     final response = await http.delete(
@@ -82,39 +83,9 @@ class BackendNotificationService {
     if (response.statusCode != 204) {
       throw Exception('Failed to delete notification');
     }
-  }
+  }  
 
-  // --- Socket.IO Real-Time ---
-
-  // Connect to Socket.IO for real-time notifications
-  void connectToWebSocket(String userToken, String userId) {
-    // Remove trailing slash if present
-    final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
-    _socket = io.io(
-      cleanBaseUrl,
-      <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-        'query': {'token': userToken},
-      },
-    );
-
-    _socket!.connect();
-
-    _socket!.onConnect((_) {
-      _socket!.emit('join', userId);
-    });
-
-    _socket!.on('notification', (data) {
-      _notificationStreamController.add(AppNotification.fromJson(data));
-    });
-  }
-
-  // Disconnect from Socket.IO
-  void disconnectWebSocket() {
-    _socket?.disconnect();
-    _socket?.destroy();
-    _socket = null;
-    // Don't close the controller if you plan to reconnect later
-  }
+  Stream<AppNotification> get notificationStream => SocketService()
+      .notificationStream
+      .map((data) => AppNotification.fromJson(data));
 }

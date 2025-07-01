@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../viewmodels/fridge_viewmodel.dart';
+import '../../../viewmodels/fridge_viewmodel.dart';
 
 class FridgeListView extends StatelessWidget {
   final List<dynamic> ingredients;

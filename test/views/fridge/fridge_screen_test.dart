@@ -7,9 +7,9 @@ import 'package:snapchef/database/app_database.dart' hide Ingredient;
 import 'package:snapchef/repositories/fridge_repository.dart';
 import 'package:snapchef/services/fridge_service.dart';
 import 'package:snapchef/views/fridge/fridge_screen.dart';
-import 'package:snapchef/views/fridge/fridge_grid_view.dart';
-import 'package:snapchef/views/fridge/fridge_list_view.dart';
-import 'package:snapchef/views/fridge/groceries_list.dart';
+import 'package:snapchef/views/fridge/widgets/fridge_grid_view.dart';
+import 'package:snapchef/views/fridge/widgets/fridge_list_view.dart';
+import 'package:snapchef/views/fridge/groceries_screen.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/viewmodels/fridge_viewmodel.dart';
@@ -111,7 +111,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.shopping_cart));
       await tester.pumpAndSettle();
-      expect(find.byType(GroceriesList), findsOneWidget);
+      expect(find.byType(GroceriesScreen), findsOneWidget);
       expect(find.text('Groceries'), findsOneWidget);
     });
   });
@@ -121,7 +121,7 @@ void main() {
       final fridgeViewModel = MockFridgeViewModel();
       fridgeViewModel.groceriesController.filteredItems = [];
       await tester.pumpWidget(buildTestWidget(
-          fridgeViewModel: fridgeViewModel, child: const GroceriesList()));
+          fridgeViewModel: fridgeViewModel, child: const GroceriesScreen()));
       await tester.pumpAndSettle();
       expect(find.text('No groceries in your list.'), findsOneWidget);
     });
@@ -135,7 +135,7 @@ void main() {
             id: '4', name: 'Apple', category: 'Fruit', count: 1, imageURL: ''),
       ];
       await tester.pumpWidget(buildTestWidget(
-          fridgeViewModel: fridgeViewModel, child: const GroceriesList()));
+          fridgeViewModel: fridgeViewModel, child: const GroceriesScreen()));
       await tester.pumpAndSettle();
       expect(find.textContaining('Bread'), findsOneWidget);
       expect(find.textContaining('Apple'), findsOneWidget);

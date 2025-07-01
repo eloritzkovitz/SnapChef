@@ -50,9 +50,13 @@ class AuthService {
       try {
         final data = jsonDecode(response.body);
         if (data is Map && data['message'] != null) {
-          errorMsg = 'Login failed: ${data['message']}';
+          errorMsg = data['message'];
         }
-      } catch (_) {}
+      } catch (_) {        
+        if (response.body.isNotEmpty) {
+          errorMsg = response.body;
+        }
+      }
       throw Exception(errorMsg);
     }
   }

@@ -38,3 +38,5 @@ const List<String> cuisines = [
 ];
 
 const List<String> difficulties = ['Easy', 'Medium', 'Hard', 'Expert'];
+
+const List<String> recipeSources = ['ai', 'user', 'shared'];

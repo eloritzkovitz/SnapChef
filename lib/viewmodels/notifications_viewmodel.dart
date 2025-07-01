@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import '../core/base_viewmodel.dart';
 import '../models/notifications/app_notification.dart';
 import '../models/notifications/ingredient_reminder.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/backend_notification_service.dart';
 import '../services/notification_service.dart';
+import '../services/socket_service.dart';
 import '../services/sync_service.dart';
-import '../utils/token_util.dart';
 import '../viewmodels/user_viewmodel.dart';
 
-class NotificationsViewModel extends ChangeNotifier {
+class NotificationsViewModel extends BaseViewModel {
   final NotificationService _notificationService;
   final BackendNotificationService _backendService;
   final ConnectivityProvider connectivityProvider;
@@ -39,7 +40,6 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 
   List<AppNotification> _notifications = [];
-  bool _isLoading = true;
   StreamSubscription<AppNotification>? _wsSubscription;
   Timer? _refreshTimer;
   Timer? _cleanupTimer;
@@ -58,8 +58,6 @@ class NotificationsViewModel extends ChangeNotifier {
           ((n.type == 'expiry' || n.type == 'grocery') &&
               n.scheduledTime.isBefore(DateTime.now())))
       .toList();
-
-  bool get isLoading => _isLoading;  
 
   /// Starts a periodic timer to refresh notifications every 5 minutes.
   void _startAutoRefresh() {
@@ -113,7 +111,7 @@ class NotificationsViewModel extends ChangeNotifier {
     _refreshTimer?.cancel();
     _cleanupTimer?.cancel();
     _wsSubscription?.cancel();
-    _backendService.disconnectWebSocket();
+    SocketService().disconnect();
     super.dispose();
   }
 
@@ -126,24 +124,35 @@ class NotificationsViewModel extends ChangeNotifier {
   /// Connects to WebSocket and listens for real-time notifications using context.
   Future<void> connectWebSocketAndListenWithContext(
       BuildContext context) async {
-    final userToken = await TokenUtil.getAccessToken();
-    if (userToken == null) return;
-
     if (context.mounted) {
       // Get userId from the UserViewModel using Provider and the given context
       final userId =
           Provider.of<UserViewModel>(context, listen: false).user?.id;
       if (userId == null) return;
 
-      _backendService.connectToWebSocket(userToken, userId);
+      // Connect the socket (only once per session, ideally in your app's main logic)
+      SocketService().connect(userId);
+
+      // Cancel previous subscription if any
+      _wsSubscription?.cancel();
 
       _wsSubscription =
-          _backendService.notificationStream?.listen((notif) async {
+          _backendService.notificationStream.listen((notif) async {
         await _notificationService.showNotification(notif.title, notif.body);
         // Prevent duplicates
         if (!_notifications.any((n) => n.id == notif.id)) {
           _notifications.insert(0, notif);
           notifyListeners();
+        }
+
+        // Refresh the friends list
+        if (notif.type == 'friend_update') {
+          // Fetch the UserViewModel and refresh user data
+          if (context.mounted) {
+            final userViewModel =
+                Provider.of<UserViewModel>(context, listen: false);
+            await userViewModel.fetchUserData();
+          }
         }
       });
     }
@@ -151,14 +160,14 @@ class NotificationsViewModel extends ChangeNotifier {
 
   /// Syncs backend and local notifications.
   Future<void> syncNotifications() async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     final isOffline = connectivityProvider.isOffline;
 
     if (isOffline) {
       _notifications = await _notificationService.getStoredNotifications();
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
@@ -167,7 +176,8 @@ class NotificationsViewModel extends ChangeNotifier {
     final backendNotifications = await _backendService.fetchNotifications();
 
     // 2. Get pending notification actions (add/edit) from SyncProvider
-    final pendingActions = await syncProvider.getPendingActions('notifications');
+    final pendingActions =
+        await syncProvider.getPendingActions('notifications');
 
     // 3. Apply pending actions to backendNotifications
     List<AppNotification> mergedNotifications = List.from(backendNotifications);
@@ -195,7 +205,7 @@ class NotificationsViewModel extends ChangeNotifier {
     // 4. Save merged list to local storage and update _notifications
     await _notificationService.saveStoredNotifications(mergedNotifications);
     _notifications = mergedNotifications;
-    _isLoading = false;
+    setLoading(false);
     notifyListeners();
   }
 
@@ -274,6 +284,20 @@ class NotificationsViewModel extends ChangeNotifier {
     }
     await _backendService.deleteNotification(id);
     _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    _notifications.clear();
+    _refreshTimer?.cancel();
+    _cleanupTimer?.cancel();
+    _wsSubscription?.cancel();
+    _refreshTimer = null;
+    _cleanupTimer = null;
+    _wsSubscription = null;
+    setError(null);
+    setLoading(false);
     notifyListeners();
   }
 }

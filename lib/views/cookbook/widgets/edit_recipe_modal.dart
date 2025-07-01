@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../constants/recipe_options.dart';
+import '../../../constants/recipe_constants.dart';
 import '../../../models/recipe.dart';
 import '../../../theme/colors.dart';
 

@@ -11,10 +11,10 @@ import '../../models/notifications/ingredient_reminder.dart';
 import '../../widgets/base_screen.dart';
 import '../../widgets/snapchef_appbar.dart';
 
-class GroceriesList extends StatelessWidget {
+class GroceriesScreen extends StatelessWidget {
   final VoidCallback? onAdd;
 
-  const GroceriesList({
+  const GroceriesScreen({
     super.key,
     this.onAdd,
   });

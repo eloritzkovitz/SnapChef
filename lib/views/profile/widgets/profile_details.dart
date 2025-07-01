@@ -45,7 +45,7 @@ class _ProfileDetailsState extends State<ProfileDetails> {
           );
         }
 
-        if (ingredientViewModel.loading) {
+        if (ingredientViewModel.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 

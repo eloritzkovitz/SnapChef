@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import '../core/base_viewmodel.dart';
 import '../models/ingredient.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/sync_provider.dart';
@@ -12,7 +12,7 @@ import '../repositories/fridge_repository.dart';
 import '../services/fridge_service.dart';
 import 'ingredient_list_controller.dart';
 
-class FridgeViewModel extends ChangeNotifier {
+class FridgeViewModel extends BaseViewModel {
   // --- Fields & Constructor ---
   final List<Ingredient> _ingredients = [];
   final List<Ingredient> _groceries = [];
@@ -30,10 +30,7 @@ class FridgeViewModel extends ChangeNotifier {
   final SyncManager syncManager = GetIt.I<SyncManager>();
   final FridgeRepository fridgeRepository = GetIt.I<FridgeRepository>();
 
-  FridgeService get fridgeService => fridgeRepository.fridgeService;
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  FridgeService get fridgeService => fridgeRepository.fridgeService;  
 
   FridgeViewModel() {
     fridgeController = IngredientListController(_ingredients);
@@ -43,6 +40,16 @@ class FridgeViewModel extends ChangeNotifier {
     syncManager.register(syncProvider.syncPendingActions);
     syncProvider.initSync(connectivityProvider);
     syncProvider.loadPendingActions();
+  }
+
+  Future<void> fetchData({
+    required String fridgeId,
+    required IngredientViewModel ingredientViewModel,
+  }) async {
+    await Future.wait([
+      fetchFridgeIngredients(fridgeId, ingredientViewModel),
+      fetchGroceries(fridgeId, ingredientViewModel),
+    ]);
   }
 
   @override
@@ -55,13 +62,13 @@ class FridgeViewModel extends ChangeNotifier {
   // --- Data Fetching & Sync ---
   Future<void> fetchFridgeIngredients(
       String fridgeId, IngredientViewModel ingredientViewModel) async {
-    _isLoading = true;
+    setLoading(true);
     notifyListeners();
 
     final isOffline = connectivityProvider.isOffline;
     if (isOffline) {
       await _loadFridgeIngredientsFromLocalDb(fridgeId);
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
       return;
     }
@@ -92,7 +99,7 @@ class FridgeViewModel extends ChangeNotifier {
       log('Error fetching fridge ingredients: $e');
       await _loadFridgeIngredientsFromLocalDb(fridgeId);
     } finally {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -654,7 +661,7 @@ class FridgeViewModel extends ChangeNotifier {
 
   // --- Image Recognition ---
   Future<void> recognizeIngredients(File image, String endpoint) async {
-    _isLoading = true;
+    setLoading(true);
     recognizedIngredients = [];
     notifyListeners();
 
@@ -665,7 +672,7 @@ class FridgeViewModel extends ChangeNotifier {
       log('Error recognizing ingredients: $e');
       recognizedIngredients = [];
     } finally {
-      _isLoading = false;
+      setLoading(false);
       notifyListeners();
     }
   }
@@ -716,6 +723,17 @@ class FridgeViewModel extends ChangeNotifier {
       }
     }
 
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    _ingredients.clear();
+    _groceries.clear();
+    recognizedIngredients = [];
+    fridgeController.clear();
+    groceriesController.clear();    
+    setLoading(false);
     notifyListeners();
   }
 }

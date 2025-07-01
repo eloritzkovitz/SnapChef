@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'groceries_list.dart';
-import './fridge_list_view.dart';
-import './fridge_grid_view.dart';
+import '../../viewmodels/ingredient_viewmodel.dart';
+import 'groceries_screen.dart';
+import 'widgets/fridge_list_view.dart';
+import 'widgets/fridge_grid_view.dart';
 import './ingredient_search_delegate.dart';
 import './widgets/action_button.dart';
 import './widgets/fridge_filter_sort_sheet.dart';
@@ -23,6 +24,22 @@ class FridgeScreen extends StatefulWidget {
 class _FridgeScreenState extends State<FridgeScreen> {
   bool isListView = false; // State variable to toggle between views
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    final fridgeViewModel =
+        Provider.of<FridgeViewModel>(context, listen: false);
+    final ingredientViewModel =
+        Provider.of<IngredientViewModel>(context, listen: false);
+    if (userViewModel.fridgeId != null) {
+      fridgeViewModel.fetchData(
+        fridgeId: userViewModel.fridgeId!,
+        ingredientViewModel: ingredientViewModel,
+      );
+    }
+  }
+
   // Open the groceries list in a sliding panel
   void _openGroceriesList(BuildContext rootContext) {
     showGeneralDialog(
@@ -42,7 +59,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
-              child: const GroceriesList(),
+              child: const GroceriesScreen(),
             ),
           ),
         );
@@ -181,7 +198,7 @@ class _FridgeScreenState extends State<FridgeScreen> {
           // Toggle Button for View Mode
           IconButton(
             color: Colors.black,
-            icon: Icon(isListView ? Icons.view_list : Icons.grid_view),
+            icon: Icon(isListView ? Icons.grid_view : Icons.view_list),
             tooltip: isListView ? 'Switch to Grid View' : 'Switch to List View',
             onPressed: () {
               setState(() {

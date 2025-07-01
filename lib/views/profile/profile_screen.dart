@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'friends_list.dart';
+import 'friends_screen.dart';
 import 'widgets/profile_details.dart';
 import 'widgets/settings_menu.dart';
 import '../../widgets/snapchef_appbar.dart';
@@ -91,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
-              child: const FriendsList(),
+              child: const FriendsScreen(),
             ),
           ),
         );
