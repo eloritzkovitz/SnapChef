@@ -2,9 +2,9 @@ name: snapchef
 
 description: A mobile app for creating AI-generated recipes based on available ingredients.
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.2+1
 
 environment:
   sdk: ^3.6.0
