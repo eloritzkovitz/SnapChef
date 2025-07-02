@@ -175,39 +175,39 @@ void main() {
     expect(find.byType(GestureDetector), findsWidgets);
   });
 
-  // testWidgets('FavoritesGallery shows carousel for multiple favorites',
-  //     (tester) async {
-  //   final recipes = [
-  //     TestRecipe('Favorite 1', isFavorite: true),
-  //     TestRecipe('Favorite 2', isFavorite: true),
-  //   ];
-  //   final cookbook = MockCookbookViewModel()..filteredItems = recipes;
-  //   await tester.pumpWidget(
-  //     MediaQuery(
-  //       data: MediaQueryData(size: Size(800, 600)),
-  //       child: SizedBox(
-  //         width: 800,
-  //         height: 600,
-  //         child: buildTestWidget(cookbook: cookbook),
-  //       ),
-  //     ),
-  //   );
-  //   await tester.pumpAndSettle();
+  testWidgets('FavoritesGallery shows carousel for multiple favorites',
+      (tester) async {
+    final recipes = [
+      TestRecipe('Favorite 1', isFavorite: true),
+      TestRecipe('Favorite 2', isFavorite: true),
+    ];
+    final cookbook = MockCookbookViewModel()..filteredItems = recipes;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(800, 600)),
+        child: SizedBox(
+          width: 800,
+          height: 600,
+          child: buildTestWidget(cookbook: cookbook),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-  //   // Ensure the first favorite is visible
-  //   expect(find.text('Favorite 1'), findsOneWidget);
+    // Ensure the first favorite is visible
+    expect(find.text('Favorite 1'), findsOneWidget);
 
-  //   // Use dragUntilVisible to swipe until the second favorite appears
-  //   await tester.dragUntilVisible(
-  //     find.text('Favorite 2'),
-  //     find.byType(CarouselSlider),
-  //     const Offset(-100, 0),
-  //   );
+    // Use dragUntilVisible to swipe until the second favorite appears
+    await tester.dragUntilVisible(
+      find.text('Favorite 2'),
+      find.byType(CarouselSlider),
+      const Offset(-100, 0),
+    );
 
-  //   await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-  //   // Now the second favorite should be visible
-  //   expect(find.text('Favorite 2'), findsOneWidget);
-  //   expect(find.byType(GestureDetector), findsWidgets);
-  // });
+    // Now the second favorite should be visible
+    expect(find.text('Favorite 2'), findsOneWidget);
+    expect(find.byType(GestureDetector), findsWidgets);
+  }, skip: true);
 }
