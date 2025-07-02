@@ -1,21 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:snapchef/database/app_database.dart' hide Recipe, Ingredient;
+import 'package:snapchef/repositories/cookbook_repository.dart';
+import 'package:snapchef/services/sync_service.dart';
+import 'package:snapchef/utils/sort_filter_mixin.dart';
 import 'package:snapchef/viewmodels/cookbook_viewmodel.dart';
 import 'package:snapchef/models/recipe.dart';
 import 'package:snapchef/models/ingredient.dart';
+import 'package:snapchef/providers/connectivity_provider.dart';
+import 'package:snapchef/providers/sync_provider.dart';
 
 class MockCookbookViewModel extends ChangeNotifier
+    with SortFilterMixin<Recipe>
     implements CookbookViewModel {
-  String? _selectedCategory;
-  String? _selectedCuisine;
-  String? _selectedDifficulty;
-  String? _selectedSortOption;
-  String? _selectedSource;
-  RangeValues? _prepTimeRange;
-  RangeValues? _cookingTimeRange;
-  RangeValues? _ratingRange;
+  // --- BaseViewModel fields ---
   @override
-  String filter = '';
+  bool isLoading = false;
+  @override
+  bool isLoggingOut = false;
+  @override
+  String? errorMessage;
 
+  @override
+  void setLoading(bool value) {
+    isLoading = value;
+    notifyListeners();
+  }
+
+  @override
+  void setLoggingOut(bool value) {
+    isLoggingOut = value;
+    notifyListeners();
+  }
+
+  @override
+  void setError(String? message) {
+    errorMessage = message;
+    notifyListeners();
+  }
+
+  @override
+  void clearError() {
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    filteredItems = [];
+    filter = '';
+    selectedCategory = null;
+    selectedSortOption = null;
+    selectedCuisine = null;
+    selectedDifficulty = null;
+    prepTimeRange = null;
+    cookingTimeRange = null;
+    ratingRange = null;
+    selectedSource = null;
+    setLoading(false);
+    notifyListeners();
+  }
+
+  // --- SortFilterMixin fields --- 
+  MockCookbookViewModel() {
+    filteredItems = List<Recipe>.from(_mockRecipes);
+  }
+
+  // --- CookbookViewModel fields ---
+  @override
+  String? selectedCuisine;
+  @override
+  String? selectedDifficulty;
+  @override
+  RangeValues? prepTimeRange;
+  @override
+  RangeValues? cookingTimeRange;
+  @override
+  RangeValues? ratingRange;
+  @override
+  String? selectedSource;
+
+  // --- Dummy data ---
   final List<Recipe> _mockRecipes = [
     Recipe(
       id: '1',
@@ -51,100 +115,150 @@ class MockCookbookViewModel extends ChangeNotifier
   ];
 
   @override
-  String? get selectedCategory => _selectedCategory;
+  List<Recipe> get recipes => _mockRecipes;
+
   @override
-  set selectedCategory(String? value) {
-    _selectedCategory = value;
+  List<Recipe> get sourceList => _mockRecipes;
+
+  // --- Filtering/sorting logic for the mock ---
+  @override
+  bool filterByCategory(Recipe item, String? category) => true;
+  @override
+  bool filterBySearch(Recipe item, String filter) => true;
+  @override
+  int sortItems(Recipe a, Recipe b, String? sortOption) => 0;
+
+  // --- Filtering/sorting API ---
+  @override
+  void applyFiltersAndSorting() {
+    filteredItems = List<Recipe>.from(_mockRecipes);
     notifyListeners();
   }
 
   @override
-  String? get selectedCuisine => _selectedCuisine;
+  void clearFilters() {
+    selectedCategory = null;
+    selectedSortOption = null;
+    filter = '';
+    selectedCuisine = null;
+    selectedDifficulty = null;
+    prepTimeRange = null;
+    cookingTimeRange = null;
+    ratingRange = null;
+    selectedSource = null;
+    applyFiltersAndSorting();
+  }
+
+  // --- CookbookViewModel methods ---
   @override
-  set selectedCuisine(String? value) {
-    _selectedCuisine = value;
-    notifyListeners();
+  Future<void> fetchCookbookRecipes(String cookbookId) async {}
+
+  @override
+  Future<bool> addRecipeToCookbook({
+    required String cookbookId,
+    required String title,
+    required String description,
+    required String mealType,
+    required String cuisineType,
+    required String difficulty,
+    required int prepTime,
+    required int cookingTime,
+    required List<Ingredient> ingredients,
+    required List<String> instructions,
+    String? imageURL,
+    double? rating,
+    required RecipeSource source,
+    String? raw,
+  }) async {
+    return true;
   }
 
   @override
-  String? get selectedDifficulty => _selectedDifficulty;
-  @override
-  set selectedDifficulty(String? value) {
-    _selectedDifficulty = value;
-    notifyListeners();
+  Future<bool> updateRecipe({
+    required String cookbookId,
+    required String recipeId,
+    required String title,
+    required String description,
+    required String mealType,
+    required String cuisineType,
+    required String difficulty,
+    required int prepTime,
+    required int cookingTime,
+    required List<Ingredient> ingredients,
+    required List<String> instructions,
+    String? imageURL,
+    double? rating,
+  }) async {
+    return true;
   }
 
   @override
-  String? get selectedSortOption => _selectedSortOption;
-  @override
-  set selectedSortOption(String? value) {
-    _selectedSortOption = value;
-    notifyListeners();
+  Future<bool> toggleRecipeFavoriteStatus(
+      String cookbookId, String recipeId) async {
+    return true;
   }
 
   @override
-  String? get selectedSource => _selectedSource;
-  @override
-  set selectedSource(String? value) {
-    _selectedSource = value;
-    notifyListeners();
+  Future<bool> deleteRecipe(String cookbookId, String recipeId) async {
+    return true;
   }
 
   @override
-  RangeValues? get prepTimeRange => _prepTimeRange ?? const RangeValues(0, 60);
-  @override
-  set prepTimeRange(RangeValues? value) {
-    _prepTimeRange = value;
-    notifyListeners();
+  Future<bool> regenerateRecipeImage({
+    required String cookbookId,
+    required String recipeId,
+    required Map<String, dynamic> payload,
+  }) async {
+    return true;
   }
 
   @override
-  RangeValues? get cookingTimeRange =>
-      _cookingTimeRange ?? const RangeValues(0, 60);
+  Future<void> shareRecipeWithFriend({
+    required String cookbookId,
+    required String recipeId,
+    required String friendId,
+  }) async {}
+
   @override
-  set cookingTimeRange(RangeValues? value) {
-    _cookingTimeRange = value;
-    notifyListeners();
+  Future<void> reorderRecipe(
+      int oldIndex, int newIndex, String cookbookId) async {}
+
+  @override
+  Future<void> saveRecipeOrder(String cookbookId) async {}
+
+  @override
+  List<Recipe> searchRecipes(String query) {
+    if (query.isEmpty) return _mockRecipes;
+    return _mockRecipes
+        .where((recipe) =>
+            recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // --- Category/cuisine/difficulty getters for UI ---
+  @override
+  List<String> getCategories() {
+    final categories =
+        _mockRecipes.map((recipe) => recipe.mealType).toSet().toList();
+    categories.sort();
+    return categories;
   }
 
   @override
-  RangeValues? get ratingRange => _ratingRange ?? const RangeValues(0, 5);
-  @override
-  set ratingRange(RangeValues? value) {
-    _ratingRange = value;
-    notifyListeners();
+  List<String> getCuisines() {
+    final cuisines =
+        _mockRecipes.map((recipe) => recipe.cuisineType).toSet().toList();
+    cuisines.sort();
+    return cuisines;
   }
 
-  // Filtering/sorting methods
   @override
-  List<String> getCategories() => [
-        'Vegetable',
-        'Fruit',
-        'Meat',
-        'Dairy',
-        'Grain',
-        'Oil',
-        'Spice',
-        'Seafood',
-        'Beverage',
-        'Other',
-      ];
-
-  @override
-  List<String> getCuisines() => [
-        'Italian',
-        'Mexican',
-        'Indian',
-        'American',
-        'Other',
-      ];
-
-  @override
-  List<String> getDifficulties() => [
-        'Easy',
-        'Medium',
-        'Hard',
-      ];
+  List<String> getDifficulties() {
+    final difficulties =
+        _mockRecipes.map((recipe) => recipe.difficulty).toSet().toList();
+    difficulties.sort();
+    return difficulties;
+  }
 
   @override
   int get minPrepTime => 0;
@@ -159,45 +273,19 @@ class MockCookbookViewModel extends ChangeNotifier
   @override
   double get maxRating => 5;
 
+  // --- Required dependencies (dummy implementations) ---
   @override
-  List<Recipe> get filteredItems => _mockRecipes;
+  ConnectivityProvider get connectivityProvider => ConnectivityProvider();
 
   @override
-  List<Recipe> get recipes => _mockRecipes;
+  CookbookRepository get cookbookRepository => CookbookRepository();
 
   @override
-  bool get isLoading => false;
+  AppDatabase get database => AppDatabase();
 
   @override
-  List<Recipe> searchRecipes(String query) {
-    if (query.isEmpty) return _mockRecipes;
-    return _mockRecipes
-        .where((recipe) =>
-            recipe.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
+  SyncManager get syncManager => SyncManager(connectivityProvider);
 
   @override
-  void applyFiltersAndSorting() {}
-
-  @override
-  void clearFilters() {
-    _selectedCategory = null;
-    _selectedSortOption = null;
-    filter = '';
-    _selectedCuisine = null;
-    _selectedDifficulty = null;
-    _prepTimeRange = null;
-    _cookingTimeRange = null;
-    _ratingRange = null;
-    _selectedSource = null;
-    notifyListeners();
-  }
-
-  @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-
-  @override
-  Future<void> fetchCookbookRecipes(String cookbookId) async {    
-  }
+  SyncProvider get syncProvider => SyncProvider();
 }

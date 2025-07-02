@@ -9,6 +9,7 @@ class MockCookbookRepository extends Mock implements CookbookRepository {}
 void main() {
   late MockCookbookRepository mockRepo;
   late CookbookSyncActions actions;
+  late Recipe recipe;
 
   Recipe getTestRecipe() => Recipe(
         id: 'r1',
@@ -30,9 +31,8 @@ void main() {
   setUp(() {
     mockRepo = MockCookbookRepository();
     actions = CookbookSyncActions(mockRepo);
+    recipe = getTestRecipe();
 
-    final recipe = getTestRecipe();
-    // Always match the exact arguments used in your tests!
     when(mockRepo.addRecipeToCookbookRemote('c1', recipe)).thenAnswer((_) async => true);
     when(mockRepo.updateRecipeRemote('c1', 'r1', recipe)).thenAnswer((_) async => true);
     when(mockRepo.deleteRecipeRemote('c1', 'r1')).thenAnswer((_) async => true);
@@ -41,7 +41,6 @@ void main() {
   });
 
   test('add calls addRecipeToCookbookRemote', () async {
-    final recipe = getTestRecipe();
     final action = {
       'action': 'add',
       'cookbookId': 'c1',
@@ -52,7 +51,6 @@ void main() {
   });
 
   test('update calls updateRecipeRemote', () async {
-    final recipe = getTestRecipe();
     final action = {
       'action': 'update',
       'cookbookId': 'c1',

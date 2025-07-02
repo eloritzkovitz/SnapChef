@@ -2,7 +2,7 @@
 // in snapchef/test/viewmodels/user_viewmodel_test.dart.
 // Do not manually edit this file.
 
-// ignore_for_file: no_leading_underscores_for_library_prefixes
+// ignore_for_file: no_leading_underscores_for_library_prefixes, invalid_use_of_internal_member
 import 'dart:async' as _i13;
 import 'dart:io' as _i23;
 import 'dart:ui' as _i19;

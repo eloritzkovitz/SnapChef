@@ -2,7 +2,7 @@
 // in snapchef/test/viewmodels/auth_viewmodel_test.dart.
 // Do not manually edit this file.
 
-// ignore_for_file: no_leading_underscores_for_library_prefixes
+// ignore_for_file: no_leading_underscores_for_library_prefixes, duplicate_ignore
 import 'dart:async' as _i7;
 
 import 'package:flutter/foundation.dart' as _i4;

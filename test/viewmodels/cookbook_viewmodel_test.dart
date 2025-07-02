@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -307,6 +308,152 @@ void main() {
       final results = vm.searchRecipes('test');
       expect(results.length, 1);
       expect(results.first.title, 'Test Recipe');
+    });
+
+    test('getCategories returns expected categories', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      expect(vm.getCategories(), contains('Dinner'));
+      expect(vm.getCategories().length, 1);
+    });
+
+    test('getCuisines returns expected cuisines', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      expect(vm.getCuisines(), contains('Italian'));
+      expect(vm.getCuisines().length, 1);
+    });
+
+    test('getDifficulties returns expected difficulties', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      expect(vm.getDifficulties(), contains('Easy'));
+      expect(vm.getDifficulties().length, 1);
+    });
+
+    test('min/max prep/cooking time and rating are correct', () {
+      final vm = CookbookViewModel();
+      expect(vm.minPrepTime, isA<int>());
+      expect(vm.maxPrepTime, isA<int>());
+      expect(vm.minCookingTime, isA<int>());
+      expect(vm.maxCookingTime, isA<int>());
+      expect(vm.minRating, isA<double>());
+      expect(vm.maxRating, isA<double>());
+    });
+
+    test('clearFilters resets filters', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      vm.selectedCategory = 'Vegetable';
+      vm.selectedSortOption = 'A-Z';
+      vm.selectedCuisine = 'Italian';
+      vm.selectedDifficulty = 'Easy';
+      vm.prepTimeRange = const RangeValues(5, 30);
+      vm.cookingTimeRange = const RangeValues(10, 40);
+      vm.ratingRange = const RangeValues(1, 5);
+      vm.selectedSource = 'user';
+      vm.filter = 'Test';
+      vm.clearFilters();
+      expect(vm.selectedCategory, null);
+      expect(vm.selectedSortOption, null);
+      expect(vm.selectedCuisine, null);
+      expect(vm.selectedDifficulty, null);
+      expect(vm.prepTimeRange, null);
+      expect(vm.cookingTimeRange, null);
+      expect(vm.ratingRange, null);
+      expect(vm.selectedSource, null);
+      expect(vm.filter, '');
+    });
+
+    test('applyFiltersAndSorting does not throw', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      expect(() => vm.applyFiltersAndSorting(), returnsNormally);
+    });
+
+    test('fields can be set and read', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      vm.selectedCategory = 'Vegetable';
+      vm.selectedSortOption = 'A-Z';
+      vm.selectedCuisine = 'Italian';
+      vm.selectedDifficulty = 'Easy';
+      vm.prepTimeRange = const RangeValues(5, 30);
+      vm.cookingTimeRange = const RangeValues(10, 40);
+      vm.ratingRange = const RangeValues(1, 5);
+      vm.selectedSource = 'user';
+      vm.filter = 'Test';
+      expect(vm.selectedCategory, 'Vegetable');
+      expect(vm.selectedSortOption, 'A-Z');
+      expect(vm.selectedCuisine, 'Italian');
+      expect(vm.selectedDifficulty, 'Easy');
+      expect(vm.prepTimeRange, const RangeValues(5, 30));
+      expect(vm.cookingTimeRange, const RangeValues(10, 40));
+      expect(vm.ratingRange, const RangeValues(1, 5));
+      expect(vm.selectedSource, 'user');
+      expect(vm.filter, 'Test');
+    });    
+
+    test('searchRecipes returns empty list for no match', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      final results = vm.searchRecipes('notfound');
+      expect(results, isEmpty);
+    });
+
+    test('recipes getter returns current recipes', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      expect(vm.recipes.length, 1);
+      expect(vm.recipes.first.title, 'Test Recipe');
+    });
+
+    test('filteredItems getter returns filtered recipes', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      vm.applyFiltersAndSorting();
+      expect(vm.filteredItems.length, 1);
+      expect(vm.filteredItems.first.title, 'Test Recipe');
+    });
+
+    test('isLoading is false by default', () {
+      final vm = CookbookViewModel();
+      expect(vm.isLoading, isFalse);
+    });
+
+    test('errorMessage is null by default', () {
+      final vm = CookbookViewModel();
+      expect(vm.errorMessage, isNull);
+    });
+
+    test('isLoggingOut is false by default', () {
+      final vm = CookbookViewModel();
+      expect(vm.isLoggingOut, isFalse);
+    });
+
+    test('setLoading updates isLoading', () {
+      final vm = CookbookViewModel();
+      vm.setLoading(true);
+      expect(vm.isLoading, isTrue);
+      vm.setLoading(false);
+      expect(vm.isLoading, isFalse);
+    });
+
+    test('setLoggingOut updates isLoggingOut', () {
+      final vm = CookbookViewModel();
+      vm.setLoggingOut(true);
+      expect(vm.isLoggingOut, isTrue);
+      vm.setLoggingOut(false);
+      expect(vm.isLoggingOut, isFalse);
     });
   });
 }

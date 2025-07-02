@@ -9,6 +9,11 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   @override
   ConnectivityProvider get connectivityProvider => MockConnectivityProvider();
 
+  final Future<void> Function()? fetchUserDataOverride;
+  
+
+  MockUserViewModel({this.fetchUserDataOverride});
+
   @override
   bool get isLoading => false;
 
@@ -43,7 +48,12 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
       _user == null ? null : '${_user!.firstName} ${_user!.lastName}';
 
   @override
-  Future<void> fetchUserData() async {}
+  Future<void> fetchUserData() async {
+    if (fetchUserDataOverride != null) {
+      return await fetchUserDataOverride!();
+    }
+    // Default: do nothing
+  }
 
   // Add missing method for FCM token refresh
   @override
