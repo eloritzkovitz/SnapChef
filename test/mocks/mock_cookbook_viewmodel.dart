@@ -149,6 +149,10 @@ class MockCookbookViewModel extends ChangeNotifier
     applyFiltersAndSorting();
   }
 
+  Recipe? get recipe => _mockRecipes.first;
+
+  Recipe? get selectedRecipe => _mockRecipes.first;
+
   // --- CookbookViewModel methods ---
   @override
   Future<void> fetchCookbookRecipes(String cookbookId) async {}
