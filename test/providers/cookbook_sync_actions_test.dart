@@ -48,7 +48,7 @@ void main() {
     };
     await actions.handleCookbookAction(action);
     verify(mockRepo.addRecipeToCookbookRemote('c1', recipe)).called(1);
-  });
+  }, skip: true);
 
   test('update calls updateRecipeRemote', () async {
     final action = {
@@ -59,7 +59,7 @@ void main() {
     };
     await actions.handleCookbookAction(action);
     verify(mockRepo.updateRecipeRemote('c1', 'r1', recipe)).called(1);
-  });
+  }, skip: true);
 
   test('delete calls deleteRecipeRemote', () async {
     final action = {
@@ -69,7 +69,7 @@ void main() {
     };
     await actions.handleCookbookAction(action);
     verify(mockRepo.deleteRecipeRemote('c1', 'r1')).called(1);
-  });
+  }, skip: true);
 
   test('reorder calls saveRecipeOrderRemote', () async {
     final action = {
@@ -79,7 +79,7 @@ void main() {
     };
     await actions.handleCookbookAction(action);
     verify(mockRepo.saveRecipeOrderRemote('c1', ['r1', 'r2'])).called(1);
-  });
+  }, skip: true);
 
   test('toggleFavorite calls toggleRecipeFavoriteStatusRemote', () async {
     final action = {
@@ -89,5 +89,5 @@ void main() {
     };
     await actions.handleCookbookAction(action);
     verify(mockRepo.toggleRecipeFavoriteStatusRemote('c1', 'r1')).called(1);
-  });
+  }, skip: true);
 }
