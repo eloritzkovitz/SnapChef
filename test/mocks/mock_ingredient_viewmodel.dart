@@ -20,9 +20,15 @@ class MockIngredientViewModel extends ChangeNotifier implements IngredientViewMo
   @override
   List<Ingredient> get ingredients => _ingredients;
 
+  Map<String, Ingredient> _ingredientMap = {};
+
   @override
-  Map<String, Ingredient>? get ingredientMap =>
-      {for (var ing in _ingredients) ing.name.trim().toLowerCase(): ing};
+  Map<String, Ingredient>? get ingredientMap => _ingredientMap;
+
+  set ingredientMap(Map<String, Ingredient>? value) {
+    _ingredientMap = value ?? {};
+    notifyListeners();
+  }
 
   // --- BaseViewModel required members ---
   @override

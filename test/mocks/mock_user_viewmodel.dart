@@ -87,7 +87,7 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   @override
   Map<String, dynamic>? get userStats => _userStats;
 
-  void setUserStats(Map<String, dynamic> stats) {
+  void setUserStats(Map<String, dynamic>? stats) {
     _userStats = stats;
     notifyListeners();
   }
