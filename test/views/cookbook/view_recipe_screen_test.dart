@@ -8,6 +8,7 @@ import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/views/cookbook/view_recipe_screen.dart';
 import 'package:network_image_mock/network_image_mock.dart';
+import 'package:snapchef/views/cookbook/widgets/edit_recipe_modal.dart';
 
 import '../../mocks/mock_cookbook_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
@@ -25,8 +26,7 @@ void main() {
   Widget buildTestWidget(MockCookbookViewModel mockViewModel) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<CookbookViewModel>(
-            create: (_) => mockViewModel),
+        ChangeNotifierProvider<CookbookViewModel>(create: (_) => mockViewModel),
         ChangeNotifierProvider<UserViewModel>(
             create: (_) => MockUserViewModel()),
         ChangeNotifierProvider<NotificationsViewModel>(
@@ -35,7 +35,8 @@ void main() {
             create: (_) => MockConnectivityProvider()),
       ],
       child: MaterialApp(
-        home: ViewRecipeScreen(recipe: mockViewModel.recipes.first, cookbookId: 'cb1'),
+        home: ViewRecipeScreen(
+            recipe: mockViewModel.recipes.first, cookbookId: 'cb1'),
       ),
     );
   }
@@ -47,57 +48,121 @@ void main() {
       await tester.pumpWidget(buildTestWidget(mockViewModel));
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('Recipe Details'), findsOneWidget);     
+      expect(find.text('Recipe Details'), findsOneWidget);
       expect(find.byType(PopupMenuButton<String>), findsOneWidget);
     });
   });
 
-  testWidgets('Popup menu actions work', (tester) async {
+  testWidgets('ViewRecipeScreen renders and displays recipe details',
+      (tester) async {
     final mockViewModel = MockCookbookViewModel();
     await mockNetworkImagesFor(() async {
       await tester.pumpWidget(buildTestWidget(mockViewModel));
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      await tester.pump(const Duration(seconds: 1));
 
-      // Open popup menu
+      expect(find.text('Recipe Details'), findsOneWidget);
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+    });
+  });
+
+  testWidgets('Popup menu actions work and dialogs behave correctly',
+      (tester) async {
+    final mockViewModel = MockCookbookViewModel();
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(buildTestWidget(mockViewModel));
+      await tester.pumpAndSettle();
+
+      // --- Edit Recipe ---
       await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      // Tap Edit
+      await tester.pumpAndSettle();
       expect(find.text('Edit Recipe'), findsOneWidget);
       await tester.tap(find.text('Edit Recipe'));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditRecipeModal), findsOneWidget);
+      // Close modal
+      await tester.tap(find.byIcon(Icons.close).first, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.byType(EditRecipeModal), findsNothing);
 
-      // Open popup menu again
+      // --- Regenerate Image (should be enabled if not offline) ---
       await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('Regenerate Image'), findsOneWidget);
+      final regenItem = find.widgetWithText(PopupMenuItem, 'Regenerate Image');
+      expect(tester.widget<PopupMenuItem>(regenItem).enabled, isTrue);
 
-      // Tap Favorite/Unfavorite
+      // --- Favorite/Unfavorite ---
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
       expect(find.text('Favorite'), findsOneWidget);
       await tester.tap(find.text('Favorite'));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // Open popup menu again
+      await tester.pumpAndSettle();
+      // Should now show "Unfavorite"
       await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('Unfavorite'), findsOneWidget);
 
-      // Tap Share Recipe
+      // --- Share Recipe (should be enabled if not offline) ---
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
       expect(find.text('Share Recipe'), findsOneWidget);
-      await tester.tap(find.text('Share Recipe'));
-      await tester.pump(const Duration(milliseconds: 100));
+      final shareItem = find.widgetWithText(PopupMenuItem, 'Share Recipe');
+      expect(tester.widget<PopupMenuItem>(shareItem).enabled, isTrue);
 
-      // Open popup menu again
+      // --- Delete Recipe (dialog: Cancel) ---
       await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      // Tap Delete Recipe
+      await tester.pumpAndSettle();
       expect(find.text('Delete Recipe'), findsOneWidget);
       await tester.tap(find.text('Delete Recipe'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      // Confirm delete dialog appears
-      expect(find.text('Delete Recipe'), findsOneWidget);
+      await tester.pumpAndSettle();
       expect(find.text('Are you sure you want to delete this recipe?'),
           findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Are you sure you want to delete this recipe?'),
+          findsNothing);
+
+      // --- Delete Recipe (dialog: Confirm) ---
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete Recipe'));
+      await tester.pumpAndSettle();
+      expect(find.text('Are you sure you want to delete this recipe?'),
+          findsOneWidget);
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recipe deleted successfully'), findsOneWidget);
+
+      // --- Offline state disables Regenerate Image and Share Recipe ---
+      // Rebuild with offline provider
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<CookbookViewModel>(
+                create: (_) => mockViewModel),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+            ChangeNotifierProvider<NotificationsViewModel>(
+                create: (_) => MockNotificationsViewModel()),
+            ChangeNotifierProvider<ConnectivityProvider>(
+                create: (_) => MockConnectivityProvider(isOffline: true)),
+          ],
+          child: MaterialApp(
+            home: ViewRecipeScreen(
+                recipe: mockViewModel.recipes.first, cookbookId: 'cb1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
+      final regenItemOffline =
+          find.widgetWithText(PopupMenuItem, 'Regenerate Image');
+      final shareItemOffline =
+          find.widgetWithText(PopupMenuItem, 'Share Recipe');
+      expect(tester.widget<PopupMenuItem>(regenItemOffline).enabled, isFalse);
+      expect(tester.widget<PopupMenuItem>(shareItemOffline).enabled, isFalse);
     });
   });
 }

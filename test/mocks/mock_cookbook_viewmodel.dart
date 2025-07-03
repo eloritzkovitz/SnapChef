@@ -60,7 +60,7 @@ class MockCookbookViewModel extends ChangeNotifier
     notifyListeners();
   }
 
-  // --- SortFilterMixin fields --- 
+  // --- SortFilterMixin fields ---
   MockCookbookViewModel() {
     filteredItems = List<Recipe>.from(_mockRecipes);
   }
@@ -199,6 +199,12 @@ class MockCookbookViewModel extends ChangeNotifier
   @override
   Future<bool> toggleRecipeFavoriteStatus(
       String cookbookId, String recipeId) async {
+    final index = _mockRecipes.indexWhere((r) => r.id == recipeId);
+    if (index != -1) {
+      final old = _mockRecipes[index];
+      _mockRecipes[index] = old.copyWith(isFavorite: !old.isFavorite);
+      notifyListeners();
+    }
     return true;
   }
 
