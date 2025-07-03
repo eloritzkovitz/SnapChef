@@ -10,7 +10,6 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   ConnectivityProvider get connectivityProvider => MockConnectivityProvider();
 
   final Future<void> Function()? fetchUserDataOverride;
-  
 
   MockUserViewModel({this.fetchUserDataOverride});
 
@@ -54,17 +53,27 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     }
     // Default: do nothing
   }
-
-  // Add missing method for FCM token refresh
+  
   @override
-  void listenForFcmTokenRefresh() {}
-
-  @override
-  Map<String, dynamic>? get userStats => {};
-
-  // Add any other required methods or properties here as needed
+  void listenForFcmTokenRefresh() {}  
 
   // Fallback for any other interface requirements
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  Map<String, dynamic>? _userStats = {
+    'ingredientCount': 5,
+    'recipeCount': 3,
+    'favoriteRecipeCount': 2,
+    'friendCount': 0,
+    'mostPopularIngredients': [],
+  };
+
+  @override
+  Map<String, dynamic>? get userStats => _userStats;
+
+  void setUserStats(Map<String, dynamic> stats) {
+    _userStats = stats;
+    notifyListeners();
+  }
 }
