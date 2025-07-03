@@ -13,6 +13,9 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
 
   MockUserViewModel({this.fetchUserDataOverride});
 
+  Future<void> Function({Map<String, dynamic>? notificationPreferences})?
+      updateUserPreferencesCallback;
+
   @override
   bool get isLoading => false;
 
@@ -75,5 +78,20 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   void setUserStats(Map<String, dynamic> stats) {
     _userStats = stats;
     notifyListeners();
+  }
+
+  @override
+  Future<void> updateUserPreferences({
+    Map<String, dynamic>? notificationPreferences,
+    Map<String, dynamic>? dietaryPreferences,
+    List<String>? allergies,
+  }) async {
+    if (updateUserPreferencesCallback != null) {
+      // Only pass notificationPreferences for your test
+      return await updateUserPreferencesCallback!(
+        notificationPreferences: notificationPreferences,
+      );
+    }
+    // Default: do nothing
   }
 }
