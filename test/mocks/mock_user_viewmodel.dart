@@ -18,12 +18,15 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     String? lastName,
     String? password,
     dynamic profilePicture,
-  })? updateUserCallback;  
+  })? updateUserCallback;
 
   Future<void> Function({Map<String, dynamic>? notificationPreferences})?
       updateUserPreferencesCallback;
 
   Future<void> Function(BuildContext context)? deleteUserCallback;
+
+  Future<void> Function(String id)? removeFriendCallback;
+  Future<User?> Function(String id)? fetchUserProfileCallback;
 
   @override
   bool get isLoading => _user == null;
@@ -65,9 +68,9 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     }
     // Default: do nothing
   }
-  
+
   @override
-  void listenForFcmTokenRefresh() {}  
+  void listenForFcmTokenRefresh() {}
 
   // Fallback for any other interface requirements
   @override
@@ -105,7 +108,7 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
       );
     }
     // Default: do nothing
-  }  
+  }
 
   @override
   Future<void> updateUserPreferences({
@@ -128,5 +131,21 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
       return await deleteUserCallback!(context);
     }
     // Default: do nothing
+  }
+
+  @override
+  Future<void> removeFriend(String id) async {
+    if (removeFriendCallback != null) {
+      return await removeFriendCallback!(id);
+    }
+    // Default: do nothing
+  }
+
+  @override
+  Future<User?> fetchUserProfile(String id) async {
+    if (fetchUserProfileCallback != null) {
+      return await fetchUserProfileCallback!(id);
+    }
+    return null;
   }
 }

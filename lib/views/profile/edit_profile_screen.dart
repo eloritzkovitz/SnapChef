@@ -258,9 +258,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             profilePicture: _selectedImage,
                           );
 
-                          if (context.mounted)
+                          if (context.mounted) {
                             Navigator.pop(
                                 context); // Close the loading indicator
+                          }
                           if (context.mounted) {
                             Navigator.pop(
                                 context); // Go back to the previous screen after successful update
