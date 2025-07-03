@@ -13,11 +13,20 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
 
   MockUserViewModel({this.fetchUserDataOverride});
 
+  Future<void> Function({
+    String? firstName,
+    String? lastName,
+    String? password,
+    dynamic profilePicture,
+  })? updateUserCallback;  
+
   Future<void> Function({Map<String, dynamic>? notificationPreferences})?
       updateUserPreferencesCallback;
 
+  Future<void> Function(BuildContext context)? deleteUserCallback;
+
   @override
-  bool get isLoading => false;
+  bool get isLoading => _user == null;
 
   User? _user = User(
     id: 'test_user',
@@ -81,6 +90,24 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   }
 
   @override
+  Future<void> updateUser({
+    String? firstName,
+    String? lastName,
+    String? password,
+    dynamic profilePicture,
+  }) async {
+    if (updateUserCallback != null) {
+      return await updateUserCallback!(
+        firstName: firstName,
+        lastName: lastName,
+        password: password,
+        profilePicture: profilePicture,
+      );
+    }
+    // Default: do nothing
+  }  
+
+  @override
   Future<void> updateUserPreferences({
     Map<String, dynamic>? notificationPreferences,
     Map<String, dynamic>? dietaryPreferences,
@@ -91,6 +118,14 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
       return await updateUserPreferencesCallback!(
         notificationPreferences: notificationPreferences,
       );
+    }
+    // Default: do nothing
+  }
+
+  @override
+  Future<void> deleteUser(BuildContext context) async {
+    if (deleteUserCallback != null) {
+      return await deleteUserCallback!(context);
     }
     // Default: do nothing
   }

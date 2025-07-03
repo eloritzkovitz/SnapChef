@@ -74,6 +74,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final userViewModel = Provider.of<UserViewModel>(context);
     final primaryColor = Theme.of(context).primaryColor;
 
+    if (userViewModel.isLoading || userViewModel.user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Edit Profile',
@@ -252,18 +258,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             profilePicture: _selectedImage,
                           );
 
-                          if (context.mounted) Navigator.pop(context); // Close the loading indicator
+                          if (context.mounted)
+                            Navigator.pop(
+                                context); // Close the loading indicator
                           if (context.mounted) {
                             Navigator.pop(
-                              context); // Go back to the previous screen after successful update
+                                context); // Go back to the previous screen after successful update
                           }
                         } catch (e) {
                           if (context.mounted) Navigator.pop(context);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Failed to update profile: $e')),
-                          );
+                              SnackBar(
+                                  content:
+                                      Text('Failed to update profile: $e')),
+                            );
                           }
                         }
                       }
