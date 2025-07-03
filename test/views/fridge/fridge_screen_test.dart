@@ -63,7 +63,9 @@ void main() {
     await dotenv.load();
     GetIt.I.reset();
     GetIt.I.registerSingleton<ConnectivityProvider>(MockConnectivityProvider());
-    GetIt.I.registerSingleton<AppDatabase>(MockAppDatabase());
+    final db = MockAppDatabase();
+    GetIt.I.registerSingleton<AppDatabase>(db);
+    addTearDown(() async => await db.close());
     GetIt.I.registerSingleton<FridgeService>(MockFridgeService());
     GetIt.I.registerSingleton<FridgeRepository>(MockFridgeRepository());
     GetIt.I.registerSingleton<IngredientService>(MockIngredientService());

@@ -10,6 +10,9 @@ import 'package:snapchef/views/cookbook/view_recipe_screen.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'package:snapchef/views/cookbook/widgets/edit_recipe_modal.dart';
 
+import 'package:get_it/get_it.dart';
+import 'package:snapchef/database/app_database.dart';
+import '../../mocks/mock_app_database.dart';
 import '../../mocks/mock_cookbook_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
 import '../../mocks/mock_notifications_viewmodel.dart';
@@ -19,8 +22,17 @@ void main() {
   // Ensure Flutter binding is initialized for all tests
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late MockAppDatabase db;
+
   setUpAll(() async {
     dotenv.testLoad(fileInput: 'IMAGE_BASE_URL=https://example.com/');
+    db = MockAppDatabase();
+    GetIt.I.registerSingleton<AppDatabase>(db);
+  });
+
+  tearDownAll(() async {
+    await db.close();
+    GetIt.I.unregister<AppDatabase>();
   });
 
   Widget buildTestWidget(MockCookbookViewModel mockViewModel) {
@@ -108,6 +120,19 @@ void main() {
       expect(find.text('Share Recipe'), findsOneWidget);
       final shareItem = find.widgetWithText(PopupMenuItem, 'Share Recipe');
       expect(tester.widget<PopupMenuItem>(shareItem).enabled, isTrue);
+      // Tap Share Recipe to open the bottom sheet
+      await tester.tap(find.text('Share Recipe'));
+      await tester.pumpAndSettle();
+      // Close the bottom sheet (assuming there's a close icon)
+      final closeIconFinder = find.byIcon(Icons.close);
+      if (closeIconFinder.evaluate().isNotEmpty) {
+        await tester.tap(closeIconFinder.first);
+        await tester.pumpAndSettle();
+      } else {
+        // If no close icon, try to pop the bottom sheet
+        Navigator.of(tester.element(find.byType(ViewRecipeScreen))).pop();
+        await tester.pumpAndSettle();
+      }
 
       // --- Delete Recipe (dialog: Cancel) ---
       await tester.tap(find.byType(PopupMenuButton<String>));
@@ -130,11 +155,14 @@ void main() {
       expect(find.text('Are you sure you want to delete this recipe?'),
           findsOneWidget);
       await tester.tap(find.text('Delete'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text('Recipe deleted successfully'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
 
-      // --- Offline state disables Regenerate Image and Share Recipe ---
-      // Rebuild with offline provider
+// Add this to ensure overlays are gone before rebuilding
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+// --- Offline state disables Regenerate Image and Share Recipe ---
       await tester.pumpWidget(
         MultiProvider(
           providers: [

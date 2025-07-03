@@ -50,7 +50,9 @@ void main() {
     GetIt.I.reset();
     GetIt.I.registerSingleton<IngredientService>(MockIngredientService());
     GetIt.I.registerSingleton<RecipeService>(MockRecipeService());
-    GetIt.I.registerSingleton<AppDatabase>(MockAppDatabase());
+    final db = MockAppDatabase();
+    GetIt.I.registerSingleton<AppDatabase>(db);
+    addTearDown(() async => await db.close());
   });
 
   Widget buildTestWidget({
