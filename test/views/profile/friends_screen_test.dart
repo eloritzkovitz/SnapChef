@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:snapchef/database/app_database.dart' hide User;
+import 'package:snapchef/models/friend_request.dart';
 import 'package:snapchef/models/user.dart';
 import 'package:snapchef/repositories/user_repository.dart';
 import 'package:snapchef/services/friend_service.dart';
@@ -233,7 +234,7 @@ Future<void> main() async {
       await tester.pumpAndSettle();
       // Tap View Profile
       await tester.tap(find.text('View Profile'));
-      await tester.pumpAndSettle();      
+      await tester.pumpAndSettle();
     });
 
     testWidgets('shows SnackBar on failed public profile fetch',
@@ -251,5 +252,208 @@ Future<void> main() async {
       await tester.pumpAndSettle();
       expect(find.textContaining('Failed to load profile'), findsOneWidget);
     });
+  });
+
+  group('FriendSearchModal', () {
+    late MockUserViewModel userViewModel;
+    late MockFriendViewModel friendViewModel;
+
+    setUp(() {
+      userViewModel = MockUserViewModel();
+      friendViewModel = MockFriendViewModel();
+      userViewModel.setUser(
+        User(
+          id: 'u1',
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          fridgeId: 'fridge1',
+          cookbookId: 'cb1',
+        ),
+      );
+      friendViewModel.setPendingRequests([]);
+      friendViewModel.setSentRequests([]);
+    });
+
+    Widget buildModal() {
+      return MultiProvider(
+        providers: [
+          ChangeNotifierProvider<UserViewModel>.value(value: userViewModel),
+          ChangeNotifierProvider<FriendViewModel>.value(value: friendViewModel),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => FriendSearchModal(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('shows search box and empty state', (tester) async {
+      await tester.pumpWidget(buildModal());
+      expect(find.byType(FriendSearchModal), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+      // No users found message should not show initially
+      expect(find.text('No users found.'), findsNothing);
+    });
+
+    testWidgets('shows loading indicator during search', (tester) async {
+      friendViewModel.searchUsersCallback = (query) async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        return [];
+      };
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'abc');
+      // Wait for debounce (adjust if your modal uses a different debounce)
+      await tester.pump(const Duration(milliseconds: 400));
+      // Should show loading indicator
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // Finish async
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      // Should not show loading indicator anymore
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('shows error on search failure', (tester) async {
+      friendViewModel.searchUsersCallback = (query) async {
+        throw Exception('fail');
+      };
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'abc');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(find.text('Failed to search users'), findsOneWidget);
+    });
+
+    testWidgets('shows users and handles Add, Pending, Friend chips',
+        (tester) async {
+      final user = User(
+        id: 'u2',
+        firstName: 'Friend',
+        lastName: 'User',
+        email: 'friend@example.com',
+        fridgeId: 'fridge2',
+        cookbookId: 'cb2',
+      );
+      friendViewModel.searchUsersCallback = (query) async => [user];
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'Friend');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(find.text('Friend User'), findsOneWidget);
+      expect(find.text('Add'), findsOneWidget);
+
+      // Simulate as friend
+      userViewModel.setUser(
+        userViewModel.user!.copyWith(friends: [user]),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Friend'), findsOneWidget);
+
+      // Simulate as pending
+      userViewModel.setUser(
+        userViewModel.user!.copyWith(friends: []),
+      );
+      friendViewModel.setPendingRequests([
+        FriendRequest(
+          id: 'req1',
+          from: userViewModel.user!,
+          to: user.id,
+          status: 'pending',
+          createdAt: DateTime.now(),
+        )
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.text('Pending'), findsOneWidget);
+    });
+
+    testWidgets('shows "No users found." when search returns empty',
+        (tester) async {
+      friendViewModel.searchUsersCallback = (query) async => [];
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'xyz');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(find.text('No users found.'), findsOneWidget);
+    });
+
+    testWidgets('sends friend request and shows snackbar', (tester) async {
+      final user = User(
+        id: 'u2',
+        firstName: 'Friend',
+        lastName: 'User',
+        email: 'friend@example.com',
+        fridgeId: 'fridge2',
+        cookbookId: 'cb2',
+      );
+      friendViewModel.searchUsersCallback = (query) async => [user];
+      friendViewModel.sendFriendRequestCallback =
+          (userId, currentUserId, userVm) async {
+        return 'Friend request sent!';
+      };
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'Friend');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+
+      Finder addFinder = find.widgetWithText(InkWell, 'Add');
+      if (addFinder.evaluate().isEmpty) {
+        final gestureFinder = find.widgetWithText(GestureDetector, 'Add');
+        final buttonFinder = find.widgetWithText(TextButton, 'Add');
+        if (gestureFinder.evaluate().isNotEmpty) {
+          addFinder = gestureFinder;
+        } else if (buttonFinder.evaluate().isNotEmpty) {
+          addFinder = buttonFinder;
+        } else {
+          fail('No tappable "Add" widget found!');
+        }
+      }
+      await tester.ensureVisible(addFinder.first);
+      await tester.tap(addFinder.first, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 500));
+    });
+
+    testWidgets('shows error snackbar on send friend request failure',
+        (tester) async {
+      final user = User(
+        id: 'u2',
+        firstName: 'Friend',
+        lastName: 'User',
+        email: 'friend@example.com',
+        fridgeId: 'fridge2',
+        cookbookId: 'cb2',
+      );
+      friendViewModel.searchUsersCallback = (query) async => [user];
+      friendViewModel.sendFriendRequestCallback =
+          (userId, currentUserId, userVm) async {
+        throw Exception('fail');
+      };
+      await tester.pumpWidget(buildModal());
+      await tester.enterText(find.byType(TextField), 'Friend');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+
+      Finder addFinder = find.widgetWithText(InkWell, 'Add');
+      if (addFinder.evaluate().isEmpty) {
+        final gestureFinder = find.widgetWithText(GestureDetector, 'Add');
+        final buttonFinder = find.widgetWithText(TextButton, 'Add');
+        if (gestureFinder.evaluate().isNotEmpty) {
+          addFinder = gestureFinder;
+        } else if (buttonFinder.evaluate().isNotEmpty) {
+          addFinder = buttonFinder;
+        } else {
+          fail('No tappable "Add" widget found!');
+        }
+      }
+      await tester.ensureVisible(addFinder.first);
+      await tester.tap(addFinder.first, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+          find.textContaining('Failed to send friend request'), findsOneWidget);
+    });    
   });
 }
