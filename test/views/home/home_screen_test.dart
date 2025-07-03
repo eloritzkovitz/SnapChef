@@ -60,6 +60,7 @@ void main() {
     FridgeViewModel? fridgeViewModel,
     RecipeViewModel? recipeViewModel,
     CookbookViewModel? cookbook,
+    CarouselSliderController? carouselController,
   }) {
     return MultiProvider(
       providers: [
@@ -78,7 +79,8 @@ void main() {
       ],
       child: MaterialApp(
         home: Builder(
-          builder: (context) => const HomeScreen(),
+          builder: (context) =>
+              HomeScreen(carouselController: carouselController),
         ),
       ),
     );
@@ -181,6 +183,7 @@ void main() {
       TestRecipe('Favorite 1', isFavorite: true),
       TestRecipe('Favorite 2', isFavorite: true),
     ];
+    final controller = CarouselSliderController();
     final cookbook = MockCookbookViewModel()..filteredItems = recipes;
     await tester.pumpWidget(
       MediaQuery(
@@ -188,7 +191,10 @@ void main() {
         child: SizedBox(
           width: 800,
           height: 600,
-          child: buildTestWidget(cookbook: cookbook),
+          child: buildTestWidget(
+            cookbook: cookbook,
+            carouselController: controller,
+          ),
         ),
       ),
     );
@@ -197,17 +203,12 @@ void main() {
     // Ensure the first favorite is visible
     expect(find.text('Favorite 1'), findsOneWidget);
 
-    // Use dragUntilVisible to swipe until the second favorite appears
-    await tester.dragUntilVisible(
-      find.text('Favorite 2'),
-      find.byType(CarouselSlider),
-      const Offset(-100, 0),
-    );
-
+    // Use the controller to go to the next page
+    controller.nextPage();
     await tester.pumpAndSettle();
 
     // Now the second favorite should be visible
     expect(find.text('Favorite 2'), findsOneWidget);
     expect(find.byType(GestureDetector), findsWidgets);
-  }, skip: true);
+  });
 }

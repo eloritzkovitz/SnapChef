@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'widgets/favorites_gallery.dart';
@@ -8,7 +9,9 @@ import '../../utils/ui_util.dart';
 import '../../viewmodels/user_viewmodel.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final CarouselSliderController? carouselController;
+
+  const HomeScreen({super.key, this.carouselController});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +64,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               const QuickActions(),
               const SizedBox(height: 32),
-              const FavoritesGallery(),
+              FavoritesGallery(carouselController: carouselController),
             ],
           ),
         ),

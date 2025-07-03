@@ -10,7 +10,9 @@ import '../../../viewmodels/user_viewmodel.dart';
 import '../../../viewmodels/cookbook_viewmodel.dart';
 
 class FavoritesGallery extends StatelessWidget {
-  const FavoritesGallery({super.key});
+  final CarouselSliderController? carouselController;
+
+  const FavoritesGallery({super.key, this.carouselController});
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +186,7 @@ class FavoritesGallery extends StatelessWidget {
                   )
                 else
                   CarouselSlider.builder(
+                    carouselController: carouselController,
                     itemCount: favoriteRecipes.length,
                     options: CarouselOptions(
                       height: cardSize + 146,
