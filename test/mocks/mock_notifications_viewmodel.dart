@@ -63,9 +63,14 @@ class MockNotificationsViewModel extends ChangeNotifier
   @override
   Future<void> syncNotifications() async {}
 
+  Future<void> Function(AppNotification, [String?])? addNotificationCallback;
+  Future<String> Function()? generateUniqueNotificationIdCallback;
+
   @override
-  Future<void> addNotification(AppNotification notification,
-      [String? userId]) async {
+  Future<void> addNotification(AppNotification notification, [String? userId]) async {
+    if (addNotificationCallback != null) {
+      return addNotificationCallback!(notification, userId);
+    }
     _notifications.add(notification);
     notifyListeners();
   }
@@ -81,7 +86,12 @@ class MockNotificationsViewModel extends ChangeNotifier
   }
 
   @override
-  Future<String> generateUniqueNotificationId() async => 'mock-id';
+  Future<String> generateUniqueNotificationId() async {
+    if (generateUniqueNotificationIdCallback != null) {
+      return await generateUniqueNotificationIdCallback!();
+    }
+    return 'mock-id';
+  }
 
   @override
   Future<void> connectWebSocketAndListenWithContext(context) async {}
