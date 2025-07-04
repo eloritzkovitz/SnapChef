@@ -1,21 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:snapchef/providers/sync_provider.dart';
 import 'package:snapchef/services/sync_service.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
 import 'package:snapchef/models/notifications/app_notification.dart';
 
-class MockNotificationsViewModel extends ChangeNotifier implements NotificationsViewModel {
-  final List<AppNotification> _notifications = [];
+class MockNotificationsViewModel extends ChangeNotifier
+    implements NotificationsViewModel {
+  List<AppNotification> _notifications = [];
   bool _isLoading = false;
   bool _isLoggingOut = false;
   String? _errorMessage;
-
-  @override
-  List<AppNotification> get alerts => _notifications;
-
-  @override
-  List<AppNotification> get notifications => _notifications;
 
   @override
   bool get isLoading => _isLoading;
@@ -25,6 +21,11 @@ class MockNotificationsViewModel extends ChangeNotifier implements Notifications
 
   @override
   String? get errorMessage => _errorMessage;
+
+  set isLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
 
   @override
   void setLoading(bool value) {
@@ -63,13 +64,15 @@ class MockNotificationsViewModel extends ChangeNotifier implements Notifications
   Future<void> syncNotifications() async {}
 
   @override
-  Future<void> addNotification(AppNotification notification, [String? userId]) async {
+  Future<void> addNotification(AppNotification notification,
+      [String? userId]) async {
     _notifications.add(notification);
     notifyListeners();
   }
 
   @override
-  Future<void> editNotification(String id, AppNotification updatedNotification) async {}
+  Future<void> editNotification(
+      String id, AppNotification updatedNotification) async {}
 
   @override
   Future<void> deleteNotification(String id) async {
@@ -91,4 +94,35 @@ class MockNotificationsViewModel extends ChangeNotifier implements Notifications
 
   @override
   SyncProvider get syncProvider => throw UnimplementedError();
+
+  @override
+  List<AppNotification> get alerts {
+    final filtered = _notifications.where((n) {
+      if (n is IngredientReminder) {
+        return (n.typeEnum == ReminderType.expiry ||
+                n.typeEnum == ReminderType.grocery) &&
+            n.scheduledTime.isAfter(DateTime.now());
+      }
+      return false;
+    }).toList();    
+    return filtered;
+  }
+
+  @override
+  List<AppNotification> get notifications => _notifications
+      .where((n) =>
+          n.type != 'expiry' && n.type != 'grocery' ||
+          ((n.type == 'expiry' || n.type == 'grocery') &&
+              n.scheduledTime.isBefore(DateTime.now())))
+      .toList();
+
+  set alerts(List<AppNotification> value) {
+    _notifications = value;
+    notifyListeners();
+  }
+
+  set notifications(List<AppNotification> value) {
+    _notifications = value;
+    notifyListeners();
+  }
 }

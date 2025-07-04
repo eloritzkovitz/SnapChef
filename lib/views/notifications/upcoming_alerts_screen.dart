@@ -12,7 +12,7 @@ import 'package:snapchef/theme/colors.dart';
 import '../../widgets/base_screen.dart';
 import '../../widgets/snapchef_appbar.dart';
 
-class UpcomingAlertsScreen extends StatelessWidget {
+class UpcomingAlertsScreen extends StatelessWidget {  
   const UpcomingAlertsScreen({super.key});
 
   @override
@@ -21,98 +21,95 @@ class UpcomingAlertsScreen extends StatelessWidget {
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
     final userId = userViewModel.user?.id;
 
-    return ChangeNotifierProvider(
-      create: (_) => NotificationsViewModel(),
-      child: BaseScreen(
-        appBar: SnapChefAppBar(
-          title: const Text('Upcoming Alerts',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,          
-        ),
-        body: Consumer<NotificationsViewModel>(
-          builder: (context, viewModel, child) {
-            if (viewModel.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    return BaseScreen(
+      appBar: SnapChefAppBar(
+        title: const Text('Upcoming Alerts',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+      ),
+      body: Consumer<NotificationsViewModel>(
+        builder: (context, viewModel, child) {
+          if (viewModel.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // Only show IngredientReminder for the current user
-            final ingredientReminders = viewModel.alerts
-                .where((n) =>
-                    n is IngredientReminder &&
-                    (userId == null || (n).recipientId == userId))
-                .toList();
+          // Only show IngredientReminder for the current user
+          final ingredientReminders = viewModel.alerts
+              .where((n) =>
+                  n is IngredientReminder &&
+                  (userId == null || (n).recipientId == userId))
+              .toList();
 
-            return ValueListenableBuilder<ReminderType?>(
-              valueListenable: filterType,
-              builder: (context, selectedType, _) {
-                // Filter notifications based on dropdown
-                final filtered = selectedType == null
-                    ? ingredientReminders
-                    : ingredientReminders
-                        .where((n) =>
-                            n is IngredientReminder &&
-                            n.typeEnum == selectedType)
-                        .toList();
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      child: Row(
-                        children: [
-                          const Text('Show:'),
-                          const SizedBox(width: 8),
-                          DropdownButton<ReminderType?>(
-                            value: selectedType,
-                            items: const [
-                              DropdownMenuItem(
-                                value: null,
-                                child: Text('All'),
-                              ),
-                              DropdownMenuItem(
-                                value: ReminderType.expiry,
-                                child: Text('Expiry'),
-                              ),
-                              DropdownMenuItem(
-                                value: ReminderType.grocery,
-                                child: Text('Grocery'),
-                              ),
-                            ],
-                            onChanged: (type) => filterType.value = type,
-                          ),
-                        ],
+          return ValueListenableBuilder<ReminderType?>(
+            valueListenable: filterType,
+            builder: (context, selectedType, _) {
+              // Filter notifications based on dropdown
+              final filtered = selectedType == null
+                  ? ingredientReminders
+                  : ingredientReminders
+                      .where((n) =>
+                          n is IngredientReminder &&
+                          n.typeEnum == selectedType)
+                      .toList();
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        const Text('Show:'),
+                        const SizedBox(width: 8),
+                        DropdownButton<ReminderType?>(
+                          value: selectedType,
+                          items: const [
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text('All'),
+                            ),
+                            DropdownMenuItem(
+                              value: ReminderType.expiry,
+                              child: Text('Expiry'),
+                            ),
+                            DropdownMenuItem(
+                              value: ReminderType.grocery,
+                              child: Text('Grocery'),
+                            ),
+                          ],
+                          onChanged: (type) => filterType.value = type,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (filtered.isEmpty)
+                    const Expanded(
+                      child: Center(
+                        child: Text('No upcoming alerts.'),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final notification =
+                              filtered[index] as IngredientReminder;
+                          return AlertListItem(
+                            notification: notification,
+                            onEdit: () => _editNotification(
+                                context, notification, viewModel),
+                            onDelete: () => _confirmDelete(
+                                context, notification.id, viewModel),
+                          );
+                        },
                       ),
                     ),
-                    if (filtered.isEmpty)
-                      const Expanded(
-                        child: Center(
-                          child: Text('No upcoming alerts.'),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final notification =
-                                filtered[index] as IngredientReminder;
-                            return AlertListItem(
-                              notification: notification,
-                              onEdit: () => _editNotification(
-                                  context, notification, viewModel),
-                              onDelete: () => _confirmDelete(
-                                  context, notification.id, viewModel),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                );
-              },
-            );
-          },
-        ),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
