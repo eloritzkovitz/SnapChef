@@ -6,7 +6,8 @@ import '../../viewmodels/user_viewmodel.dart';
 import '../../models/user.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
-  const FriendRequestsScreen({super.key});
+  final bool skipFetch;
+  const FriendRequestsScreen({super.key, this.skipFetch = false});
 
   @override
   State<FriendRequestsScreen> createState() => _FriendRequestsScreenState();
@@ -20,11 +21,13 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
-    if (userViewModel.user != null) {
-      Provider.of<FriendViewModel>(context, listen: false)
-          .getAllFriendRequests(userViewModel.user!.id)
-          .then((_) => _preloadSentUsers());
+    if (!widget.skipFetch) {
+      final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+      if (userViewModel.user != null) {
+        Provider.of<FriendViewModel>(context, listen: false)
+            .getAllFriendRequests(userViewModel.user!.id)
+            .then((_) => _preloadSentUsers());
+      }
     }
   }
 
@@ -142,8 +145,11 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                       currentUser: currentUser,
                                       friendViewModel: friendViewModel,
                                       userViewModel: userViewModel,
-                                      onRefresh: () => Provider.of<FriendViewModel>(context, listen: false)
-                                          .getAllFriendRequests(currentUser.id),
+                                      onRefresh: () =>
+                                          Provider.of<FriendViewModel>(context,
+                                                  listen: false)
+                                              .getAllFriendRequests(
+                                                  currentUser.id),
                                       preloadSentUsers: _preloadSentUsers,
                                     );
                                   } else {
@@ -154,8 +160,11 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                                       currentUser: currentUser,
                                       friendViewModel: friendViewModel,
                                       userViewModel: userViewModel,
-                                      onRefresh: () => Provider.of<FriendViewModel>(context, listen: false)
-                                          .getAllFriendRequests(currentUser.id),
+                                      onRefresh: () =>
+                                          Provider.of<FriendViewModel>(context,
+                                                  listen: false)
+                                              .getAllFriendRequests(
+                                                  currentUser.id),
                                       preloadSentUsers: _preloadSentUsers,
                                     );
                                   }

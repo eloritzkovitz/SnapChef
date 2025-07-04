@@ -66,6 +66,10 @@ class MockFriendViewModel extends FriendViewModel {
 
   @override
   Future<void> getAllFriendRequests(String currentUserId) async {}
+  
+  List<FriendRequest> getAllFriendRequestsSync() {
+    return [..._testPendingRequests, ..._testSentRequests];
+  }
 
   @override
   Future<void> refreshRequests(String currentUserId) async {}

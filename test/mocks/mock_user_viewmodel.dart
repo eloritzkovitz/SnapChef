@@ -133,6 +133,10 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     // Default: do nothing
   }
 
+  void setFriends(List<User> friends) {
+    notifyListeners();
+  }
+
   @override
   Future<void> removeFriend(String id) async {
     if (removeFriendCallback != null) {
