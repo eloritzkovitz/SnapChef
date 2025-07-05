@@ -19,6 +19,7 @@ import 'package:snapchef/models/ingredient.dart';
 
 import '../../mocks/mock_app_database.dart';
 import '../../mocks/mock_fridge_viewmodel.dart';
+import '../../mocks/mock_ingredient_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
 import '../../mocks/mock_connectivity_provider.dart';
 import '../../mocks/mock_ingredient_service.dart';
@@ -27,10 +28,6 @@ import '../../mocks/mock_ingredient_service.dart';
 class MockFridgeRepository extends FridgeRepository {}
 
 class MockFridgeService extends FridgeService {}
-
-class MockIngredientViewModel extends IngredientViewModel {
-  MockIngredientViewModel() : super();
-}
 
 Widget buildTestWidget({
   FridgeViewModel? fridgeViewModel,

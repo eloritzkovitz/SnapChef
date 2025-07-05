@@ -11,6 +11,13 @@ class MockIngredientViewModel extends ChangeNotifier implements IngredientViewMo
       imageURL: '',
       count: 1,
     ),
+    Ingredient(
+      id: 'i2',
+      name: 'Mock Ingredient 2',
+      category: 'Mock Category 2',
+      imageURL: '',
+      count: 1,
+    ),
   ];
 
   bool _isLoading = false;
@@ -66,7 +73,11 @@ class MockIngredientViewModel extends ChangeNotifier implements IngredientViewMo
 
   // --- IngredientViewModel methods ---
   @override
-  Future<void> fetchIngredients() async {}
+  Future<void> fetchIngredients() async {
+    setLoading(true);
+    await Future.delayed(const Duration(milliseconds: 100));    
+    setLoading(false);
+  }
 
   @override
   void clear() {

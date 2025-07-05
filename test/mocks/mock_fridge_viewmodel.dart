@@ -25,6 +25,9 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
     notifyListeners();
   }
 
+  bool addGrocerySuccess = true;
+  bool addFridgeSuccess = true;
+
   @override
   List<Ingredient> get ingredients => [
         Ingredient(
@@ -59,7 +62,7 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
   @override
   Future<bool> addFridgeItem(String fridgeId, String id, String name,
           String category, String? imageURL, int quantity) async =>
-      true;
+      addFridgeSuccess;
 
   @override
   Future<bool> updateFridgeItem(
@@ -72,7 +75,7 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
   @override
   Future<bool> addGroceryItem(String fridgeId, String id, String name,
           String category, String? imageURL, int quantity) async =>
-      true;
+      addGrocerySuccess;
 
   @override
   Future<bool> updateGroceryItem(
