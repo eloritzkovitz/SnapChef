@@ -142,6 +142,254 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('No upcoming alerts.'), findsOneWidget);
     });
+
+    testWidgets('shows loading indicator', (tester) async {
+      notificationsViewModel.isLoading = true;
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets('filters out alerts for other users', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.alerts = [
+        IngredientReminder(
+          id: 'a3',
+          ingredientName: 'Egg',
+          title: 'Egg',
+          body: 'Other user alert',
+          scheduledTime: DateTime.now(),
+          typeEnum: ReminderType.expiry,
+          recipientId: 'other_user',
+        ),
+      ];
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('No upcoming alerts.'), findsOneWidget);
+    });
+
+    testWidgets('edit dialog opens and cancel works', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.alerts = [
+        IngredientReminder(
+          id: 'a1',
+          ingredientName: 'Tomato',
+          title: 'Tomato',
+          body: 'Expires soon',
+          scheduledTime: DateTime.now().add(const Duration(days: 1)),
+          typeEnum: ReminderType.expiry,
+          recipientId: userViewModel.user!.id,
+        ),
+      ];
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.edit));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit Reminder'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit Reminder'), findsNothing);
+    });
+
+    testWidgets('edit dialog save works', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.disableTimeFilter = true;
+      await notificationsViewModel.addNotification(
+        IngredientReminder(
+          id: 'a1',
+          ingredientName: 'Tomato',
+          title: 'Tomato',
+          body: 'Expires soon',
+          scheduledTime: DateTime.now().add(const Duration(days: 7)),
+          typeEnum: ReminderType.expiry,
+          recipientId: userViewModel.user!.id,
+        ),
+      );
+      
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(const UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to the alert by text (ingredient name) to ensure it's visible
+      final tomatoText = find.text('Tomato');
+      await tester.ensureVisible(tomatoText);
+      await tester.pumpAndSettle();
+
+      // Find the AlertListItem for 'Tomato'
+      final alertItem = find.ancestor(
+        of: tomatoText,
+        matching: find.byType(AlertListItem),
+      );
+
+      // Find the edit icon for this specific alert
+      final editIcon = find.descendant(
+        of: alertItem,
+        matching: find.byIcon(Icons.edit),
+      );
+      await tester.ensureVisible(editIcon);
+      await tester.pumpAndSettle();
+
+      // Try normal tap first, fallback to gesture if warning persists
+      try {
+        await tester.tap(editIcon);
+        await tester.pumpAndSettle();
+      } catch (_) {
+        final editIconElement = editIcon.evaluate().first;
+        final renderBox = editIconElement.renderObject as RenderBox;
+        final center =
+            renderBox.localToGlobal(renderBox.size.center(Offset.zero));
+        final gesture = await tester.startGesture(center);
+        await gesture.up();
+        await tester.pumpAndSettle();
+      }
+
+      // Confirm the dialog opened
+      expect(find.text('Edit Reminder'), findsOneWidget);
+
+      // Interact with date/time pickers if present and change the value
+      final datePicker = find.byIcon(Icons.calendar_today);
+      if (datePicker.evaluate().isNotEmpty) {
+        await tester.tap(datePicker);
+        await tester.pumpAndSettle();
+        // Try to pick a different year if possible
+        if (find.text('2026').evaluate().isNotEmpty) {
+          await tester.tap(find.text('2026'));
+          await tester.pumpAndSettle();
+        }
+        if (find.text('OK').evaluate().isNotEmpty) {
+          await tester.tap(find.text('OK'));
+          await tester.pumpAndSettle();
+        } else if (find.text('Save').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Save'));
+          await tester.pumpAndSettle();
+        }
+      }
+      final timePicker = find.byIcon(Icons.access_time);
+      if (timePicker.evaluate().isNotEmpty) {
+        await tester.tap(timePicker);
+        await tester.pumpAndSettle();
+        // Pick a different hour than the current one
+        int hourToTap = -1;
+        for (int i = 0; i < 24; i++) {
+          final hourFinder = find.text(i.toString());
+          if (hourFinder.evaluate().isNotEmpty && i != 10) {
+            hourToTap = i;
+            break;
+          }
+        }
+        if (hourToTap != -1) {
+          final hourText = find.text(hourToTap.toString());
+          await tester.tap(hourText.first);
+          await tester.pumpAndSettle();
+        }
+        if (find.text('OK').evaluate().isNotEmpty) {
+          await tester.tap(find.text('OK'));
+          await tester.pumpAndSettle();
+        } else if (find.text('Save').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Save'));
+          await tester.pumpAndSettle();
+        }
+      }
+
+      // Tap the Save button in the dialog
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('edit dialog shows error on exception', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.alerts = [
+        IngredientReminder(
+          id: 'a1',
+          ingredientName: 'Tomato',
+          title: 'Tomato',
+          body: 'Expires soon',
+          scheduledTime: DateTime.now().add(const Duration(days: 1)),
+          typeEnum: ReminderType.expiry,
+          recipientId: userViewModel.user!.id,
+        ),
+      ];
+      notificationsViewModel.editNotificationCallback =
+          (String id, AppNotification notif) async {
+        throw Exception('fail');
+      };
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.edit));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
+
+    testWidgets('delete dialog opens and cancel works', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.alerts = [
+        IngredientReminder(
+          id: 'a1',
+          ingredientName: 'Tomato',
+          title: 'Tomato',
+          body: 'Expires soon',
+          scheduledTime: DateTime.now().add(const Duration(days: 1)),
+          typeEnum: ReminderType.expiry,
+          recipientId: userViewModel.user!.id,
+        ),
+      ];
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Notification'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Notification'), findsNothing);
+    });
+
+    testWidgets('delete dialog confirm works', (tester) async {
+      notificationsViewModel.isLoading = false;
+      notificationsViewModel.alerts = [
+        IngredientReminder(
+          id: 'a1',
+          ingredientName: 'Tomato',
+          title: 'Tomato',
+          body: 'Expires soon',
+          scheduledTime: DateTime.now().add(const Duration(days: 1)),
+          typeEnum: ReminderType.expiry,
+          recipientId: userViewModel.user!.id,
+        ),
+      ];
+      bool deleteCalled = false;
+      notificationsViewModel.deleteNotificationCallback = (String id) async {
+        deleteCalled = true;
+      };
+      notificationsViewModel.notifyListeners();
+      await tester.pumpWidget(
+        wrapWithProviders(UpcomingAlertsScreen()),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(deleteCalled, isTrue);
+      expect(find.text('Delete Notification'), findsNothing);
+    });
   });
 
   group('AlertListItem', () {

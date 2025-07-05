@@ -65,9 +65,12 @@ class MockNotificationsViewModel extends ChangeNotifier
 
   Future<void> Function(AppNotification, [String?])? addNotificationCallback;
   Future<String> Function()? generateUniqueNotificationIdCallback;
+  Future<void> Function(String, AppNotification)? editNotificationCallback;
+  Future<void> Function(String)? deleteNotificationCallback;
 
   @override
-  Future<void> addNotification(AppNotification notification, [String? userId]) async {
+  Future<void> addNotification(AppNotification notification,
+      [String? userId]) async {
     if (addNotificationCallback != null) {
       return addNotificationCallback!(notification, userId);
     }
@@ -77,10 +80,22 @@ class MockNotificationsViewModel extends ChangeNotifier
 
   @override
   Future<void> editNotification(
-      String id, AppNotification updatedNotification) async {}
+      String id, AppNotification updatedNotification) async {    
+    if (editNotificationCallback != null) {
+      return editNotificationCallback!(id, updatedNotification);
+    }
+    final idx = _notifications.indexWhere((n) => n.id == id);
+    if (idx != -1) {
+      _notifications[idx] = updatedNotification;
+      notifyListeners();
+    }
+  }
 
   @override
   Future<void> deleteNotification(String id) async {
+    if (deleteNotificationCallback != null) {
+      return deleteNotificationCallback!(id);
+    }
     _notifications.removeWhere((n) => n.id == id);
     notifyListeners();
   }
@@ -105,8 +120,11 @@ class MockNotificationsViewModel extends ChangeNotifier
   @override
   SyncProvider get syncProvider => throw UnimplementedError();
 
+  bool disableTimeFilter = false;
+
   @override
   List<AppNotification> get alerts {
+    if (disableTimeFilter) return _notifications;
     final filtered = _notifications.where((n) {
       if (n is IngredientReminder) {
         return (n.typeEnum == ReminderType.expiry ||
@@ -114,7 +132,7 @@ class MockNotificationsViewModel extends ChangeNotifier
             n.scheduledTime.isAfter(DateTime.now());
       }
       return false;
-    }).toList();    
+    }).toList();
     return filtered;
   }
 
