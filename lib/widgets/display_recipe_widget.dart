@@ -14,6 +14,7 @@ class DisplayRecipeWidget extends StatefulWidget {
   final Recipe? recipeObject;
   final String? imageUrl;
   final String? cookbookId;
+  final Widget Function(String imageUrl)? imageBuilder;
 
   const DisplayRecipeWidget({
     super.key,
@@ -21,6 +22,7 @@ class DisplayRecipeWidget extends StatefulWidget {
     this.recipeObject,
     this.imageUrl,
     this.cookbookId,
+    this.imageBuilder,
   });
 
   @override
@@ -57,19 +59,22 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: CachedNetworkImage(
-                        imageUrl: widget.imageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        errorWidget: (context, url, error) => Image.asset(
-                          'assets/images/placeholder_image.png',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        ),
-                      ),
+                      child: widget.imageBuilder != null
+                          ? widget.imageBuilder!(widget.imageUrl!)
+                          : CachedNetworkImage(
+                              imageUrl: widget.imageUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              placeholder: (context, url) => const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (context, url, error) => Image.asset(
+                                'assets/images/placeholder_image.png',
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
+                            ),
                     ),
                   ),
                 if (recipeObject != null) ...[
@@ -149,8 +154,9 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
           ),
         ),
       ),
-      floatingActionButton:
-          recipe.isNotEmpty ? TTSWidget(text: stripMarkdown(recipe, preserveNewlines: true)) : null,
+      floatingActionButton: recipe.isNotEmpty
+          ? TTSWidget(text: stripMarkdown(recipe, preserveNewlines: true))
+          : null,
     );
   }
 }

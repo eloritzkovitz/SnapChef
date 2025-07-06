@@ -19,6 +19,8 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
   @override
   String imageUrl = 'https://example.com/mock_image.jpg';
 
+  bool regenerateImageCallback = false;
+
   @override
   final List<Ingredient> selectedIngredients = [
     Ingredient(
@@ -114,6 +116,7 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
     int? prepTime,
     Map<String, dynamic>? preferences,
   }) async {
+    regenerateImageCallback = true;
     setLoading(true);
     await Future.delayed(const Duration(milliseconds: 10));
     setLoading(false);
@@ -149,13 +152,8 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
     Map<String, dynamic>? preferences,
     List<String>? ingredients,
   }) async {
-    setLoading(true);
+    regenerateImageCallback = true;    
     await Future.delayed(const Duration(milliseconds: 10));
-    imageUrl = 'https://example.com/mock_image_regenerated.jpg';
-    if (generatedRecipe != null) {
-      generatedRecipe = generatedRecipe!.copyWith(imageURL: imageUrl);
-    }
-    setLoading(false);
     notifyListeners();
   }
 

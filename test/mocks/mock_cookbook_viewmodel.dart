@@ -153,6 +153,8 @@ class MockCookbookViewModel extends ChangeNotifier
 
   Recipe? get selectedRecipe => _mockRecipes.first;
 
+  bool addToCookbookCallback = false;  
+
   // --- CookbookViewModel methods ---
   @override
   Future<void> fetchCookbookRecipes(String cookbookId) async {}
@@ -174,6 +176,8 @@ class MockCookbookViewModel extends ChangeNotifier
     required RecipeSource source,
     String? raw,
   }) async {
+    addToCookbookCallback = true;
+    notifyListeners();
     return true;
   }
 

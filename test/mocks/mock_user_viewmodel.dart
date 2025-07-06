@@ -54,6 +54,13 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   @override
   String? get cookbookId => _user?.cookbookId;
 
+  set cookbookId(String? value) {
+    if (_user != null) {
+      _user = _user!.copyWith(cookbookId: value);
+      notifyListeners();
+    }
+  }
+
   String? get userId => _user?.id;
 
   String? get email => _user?.email;
