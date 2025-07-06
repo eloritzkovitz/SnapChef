@@ -236,8 +236,13 @@ class MockCookbookViewModel extends ChangeNotifier
   @override
   Future<void> saveRecipeOrder(String cookbookId) async {}
 
+  List<Recipe> Function(String)? searchRecipesOverride;
+
   @override
   List<Recipe> searchRecipes(String query) {
+    if (searchRecipesOverride != null) {
+      return searchRecipesOverride!(query);
+    }
     if (query.isEmpty) return _mockRecipes;
     return _mockRecipes
         .where((recipe) =>
