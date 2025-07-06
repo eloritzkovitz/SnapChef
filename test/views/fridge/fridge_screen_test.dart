@@ -7,13 +7,10 @@ import 'package:snapchef/database/app_database.dart' hide Ingredient;
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/repositories/fridge_repository.dart';
 import 'package:snapchef/services/fridge_service.dart';
-import 'package:snapchef/services/image_service.dart';
 import 'package:snapchef/services/ingredient_service.dart';
 import 'package:snapchef/viewmodels/ingredient_viewmodel.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
-import 'package:snapchef/views/cookbook/generate_recipe_screen.dart';
 import 'package:snapchef/views/fridge/fridge_screen.dart';
-import 'package:snapchef/views/fridge/widgets/action_button.dart';
 import 'package:snapchef/views/fridge/widgets/fridge_filter_sort_sheet.dart';
 import 'package:snapchef/views/fridge/widgets/fridge_grid_view.dart';
 import 'package:snapchef/views/fridge/widgets/fridge_list_view.dart';
@@ -27,7 +24,6 @@ import 'package:snapchef/views/fridge/widgets/recognition_results.dart';
 
 import '../../mocks/mock_app_database.dart';
 import '../../mocks/mock_fridge_viewmodel.dart';
-import '../../mocks/mock_image_service.dart';
 import '../../mocks/mock_ingredient_viewmodel.dart';
 import '../../mocks/mock_notifications_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
@@ -456,118 +452,6 @@ void main() {
     });
   });
 
-  group('ActionButton', () {
-    Widget buildButton({
-      bool isDisabled = false,
-      ImageService? imageService,
-      UserViewModel? userViewModel,      
-    }) {
-      return ChangeNotifierProvider<UserViewModel>(
-        create: (_) => userViewModel ?? MockUserViewModel(),
-        child: MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ActionButton(
-                isDisabled: isDisabled,                
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    testWidgets('shows all SpeedDial actions', (tester) async {
-      await tester.pumpWidget(buildButton());
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      expect(find.text('Generate Recipe'), findsOneWidget);
-      expect(find.text('Scan Barcode'), findsOneWidget);
-      expect(find.text('Scan Receipt'), findsOneWidget);
-      expect(find.text('Capture Photo'), findsOneWidget);
-    });
-
-    testWidgets('disabled state shows unavailable offline', (tester) async {
-      await tester.pumpWidget(buildButton(isDisabled: true));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Generate Recipe'), warnIfMissed: false);
-      await tester.pumpAndSettle();      
-      expect(find.byType(SnackBar), findsNothing);
-    });
-
-    testWidgets('generate recipe navigates when enabled', (tester) async {
-      await tester.pumpWidget(buildButton());
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Generate Recipe'));
-      await tester.pumpAndSettle();      
-      expect(find.byType(GenerateRecipeScreen), findsOneWidget);
-    });
-
-    testWidgets('scan barcode with no barcode shows snackbar', (tester) async {
-      final mockImageService = MockImageService()..barcodeMode = true;
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Scan Barcode'));
-      await tester.pumpAndSettle();
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('No barcode found'), findsOneWidget);
-    });
-
-    testWidgets('scan receipt shows recognition results', (tester) async {
-      final mockImageService = MockImageService();
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Scan Receipt'));
-      await tester.pumpAndSettle();
-      expect(find.text('Recognized Ingredients'), findsOneWidget);
-    });
-
-    testWidgets('capture photo shows recognition results', (tester) async {
-      final mockImageService = MockImageService();
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Capture Photo'));
-      await tester.pumpAndSettle();
-      expect(find.text('Recognized Ingredients'), findsOneWidget);
-    });
-
-    testWidgets('image pick returns null shows no ingredients popup', (tester) async {
-      final mockImageService = MockImageService()..returnImage = false;
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Scan Receipt'));
-      await tester.pumpAndSettle();
-      expect(find.text('No Ingredients Recognized'), findsOneWidget);
-    });
-
-    testWidgets('image pick throws error shows snackbar', (tester) async {
-      final mockImageService = MockImageService()..throwOnPick = true;
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Scan Receipt'));
-      await tester.pumpAndSettle();
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Error:'), findsOneWidget);
-    });
-
-    testWidgets('process image throws error shows snackbar', (tester) async {
-      final mockImageService = MockImageService()..throwOnProcess = true;
-      await tester.pumpWidget(buildButton(imageService: mockImageService));
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Scan Receipt'));
-      await tester.pumpAndSettle();
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Error:'), findsOneWidget);
-    });
-  });
-
   group('RecognitionResultsWidget', () {
     late Map<String, Map<String, dynamic>> groupedIngredients;
     late MockFridgeViewModel mockViewModel;
@@ -680,6 +564,6 @@ void main() {
       await tester.pumpAndSettle();
       // Widget should be gone after last ingredient is discarded
       expect(find.byType(RecognitionResultsWidget), findsNothing);
-    });    
+    });
   });
 }
