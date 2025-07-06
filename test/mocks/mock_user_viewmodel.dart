@@ -152,4 +152,19 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     }
     return null;
   }
+
+  // Mock implementation for shared user data
+
+  @override
+  String get sharedUserName => 'Test User';
+
+  @override
+  String get sharedUserProfilePic => '';
+
+  @override
+  Future<void> fetchUserInfo(
+      {required String userId, required String currentUserId}) async {
+    await Future.value();
+    notifyListeners();
+  }
 }
