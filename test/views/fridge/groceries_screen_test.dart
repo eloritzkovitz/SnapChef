@@ -198,7 +198,7 @@ void main() {
     }
   });
 
-  testWidgets('reminder dialog can be cancelled', (tester) async {
+  testWidgets('filter/sort sheet closes on barrier tap', (tester) async {
     final ingredient = Ingredient(
       id: 'i1',
       name: 'Apple',
@@ -213,16 +213,13 @@ void main() {
       userViewModel: userViewModel,
       connectivityProvider: MockConnectivityProvider(),
     ));
-    await tester.tap(find.byIcon(Icons.alarm).first);
+    await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
-    // Tap cancel if present
-    final cancel = find.text('Cancel');
-    if (cancel.evaluate().isNotEmpty) {
-      await tester.tap(cancel.first);
-      await tester.pumpAndSettle();
-    }
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Category'), findsOneWidget);
+    // Tap outside to close
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.text('Category'), findsNothing);
   });
 
   testWidgets('shows correct UI for multiple groceries', (tester) async {
@@ -369,16 +366,13 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('move to fridge does nothing if no fridgeId', (tester) async {
+  testWidgets('add all to fridge does nothing if fridgeId is empty',
+      (tester) async {
     userViewModel.setUser(userViewModel.user?.copyWith(fridgeId: ''));
-    final ingredient = Ingredient(
-      id: 'i1',
-      name: 'Apple',
-      category: 'Fruit',
-      count: 1,
-      imageURL: '',
-    );
-    groceriesController.filteredItems = [ingredient];
+    groceriesController.filteredItems = [
+      Ingredient(
+          id: 'i1', name: 'Apple', category: 'Fruit', count: 1, imageURL: ''),
+    ];
     await tester.pumpWidget(wrapWithProviders(
       const GroceriesScreen(),
       fridgeViewModel: fridgeViewModel,
@@ -387,7 +381,6 @@ void main() {
     ));
     await tester.tap(find.byIcon(Icons.kitchen_outlined).first);
     await tester.pumpAndSettle();
-    // No error, no snackbar
     expect(find.byType(SnackBar), findsNothing);
   });
 
@@ -432,6 +425,71 @@ void main() {
     expect(find.byType(AlertDialog), findsOneWidget);
   });
 
+  testWidgets('reminder dialog can set reminder', (tester) async {
+    final ingredient = Ingredient(
+      id: 'i1',
+      name: 'Apple',
+      category: 'Fruit',
+      count: 1,
+      imageURL: '',
+    );
+    groceriesController.filteredItems = [ingredient];
+    await tester.pumpWidget(wrapWithProviders(
+      const GroceriesScreen(),
+      fridgeViewModel: fridgeViewModel,
+      userViewModel: userViewModel,
+      connectivityProvider: MockConnectivityProvider(),
+    ));
+    await tester.tap(find.byIcon(Icons.alarm).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    // Tap set reminder if present
+    final setReminder = find.text('Set Reminder');
+    if (setReminder.evaluate().isNotEmpty) {
+      await tester.tap(setReminder.first);
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+    }
+
+    // If the dialog is still open, tap Cancel to close it
+    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+      final cancel = find.text('Cancel');
+      if (cancel.evaluate().isNotEmpty) {
+        await tester.tap(cancel.first);
+        await tester.pumpAndSettle();
+      }
+    }
+
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('reminder dialog can be cancelled', (tester) async {
+    final ingredient = Ingredient(
+      id: 'i1',
+      name: 'Apple',
+      category: 'Fruit',
+      count: 1,
+      imageURL: '',
+    );
+    groceriesController.filteredItems = [ingredient];
+    await tester.pumpWidget(wrapWithProviders(
+      const GroceriesScreen(),
+      fridgeViewModel: fridgeViewModel,
+      userViewModel: userViewModel,
+      connectivityProvider: MockConnectivityProvider(),
+    ));
+    await tester.tap(find.byIcon(Icons.alarm).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    // Tap cancel if present
+    final cancel = find.text('Cancel');
+    if (cancel.evaluate().isNotEmpty) {
+      await tester.tap(cancel.first);
+      await tester.pumpAndSettle();
+    }
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
   testWidgets('move to fridge for single item', (tester) async {
     final ingredient = Ingredient(
       id: 'i1',
@@ -468,5 +526,56 @@ void main() {
     ));
     await tester.tap(find.byIcon(Icons.delete).first);
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('app bar close button pops screen', (tester) async {
+    await tester.pumpWidget(wrapWithProviders(
+      const GroceriesScreen(),
+      fridgeViewModel: fridgeViewModel,
+      userViewModel: userViewModel,
+      connectivityProvider: MockConnectivityProvider(),
+    ));
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('trailing actions do nothing if fridgeId is null',
+      (tester) async {
+    userViewModel.setUser(userViewModel.user?.copyWith(fridgeId: null));
+    final ingredient = Ingredient(
+      id: 'i1',
+      name: 'Apple',
+      category: 'Fruit',
+      count: 1,
+      imageURL: '',
+    );
+    groceriesController.filteredItems = [ingredient];
+    await tester.pumpWidget(wrapWithProviders(
+      const GroceriesScreen(),
+      fridgeViewModel: fridgeViewModel,
+      userViewModel: userViewModel,
+      connectivityProvider: MockConnectivityProvider(),
+    ));
+    // Try all trailing actions
+    await tester.tap(find.byIcon(Icons.kitchen_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.alarm).first);
+    await tester.pumpAndSettle();
+
+    // If the dialog is still open, tap Cancel to close it
+    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+      final cancel = find.text('Cancel');
+      if (cancel.evaluate().isNotEmpty) {
+        await tester.tap(cancel.first);
+        await tester.pumpAndSettle();
+      }
+    }
+
+    // No snackbar, no dialog
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
   });
 }

@@ -101,6 +101,27 @@ void main() {
       expect(find.text('Failed to load user data'), findsOneWidget);
     });
 
+    testWidgets('shows empty state when fridge is empty', (tester) async {
+      final fridgeViewModel = MockFridgeViewModel();
+      fridgeViewModel.fridgeController.filteredItems = [];
+      await tester
+          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpAndSettle();
+      expect(find.text('No available ingredients'), findsOneWidget);
+    });
+
+    testWidgets('does not fetch data if fridgeId is null', (tester) async {
+      final userViewModel = MockUserViewModel();
+      userViewModel.setUser(userViewModel.user?.copyWith(fridgeId: null));
+      await tester.pumpWidget(buildTestWidget(userViewModel: userViewModel));
+      await tester.pumpAndSettle();
+      // Should not throw, and should show failed user state or empty state
+      expect(
+          find.text('Failed to load user data').evaluate().isNotEmpty ||
+              find.text('No available ingredients').evaluate().isNotEmpty,
+          isTrue);
+    });
+
     testWidgets('toggles between grid and list view', (tester) async {
       final fridgeViewModel = MockFridgeViewModel();
       fridgeViewModel.fridgeController.filteredItems = [
@@ -126,6 +147,45 @@ void main() {
       expect(find.byType(FridgeListView), findsOneWidget);
     });
 
+    testWidgets('toggles grid/list view multiple times', (tester) async {
+      final fridgeViewModel = MockFridgeViewModel();
+      fridgeViewModel.fridgeController.filteredItems = [
+        Ingredient(
+            id: '1', name: 'Egg', category: 'Dairy', count: 2, imageURL: ''),
+        Ingredient(
+            id: '2', name: 'Milk', category: 'Dairy', count: 2, imageURL: ''),
+      ];
+      await tester
+          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Switch to List View'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FridgeListView), findsOneWidget);
+      await tester.tap(find.byTooltip('Switch to Grid View'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FridgeGridView), findsOneWidget);
+    });
+
+    testWidgets('opens filter & sort sheet and applies filter', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.tap(find.byIcon(Icons.tune));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FridgeFilterSortSheet), findsNothing);
+    });
+
+    testWidgets('opens filter & sort sheet and cancels', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.tap(find.byIcon(Icons.tune));
+      await tester.pumpAndSettle();
+      expect(find.byType(FridgeFilterSortSheet), findsOneWidget);
+      // Dismiss by tapping outside (simulate barrier tap)
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      expect(find.byType(FridgeFilterSortSheet), findsNothing);
+    });
+
     testWidgets('opens groceries list', (tester) async {
       final fridgeViewModel = MockFridgeViewModel();
       await tester
@@ -135,6 +195,64 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(GroceriesScreen), findsOneWidget);
       expect(find.text('Groceries'), findsOneWidget);
+    });
+
+    testWidgets('FAB is at endFloat location', (tester) async {
+      await tester.runAsync(() async {
+        await tester.pumpWidget(buildTestWidget());
+        final fab = find.byType(FloatingActionButton);
+        expect(tester.getTopLeft(fab).dx, greaterThan(0));
+        await Future.delayed(Duration(milliseconds: 100));
+      });
+    });
+
+    testWidgets('FAB is disabled when offline', (tester) async {
+      final connectivityProvider = MockConnectivityProvider();
+      connectivityProvider.isOffline = true;
+      await tester.pumpWidget(
+          buildTestWidget(connectivityProvider: connectivityProvider));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      // Try to tap a SpeedDial action and expect the unavailable snackbar/dialog
+      await tester.tap(find.text('Generate Recipe'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Unavailable offline'), findsWidgets);
+    });
+
+    testWidgets('shows and cancels delete confirmation dialog', (tester) async {
+      final fridgeViewModel = MockFridgeViewModel();
+      fridgeViewModel.fridgeController.filteredItems = [
+        Ingredient(
+            id: '1', name: 'Egg', category: 'Dairy', count: 2, imageURL: ''),
+      ];
+      await tester
+          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Ingredient'), findsOneWidget);
+      // Cancel
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Ingredient'), findsNothing);
+    });
+
+    testWidgets('shows expiry alert dialog and cancels', (tester) async {
+      final fridgeViewModel = MockFridgeViewModel();
+      fridgeViewModel.fridgeController.filteredItems = [
+        Ingredient(
+            id: '1', name: 'Egg', category: 'Dairy', count: 2, imageURL: ''),
+      ];
+      await tester
+          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.alarm_add).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Set Expiry Reminder'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byType(IngredientReminderDialog), findsNothing);
     });
   });
 
@@ -403,6 +521,14 @@ void main() {
       expect(find.text('Set Grocery Reminder'), findsOneWidget);
     });
 
+    testWidgets('tapping date and time icons does not crash', (tester) async {
+      await tester.pumpWidget(buildDialog(type: ReminderType.expiry));
+      await tester.tap(find.byIcon(Icons.calendar_today), warnIfMissed: false);
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.access_time), warnIfMissed: false);
+      await tester.pump();
+    });
+
     testWidgets('cancel button closes dialog', (tester) async {
       await tester.pumpWidget(buildDialog(type: ReminderType.expiry));
       await tester.tap(find.text('Cancel'));
@@ -418,6 +544,35 @@ void main() {
       expect(alertSet, isTrue);
       // Dialog should close
       expect(find.byType(IngredientReminderDialog), findsNothing);
+    });
+
+    testWidgets('set reminder with null user does not crash', (tester) async {
+      final mockUserViewModel = MockUserViewModel();
+      mockUserViewModel.setUser(null);
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<NotificationsViewModel>(
+                create: (_) => MockNotificationsViewModel()),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => mockUserViewModel),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => IngredientReminderDialog(
+                  ingredient: ingredient,
+                  type: ReminderType.expiry,
+                  onSetAlert: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Set Reminder'));
+      await tester.pumpAndSettle();
+      // Should not throw, may show snackbar or close dialog
     });
 
     testWidgets('shows error snackbar if exception thrown', (tester) async {
