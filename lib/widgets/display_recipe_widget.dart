@@ -154,7 +154,7 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
           ),
         ),
       ),
-      floatingActionButton: recipe.isNotEmpty
+      floatingActionButton: recipe.trim().isNotEmpty
           ? TTSWidget(text: stripMarkdown(recipe, preserveNewlines: true))
           : null,
     );

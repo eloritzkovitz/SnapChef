@@ -10,6 +10,7 @@ import 'package:snapchef/views/cookbook/view_recipe_screen.dart';
 import 'package:snapchef/models/recipe.dart';
 import 'package:snapchef/models/ingredient.dart';
 import 'package:network_image_mock/network_image_mock.dart';
+import 'package:snapchef/widgets/display_recipe_widget.dart';
 
 import '../../mocks/mock_cookbook_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
@@ -89,7 +90,7 @@ void main() {
   testWidgets('renders and displays recipe details', (tester) async {
     await mockNetworkImagesFor(() async {
       await tester.pumpWidget(buildTestWidget());
-      await safePumpAndSettle(tester);      
+      await safePumpAndSettle(tester);
 
       expect(find.text('4.5'), findsOneWidget);
       expect(find.text('Chop tomatoes Cook for 10 minutes'), findsOneWidget);
@@ -123,7 +124,7 @@ void main() {
       await safePumpAndSettle(tester);
       expect(find.text('Favorite'), findsOneWidget);
       await tester.tap(find.text('Favorite'));
-      await safePumpAndSettle(tester);      
+      await safePumpAndSettle(tester);
 
       // Open popup menu and tap Share Recipe
       await tester.tap(find.byType(PopupMenuButton<String>));
@@ -245,6 +246,114 @@ void main() {
       expect(shareIconFinder, findsOneWidget);
       final Icon shareIcon = tester.widget(shareIconFinder);
       expect(shareIcon.color, Colors.black);
+    });
+  });
+
+  group('DisplayRecipeWidget', () {
+    Widget buildDisplayRecipeWidget(
+        {Recipe? overrideRecipe, String? recipeString}) {
+      return MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CookbookViewModel>(
+              create: (_) => MockCookbookViewModel()),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: DisplayRecipeWidget(
+              recipeObject: overrideRecipe,
+              recipeString: recipeString,
+              cookbookId: 'cb1',
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('renders rating, instructions, and TTS button', (tester) async {
+      final testRecipe = Recipe(
+        id: '2',
+        title: 'Widget Recipe',
+        description: 'Widget description',
+        mealType: 'Breakfast',
+        cuisineType: 'American',
+        difficulty: 'Easy',
+        prepTime: 5,
+        cookingTime: 10,
+        ingredients: [
+          Ingredient(
+            id: 'ing1',
+            name: 'Bread',
+            category: 'Grain',
+            imageURL: '',
+            count: 2,
+          ),
+        ],
+        instructions: ['Toast bread', 'Spread butter'],
+        imageURL: null,
+        rating: 2.5,
+        isFavorite: false,
+        source: RecipeSource.user,
+      );
+
+      await tester
+          .pumpWidget(buildDisplayRecipeWidget(overrideRecipe: testRecipe));
+      await tester.pumpAndSettle();
+      
+      expect(
+        find.byWidgetPredicate((widget) =>
+            widget is RichText && widget.text.toPlainText().contains('2.5')),
+        findsOneWidget,
+      );     
+      expect(
+        find.byWidgetPredicate((widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('Toast bread')),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate((widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('Spread butter')),
+        findsOneWidget,
+      );
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+    });
+
+    testWidgets('renders markdown from recipeString', (tester) async {
+      const String myMarkdown = '''
+# Pancakes
+
+- 2 eggs
+- 1 cup flour
+- 1 cup milk
+
+**Instructions:**
+1. Mix all ingredients.
+2. Cook on a hot griddle.
+''';
+
+      await tester.pumpWidget(buildDisplayRecipeWidget(
+        overrideRecipe: null,
+        recipeString: myMarkdown,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate((widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('Pancakes')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('does not render TTS button if recipe is empty',
+        (tester) async {
+      await tester.pumpWidget(buildDisplayRecipeWidget(
+        overrideRecipe: null,
+        recipeString: '',
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingActionButton), findsNothing);
     });
   });
 }
