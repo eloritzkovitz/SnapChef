@@ -51,7 +51,7 @@ void main() async {
                 sharedRecipeViewModel ?? MockSharedRecipeViewModel()),
         ChangeNotifierProvider<RecipeViewModel>(
             create: (_) => recipeViewModel ?? MockRecipeViewModel()),
-        ChangeNotifierProvider<FridgeViewModel>(           
+        ChangeNotifierProvider<FridgeViewModel>(
             create: (_) => fridgeViewModel ?? MockFridgeViewModel()),
       ],
       child: const MaterialApp(
@@ -287,6 +287,298 @@ void main() async {
         ),
       );
       expect(find.text('Test Recipe'), findsOneWidget);
+    });
+
+    testWidgets('displays AI source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '1',
+        title: 'AI Recipe',
+        description: '',
+        mealType: 'Lunch',
+        cuisineType: 'Italian',
+        difficulty: 'Easy',
+        prepTime: 10,
+        cookingTime: 10,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.smart_toy), findsOneWidget);
+      expect(find.byTooltip('AI Generated'), findsOneWidget);
+    });
+
+    testWidgets('displays Shared source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '2',
+        title: 'Shared Recipe',
+        description: '',
+        mealType: 'Dinner',
+        cuisineType: 'French',
+        difficulty: 'Medium',
+        prepTime: 15,
+        cookingTime: 20,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.shared,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.people_alt), findsOneWidget);
+      expect(find.byTooltip('Shared Recipe'), findsOneWidget);
+    });
+
+    testWidgets('displays User source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '3',
+        title: 'User Recipe',
+        description: '',
+        mealType: 'Breakfast',
+        cuisineType: 'American',
+        difficulty: 'Hard',
+        prepTime: 5,
+        cookingTime: 5,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.user,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.person), findsOneWidget);
+      expect(find.byTooltip('User Recipe'), findsOneWidget);
+    });
+
+    testWidgets('shows favorite heart when isFavorite is true', (tester) async {
+      final recipe = Recipe(
+        id: '4',
+        title: 'Fav Recipe',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+        isFavorite: true,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+    });
+
+    testWidgets('shows fallback icon when imageURL is empty', (tester) async {
+      final recipe = Recipe(
+        id: '5',
+        title: 'No Image',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+        imageURL: '',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.image), findsOneWidget);
+    });    
+
+    testWidgets('calls onTap callback when tapped', (tester) async {
+      bool tapped = false;
+      final recipe = Recipe(
+        id: '7',
+        title: 'Tap Recipe',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecipeCard(
+              recipe: recipe,
+              onTap: () {
+                tapped = true;
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(RecipeCard));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('displays AI source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '1',
+        title: 'AI Recipe',
+        description: '',
+        mealType: 'Lunch',
+        cuisineType: 'Italian',
+        difficulty: 'Easy',
+        prepTime: 10,
+        cookingTime: 10,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.smart_toy), findsOneWidget);
+      expect(find.byTooltip('AI Generated'), findsOneWidget);
+    });
+
+    testWidgets('displays Shared source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '2',
+        title: 'Shared Recipe',
+        description: '',
+        mealType: 'Dinner',
+        cuisineType: 'French',
+        difficulty: 'Medium',
+        prepTime: 15,
+        cookingTime: 20,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.shared,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.people_alt), findsOneWidget);
+      expect(find.byTooltip('Shared Recipe'), findsOneWidget);
+    });
+
+    testWidgets('displays User source icon and tooltip', (tester) async {
+      final recipe = Recipe(
+        id: '3',
+        title: 'User Recipe',
+        description: '',
+        mealType: 'Breakfast',
+        cuisineType: 'American',
+        difficulty: 'Hard',
+        prepTime: 5,
+        cookingTime: 5,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.user,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.person), findsOneWidget);
+      expect(find.byTooltip('User Recipe'), findsOneWidget);
+    });
+
+    testWidgets('shows favorite heart when isFavorite is true', (tester) async {
+      final recipe = Recipe(
+        id: '4',
+        title: 'Fav Recipe',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+        isFavorite: true,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+    });
+
+    testWidgets('shows fallback icon when imageURL is empty', (tester) async {
+      final recipe = Recipe(
+        id: '5',
+        title: 'No Image',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+        imageURL: '',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: RecipeCard(recipe: recipe)),
+        ),
+      );
+      expect(find.byIcon(Icons.image), findsOneWidget);
+    });    
+
+    testWidgets('calls onTap callback when tapped', (tester) async {
+      bool tapped = false;
+      final recipe = Recipe(
+        id: '7',
+        title: 'Tap Recipe',
+        description: '',
+        mealType: '',
+        cuisineType: '',
+        difficulty: '',
+        prepTime: 1,
+        cookingTime: 1,
+        ingredients: [],
+        instructions: [],
+        source: RecipeSource.ai,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecipeCard(
+              recipe: recipe,
+              onTap: () {
+                tapped = true;
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(RecipeCard));
+      expect(tapped, isTrue);
     });
   });
 }
