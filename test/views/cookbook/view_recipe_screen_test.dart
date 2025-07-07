@@ -248,7 +248,7 @@ void main() {
       final Icon shareIcon = tester.widget(shareIconFinder);
       expect(shareIcon.color, Colors.black);
     });
-  });
+  });  
 
   group('DisplayRecipeWidget', () {
     Widget buildDisplayRecipeWidget(
