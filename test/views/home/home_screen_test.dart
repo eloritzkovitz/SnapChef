@@ -213,4 +213,37 @@ void main() {
     expect(find.text('Favorite 2'), findsOneWidget);
     expect(find.byType(GestureDetector), findsWidgets);
   });
+
+  testWidgets(
+      'FavoritesGallery single favorite with no imageURL shows default icon',
+      (tester) async {
+    final recipe = TestRecipe('No Image', isFavorite: true, imageURL: '');
+    final cookbook = MockCookbookViewModel()..filteredItems = [recipe];
+    await tester.pumpWidget(buildTestWidget(cookbook: cookbook));
+    await tester.pumpAndSettle();
+
+    // Should show the default image icon
+    expect(find.byIcon(Icons.image), findsOneWidget);
+    expect(find.text('No Image'), findsOneWidget);
+  });
+
+  testWidgets(
+      'FavoritesGallery single favorite with invalid imageURL shows not supported icon',
+      (tester) async {
+    final recipe = TestRecipe('Broken Image',
+        isFavorite: true, imageURL: 'http://invalid.url/image.png');
+    final cookbook = MockCookbookViewModel()..filteredItems = [recipe];
+    await tester.pumpWidget(buildTestWidget(cookbook: cookbook));
+    await tester.pumpAndSettle();
+
+    // Simulate image load failure
+    final image = find.byType(Image).first;
+    final element = tester.element(image);
+    final widget = element.widget as Image;
+    widget.errorBuilder?.call(element, Exception(), StackTrace.current);
+
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.image_not_supported), findsOneWidget);
+    expect(find.text('Broken Image'), findsOneWidget);
+  });  
 }
