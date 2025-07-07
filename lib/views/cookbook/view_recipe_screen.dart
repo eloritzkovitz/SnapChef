@@ -16,11 +16,13 @@ import './widgets/edit_recipe_modal.dart';
 class ViewRecipeScreen extends StatefulWidget {
   final Recipe recipe;
   final String cookbookId;
+  final Widget Function(String imageUrl)? imageBuilder;
 
   const ViewRecipeScreen({
     super.key,
     required this.recipe,
     required this.cookbookId,
+    this.imageBuilder,
   });
 
   @override
@@ -181,7 +183,8 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
 
   // Toggle favorite status for the recipe
   Future<void> _toggleFavorite(BuildContext context) async {
-    final cookbookViewModel = Provider.of<CookbookViewModel>(context, listen: false);
+    final cookbookViewModel =
+        Provider.of<CookbookViewModel>(context, listen: false);
     final success = await cookbookViewModel.toggleRecipeFavoriteStatus(
       widget.cookbookId,
       _recipe.id,
@@ -460,7 +463,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,        
+        foregroundColor: Colors.black,
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -487,26 +490,30 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                   children: const [
                     Icon(Icons.edit, color: Colors.black),
                     SizedBox(width: 8),
-                    Text('Edit Recipe'),
+                    Flexible(child: Text('Edit Recipe')),
                   ],
                 ),
               ),
               PopupMenuItem(
-              value: 'regenerate_image',
-              enabled: !isOffline,
-              child: Row(
-                children: [
-                  Icon(Icons.image, color: isOffline ? Colors.grey : Colors.black),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Regenerate Image',
-                    style: TextStyle(
-                      color: isOffline ? Colors.grey : Colors.black,
+                value: 'regenerate_image',
+                enabled: !isOffline,
+                child: Row(
+                  children: [
+                    Icon(Icons.image,
+                        color: isOffline ? Colors.grey : Colors.black),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Regenerate Image',
+                        style: TextStyle(
+                          color: isOffline ? Colors.grey : Colors.black,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
               PopupMenuItem(
                 value: 'toggle_favorite',
                 child: Row(
@@ -518,33 +525,39 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
                       color: Colors.black,
                     ),
                     const SizedBox(width: 8),
-                    Text(_recipe.isFavorite ? 'Unfavorite' : 'Favorite'),
+                    Flexible(
+                        child: Text(
+                            _recipe.isFavorite ? 'Unfavorite' : 'Favorite')),
                   ],
                 ),
               ),
               PopupMenuItem(
-              value: 'share',
-              enabled: !isOffline,
-              child: Row(
-                children: [
-                  Icon(Icons.share, color: isOffline ? Colors.grey : Colors.black),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Share Recipe',
-                    style: TextStyle(
-                      color: isOffline ? Colors.grey : Colors.black,
+                value: 'share',
+                enabled: !isOffline,
+                child: Row(
+                  children: [
+                    Icon(Icons.share,
+                        color: isOffline ? Colors.grey : Colors.black),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Share Recipe',
+                        style: TextStyle(
+                          color: isOffline ? Colors.grey : Colors.black,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
               PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: const [
                     Icon(Icons.delete, color: Colors.black),
                     SizedBox(width: 8),
-                    Text('Delete Recipe'),
+                    Flexible(child: Text('Delete Recipe')),
                   ],
                 ),
               ),
@@ -558,6 +571,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
           recipeObject: _recipe,
           imageUrl: ImageUtil().getFullImageUrl(_recipe.imageURL),
           cookbookId: widget.cookbookId,
+          imageBuilder: widget.imageBuilder,
         ),
       ),
     );

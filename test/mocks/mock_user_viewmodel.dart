@@ -174,4 +174,9 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     await Future.value();
     notifyListeners();
   }
+
+  @override
+  Future<List<User>> getFriends() async {
+    return [];
+  }
 }
