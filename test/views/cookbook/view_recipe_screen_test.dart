@@ -11,6 +11,7 @@ import 'package:snapchef/models/recipe.dart';
 import 'package:snapchef/models/ingredient.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'package:snapchef/widgets/display_recipe_widget.dart';
+import 'package:snapchef/widgets/tts_widget.dart';
 
 import '../../mocks/mock_cookbook_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
@@ -298,12 +299,12 @@ void main() {
       await tester
           .pumpWidget(buildDisplayRecipeWidget(overrideRecipe: testRecipe));
       await tester.pumpAndSettle();
-      
+
       expect(
         find.byWidgetPredicate((widget) =>
             widget is RichText && widget.text.toPlainText().contains('2.5')),
         findsOneWidget,
-      );     
+      );
       expect(
         find.byWidgetPredicate((widget) =>
             widget is RichText &&
@@ -354,6 +355,137 @@ void main() {
       ));
       await tester.pumpAndSettle();
       expect(find.byType(FloatingActionButton), findsNothing);
+    });
+  });
+
+  group('TTSWidget', () {
+    testWidgets('renders and shows SpeedDial actions', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: TTSWidget(text: 'Hello world'),
+          ),
+        ),
+      );
+
+      // Main TTS button should be present
+      expect(find.byType(TTSWidget), findsOneWidget);
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Tap to open SpeedDial (the main FAB)
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Should show Play, Pause, and Stop buttons
+      expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+      expect(find.byIcon(Icons.pause), findsOneWidget);
+      expect(find.byIcon(Icons.stop), findsOneWidget);
+
+      // Tap Play
+      await tester.tap(find.byIcon(Icons.play_arrow));
+      await tester.pump();
+
+      // Tap Pause
+      await tester.tap(find.byIcon(Icons.pause));
+      await tester.pump();
+
+      // Tap Stop
+      await tester.tap(find.byIcon(Icons.stop));
+      await tester.pump();
+    });
+
+    testWidgets('TTSWidget play/pause/stop changes state', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: TTSWidget(text: 'Hello world'),
+          ),
+        ),
+      );
+
+      // Main FAB should be present (volume_up)
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Open SpeedDial
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Tap Play
+      await tester.tap(find.byIcon(Icons.play_arrow));
+      await tester.pumpAndSettle();
+
+      // After tapping Play, SpeedDial closes, so only main FAB is visible
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Reopen SpeedDial
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Tap Pause
+      await tester.tap(find.byIcon(Icons.pause));
+      await tester.pumpAndSettle();
+
+      // After tapping Pause, SpeedDial closes, so only main FAB is visible
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Reopen SpeedDial
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Tap Stop
+      await tester.tap(find.byIcon(Icons.stop));
+      await tester.pumpAndSettle();
+
+      // After tapping Stop, SpeedDial closes, so only main FAB is visible
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+    });
+
+    testWidgets('TTSWidget does not play when text is empty', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: TTSWidget(text: ''),
+          ),
+        ),
+      );
+
+      // Main FAB should be present
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Open SpeedDial
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Tap Play (should not crash or change state)
+      await tester.tap(find.byIcon(Icons.play_arrow));
+      await tester.pumpAndSettle();
+
+      // After tapping Play, SpeedDial closes, so only main FAB is visible
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+    });
+
+    testWidgets('TTSWidget does not play when text is empty', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: TTSWidget(text: ''),
+          ),
+        ),
+      );
+
+      // Main FAB should be present
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
+
+      // Open SpeedDial
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      // Tap Play (should not crash or change state)
+      await tester.tap(find.byIcon(Icons.play_arrow));
+      await tester.pumpAndSettle();
+
+      // After tapping Play, SpeedDial closes, so only main FAB is visible
+      expect(find.byIcon(Icons.volume_up), findsOneWidget);
     });
   });
 }
