@@ -8,6 +8,11 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   String? _errorMessage;
   bool _isLoggingOut = false;
 
+  bool shouldThrowOnVerify = false;
+  bool shouldThrowOnResend = false;
+  bool shouldThrowOnRequestReset = false;
+  bool shouldThrowOnConfirmReset = false;
+
   @override
   String? get errorMessage => _errorMessage;
 
@@ -60,14 +65,38 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   Future<bool> signup(String firstName, String lastName, String email, String password, BuildContext context) async => true;
 
   @override
-  Future<void> requestPasswordReset(String email, BuildContext context) async {}
+  Future<void> requestPasswordReset(String email, BuildContext context) async {
+    if (shouldThrowOnRequestReset) {
+      setError('Failed to resend code. Please try again.');
+      throw Exception('Request failed');
+    }
+    setError(null);
+  }
 
   @override
-  Future<void> verifyOTP(String email, String otp, BuildContext context) async {}
+  Future<void> verifyOTP(String email, String otp, BuildContext context) async {
+    if (shouldThrowOnVerify) {
+      setError('Invalid OTP. Please try again.');
+      throw Exception('Invalid OTP');
+    }
+    setError(null);   
+  }
 
   @override
-  Future<void> resendOTP(String email) async {}
+  Future<void> resendOTP(String email) async {
+    if (shouldThrowOnResend) {
+      setError('Failed to resend OTP. Please try again.');
+      throw Exception('Resend failed');
+    }
+    setError(null);    
+  }
 
   @override
-  Future<void> confirmPasswordReset(String email, String otp, String newPassword, BuildContext context) async {}
+  Future<void> confirmPasswordReset(String email, String otp, String newPassword, BuildContext context) async {
+    if (shouldThrowOnConfirmReset) {
+      setError('Failed to reset password. Please try again.');
+      throw Exception('Reset failed');
+    }
+    setError(null);
+  }
 }

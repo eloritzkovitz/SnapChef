@@ -56,4 +56,122 @@ void main() {
     expect(find.text('Email is required'), findsNothing);
     expect(find.text('Password is required'), findsNothing);
   });
+
+  testWidgets('toggles password visibility', (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(
+                create: (_) => MockAuthViewModel()),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            home: LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    // Tap the password visibility icon
+    await tester.tap(find.byIcon(Icons.visibility_off));
+    await tester.pump();
+    expect(find.byIcon(Icons.visibility), findsOneWidget);
+  });
+
+  testWidgets('forgot password button navigates', (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(
+                create: (_) => MockAuthViewModel()),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            routes: {
+              '/reset-password': (context) =>
+                  Scaffold(body: Text('ResetPassword')),
+            },
+            home: LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Forgot your password?'));
+    await tester.pumpAndSettle();
+    expect(find.text('ResetPassword'), findsOneWidget);
+  });
+
+  testWidgets('google sign in button triggers callback', (tester) async {
+    bool pressed = false;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(
+                create: (_) => MockAuthViewModel()),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            home: LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {
+                  pressed = true;
+                },
+                child: Text('Sign in with Google'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Sign in with Google'));
+    expect(pressed, isTrue);
+  });
+
+  testWidgets('sign up button navigates', (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(
+                create: (_) => MockAuthViewModel()),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            routes: {
+              '/signup': (context) => Scaffold(body: Text('SignupScreen')),
+            },
+            home: LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text("Don't have an account?"));
+    await tester.pumpAndSettle();
+    expect(find.text('SignupScreen'), findsOneWidget);
+  });
 }

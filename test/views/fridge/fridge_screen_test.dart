@@ -186,6 +186,39 @@ void main() {
       expect(find.byType(FridgeFilterSortSheet), findsNothing);
     });
 
+    testWidgets('applies filter and sort from filter sheet', (tester) async {
+      final fridgeViewModel = MockFridgeViewModel();
+      await tester
+          .pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+      await tester.tap(find.byIcon(Icons.tune));
+      await tester.pumpAndSettle();
+      // Select a category and sort option if available
+      if (find.byIcon(Icons.category).evaluate().isNotEmpty) {
+        await tester.tap(find.byIcon(Icons.category), warnIfMissed: false);
+        await tester.pumpAndSettle();
+        final dairyFinder = find.text('Dairy');
+        if (dairyFinder.evaluate().isNotEmpty) {
+          await tester.ensureVisible(dairyFinder);
+          await tester.tap(dairyFinder);
+          await tester.pumpAndSettle();
+        }
+      }
+      if (find.byIcon(Icons.sort).evaluate().isNotEmpty) {
+        await tester.tap(find.byIcon(Icons.sort), warnIfMissed: false);
+        await tester.pumpAndSettle();
+        final nameFinder = find.textContaining('Name');
+        if (nameFinder.evaluate().isNotEmpty) {
+          await tester.ensureVisible(nameFinder);
+          await tester.tap(nameFinder.first);
+          await tester.pumpAndSettle();
+        }
+      }
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+      // Should close sheet and not throw
+      expect(find.byType(FridgeFilterSortSheet), findsNothing);
+    });
+
     testWidgets('opens groceries list', (tester) async {
       final fridgeViewModel = MockFridgeViewModel();
       await tester
@@ -254,6 +287,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(IngredientReminderDialog), findsNothing);
     });
+  });
+
+  testWidgets('confirms delete ingredient', (tester) async {
+    final fridgeViewModel = MockFridgeViewModel();
+    fridgeViewModel.fridgeController.filteredItems = [
+      Ingredient(
+          id: '1', name: 'Egg', category: 'Dairy', count: 2, imageURL: ''),
+    ];
+    await tester.pumpWidget(buildTestWidget(fridgeViewModel: fridgeViewModel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Ingredient'), findsOneWidget);
+    // Confirm delete
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    // Should show snackbar
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   group('FridgeGridView', () {
