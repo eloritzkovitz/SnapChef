@@ -30,7 +30,7 @@ class FridgeViewModel extends BaseViewModel {
   final SyncManager syncManager = GetIt.I<SyncManager>();
   final FridgeRepository fridgeRepository = GetIt.I<FridgeRepository>();
 
-  FridgeService get fridgeService => fridgeRepository.fridgeService;  
+  FridgeService get fridgeService => fridgeRepository.fridgeService;
 
   FridgeViewModel() {
     fridgeController = IngredientListController(_ingredients);
@@ -189,12 +189,17 @@ class FridgeViewModel extends BaseViewModel {
         applyFilters();
         return true;
       }
-      final success = await remoteUpdateAction(newQuantity);
-      if (success) {
-        list[idx].count = newQuantity;
-        applyFilters();
-        return true;
-      } else {
+      try {
+        final success = await remoteUpdateAction(newQuantity);
+        if (success) {
+          list[idx].count = newQuantity;
+          applyFilters();
+          return true;
+        } else {
+          return false;
+        }
+      } catch (e) {
+        // Catch remote error and return false
         return false;
       }
     } else {
@@ -209,12 +214,17 @@ class FridgeViewModel extends BaseViewModel {
         applyFilters();
         return true;
       }
-      final success = await remoteAddAction();
-      if (success) {
-        list.add(ingredient);
-        applyFilters();
-        return true;
-      } else {
+      try {
+        final success = await remoteAddAction();
+        if (success) {
+          list.add(ingredient);
+          applyFilters();
+          return true;
+        } else {
+          return false;
+        }
+      } catch (e) {
+        // Catch remote error and return false
         return false;
       }
     }
@@ -462,6 +472,12 @@ class FridgeViewModel extends BaseViewModel {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
+    if (oldIndex < 0 ||
+        oldIndex >= _ingredients.length ||
+        newIndex < 0 ||
+        newIndex >= _ingredients.length) {
+      return;
+    }
     final ingredient = fridgeController.filteredItems.removeAt(oldIndex);
     fridgeController.filteredItems.insert(newIndex, ingredient);
 
@@ -504,6 +520,12 @@ class FridgeViewModel extends BaseViewModel {
   Future<void> reorderGroceryItem(
       int oldIndex, int newIndex, String fridgeId) async {
     if (oldIndex < newIndex) newIndex -= 1;
+    if (oldIndex < 0 ||
+        oldIndex >= _groceries.length ||
+        newIndex < 0 ||
+        newIndex >= _groceries.length) {
+      return;
+    }
     final item = groceriesController.filteredItems.removeAt(oldIndex);
     groceriesController.filteredItems.insert(newIndex, item);
 
@@ -732,7 +754,7 @@ class FridgeViewModel extends BaseViewModel {
     _groceries.clear();
     recognizedIngredients = [];
     fridgeController.clear();
-    groceriesController.clear();    
+    groceriesController.clear();
     setLoading(false);
     notifyListeners();
   }
