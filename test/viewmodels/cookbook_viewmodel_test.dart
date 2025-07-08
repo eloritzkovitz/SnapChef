@@ -455,5 +455,114 @@ void main() {
       vm.setLoggingOut(false);
       expect(vm.isLoggingOut, isFalse);
     });
+
+    test('regenerateRecipeImage updates imageURL and returns true', () async {
+      fakeRecipes.add(testRecipe);
+      when(mockRepo.regenerateRecipeImage(any, any, any))
+          .thenAnswer((_) async => 'new_image_url');
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      final result = await vm.regenerateRecipeImage(
+        cookbookId: 'cb1',
+        recipeId: '1',
+        payload: {},
+      );
+      expect(result, isTrue);
+      expect(vm.recipes.first.imageURL, 'new_image_url');
+    });
+
+    test('regenerateRecipeImage returns false on error', () async {
+      fakeRecipes.add(testRecipe);
+      when(mockRepo.regenerateRecipeImage(any, any, any))
+          .thenThrow(Exception('fail'));
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      final result = await vm.regenerateRecipeImage(
+        cookbookId: 'cb1',
+        recipeId: '1',
+        payload: {},
+      );
+      expect(result, isFalse);
+    });
+
+    test('saveRecipeOrder calls repository', () async {
+      fakeRecipes.add(testRecipe);
+      when(mockRepo.saveRecipeOrderRemote(any, any))
+          .thenAnswer((_) async => {});
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      await vm.saveRecipeOrder('cb1');
+      verify(mockRepo.saveRecipeOrderRemote('cb1', any)).called(1);
+    });
+
+    test('saveRecipeOrder handles error gracefully', () async {
+      fakeRecipes.add(testRecipe);
+      when(mockRepo.saveRecipeOrderRemote(any, any))
+          .thenThrow(Exception('fail'));
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      await vm.saveRecipeOrder('cb1');
+      // No throw expected
+    });
+
+    test('shareRecipeWithFriend calls repository', () async {
+      when(mockRepo.shareRecipeWithFriend(
+        cookbookId: anyNamed('cookbookId'),
+        recipeId: anyNamed('recipeId'),
+        friendId: anyNamed('friendId'),
+      )).thenAnswer((_) async {});
+      final vm = CookbookViewModel();
+      await vm.shareRecipeWithFriend(
+        cookbookId: 'cb1',
+        recipeId: '1',
+        friendId: 'friend1',
+      );
+      verify(mockRepo.shareRecipeWithFriend(
+        cookbookId: 'cb1',
+        recipeId: '1',
+        friendId: 'friend1',
+      )).called(1);
+    });
+
+    test('clear resets all fields and recipes', () async {
+      fakeRecipes.add(testRecipe);
+      final vm = CookbookViewModel();
+      await vm.fetchCookbookRecipes('cb1');
+      vm.selectedCategory = 'Vegetable';
+      vm.selectedSortOption = 'A-Z';
+      vm.selectedCuisine = 'Italian';
+      vm.selectedDifficulty = 'Easy';
+      vm.prepTimeRange = const RangeValues(5, 30);
+      vm.cookingTimeRange = const RangeValues(10, 40);
+      vm.ratingRange = const RangeValues(1, 5);
+      vm.selectedSource = 'user';
+      vm.filter = 'Test';
+      vm.clear();
+      expect(vm.recipes, isEmpty);
+      expect(vm.selectedCategory, null);
+      expect(vm.selectedSortOption, null);
+      expect(vm.selectedCuisine, null);
+      expect(vm.selectedDifficulty, null);
+      expect(vm.prepTimeRange, null);
+      expect(vm.cookingTimeRange, null);
+      expect(vm.ratingRange, null);
+      expect(vm.selectedSource, null);
+      expect(vm.filter, '');
+    });
+
+    test('dispose calls syncProvider.disposeSync and unregisters sync', () {
+      var disposeSyncCalled = false;
+      var unregisterCalled = false;
+      when(mockSyncProvider.disposeSync()).thenAnswer((_) {
+        disposeSyncCalled = true;
+      });
+      when(mockSyncManager.unregister(any)).thenAnswer((_) {
+        unregisterCalled = true;
+      });
+      final vm = CookbookViewModel();
+      vm.dispose();
+      expect(disposeSyncCalled, isTrue);
+      expect(unregisterCalled, isTrue);
+    });
   });
 }
