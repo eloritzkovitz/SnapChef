@@ -78,7 +78,9 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? initialRoute;
+  final Widget? loginScreenGoogleButton;
+  const MyApp({super.key, this.initialRoute, this.loginScreenGoogleButton});
 
   @override
   Widget build(BuildContext context) {
@@ -106,11 +108,12 @@ class MyApp extends StatelessWidget {
       child: Consumer<ConnectivityProvider>(
         builder: (context, connectivity, child) {
           return MaterialApp(
+            initialRoute: initialRoute,
             theme: appTheme,
             navigatorObservers: [StatusBarObserver(context), routeObserver],
             home: AnimatedSplashScreen(),
             routes: {
-              '/login': (context) => LoginScreen(),
+              '/login': (context) => LoginScreen(googleButton: loginScreenGoogleButton),
               '/signup': (context) => SignupScreen(),
               '/reset-password': (context) => const ResetPasswordScreen(),
               '/confirm-reset': (context) => const ConfirmResetScreen(),
