@@ -19,29 +19,29 @@ import 'package:snapchef/services/sync_service.dart';
 import 'shared_recipe_viewmodel_test.mocks.dart';
 
 Recipe get dummyRecipe => Recipe(
-  id: 'r1',
-  title: 'Test Recipe',
-  description: 'desc',
-  mealType: 'Dinner',
-  cuisineType: 'Italian',
-  difficulty: 'Easy',
-  prepTime: 10,
-  cookingTime: 20,
-  ingredients: [],
-  instructions: [],
-  imageURL: '',
-  rating: null,
-  source: RecipeSource.ai,
-);
+      id: 'r1',
+      title: 'Test Recipe',
+      description: 'desc',
+      mealType: 'Dinner',
+      cuisineType: 'Italian',
+      difficulty: 'Easy',
+      prepTime: 10,
+      cookingTime: 20,
+      ingredients: [],
+      instructions: [],
+      imageURL: '',
+      rating: null,
+      source: RecipeSource.ai,
+    );
 
 SharedRecipe get testSharedRecipe => SharedRecipe(
-  id: 'sr1',
-  recipe: dummyRecipe,
-  fromUser: 'userA',
-  toUser: 'userB',
-  sharedAt: DateTime.now(),
-  status: 'pending',
-);
+      id: 'sr1',
+      recipe: dummyRecipe,
+      fromUser: 'userA',
+      toUser: 'userB',
+      sharedAt: DateTime.now(),
+      status: 'pending',
+    );
 
 void main() {
   late SharedRecipeViewModel vm;
@@ -109,6 +109,15 @@ void main() {
     expect(vm.isLoading, isFalse);
   });
 
+   test('fetchSharedRecipes sets empty lists when local DB returns empty',
+      () async {
+    when(mockConnectivity.isOffline).thenReturn(true);
+    when(mockRepo.fetchSharedRecipesLocal('userB')).thenAnswer((_) async => []);
+    await vm.fetchSharedRecipes('cb1', 'userB');
+    expect(vm.sharedWithMeRecipes, isEmpty);
+    expect(vm.sharedByMeRecipes, isEmpty);
+  });
+
   test('removeSharedRecipe removes locally and queues for sync when offline',
       () async {
     when(mockConnectivity.isOffline).thenReturn(true);
@@ -141,5 +150,34 @@ void main() {
     expect(vm.sharedWithMeRecipes!.any((r) => r.id == 'sr1'), isFalse);
     verify(mockRepo.removeSharedRecipeRemote('cb1', 'sr1')).called(1);
     verify(mockRepo.removeSharedRecipeLocal('sr1')).called(1);
+  }); 
+
+  test('removeSharedRecipe throws if local remove fails when offline',
+      () async {
+    when(mockConnectivity.isOffline).thenReturn(true);
+    when(mockRepo.removeSharedRecipeLocal('sr1')).thenThrow(Exception('fail'));
+    expect(
+      () => vm.removeSharedRecipe('cb1', 'sr1', isSharedByMe: false),
+      throwsException,
+    );
+  });
+
+  test('clear resets lists and flags', () {
+    vm.sharedWithMeRecipes = [testSharedRecipe];
+    vm.sharedByMeRecipes = [testSharedRecipe];
+    vm.setLoading(true);
+    vm.setLoggingOut(true);
+    vm.clear();
+    expect(vm.sharedWithMeRecipes, isEmpty);
+    expect(vm.sharedByMeRecipes, isEmpty);
+    expect(vm.isLoading, isFalse);
+    expect(vm.isLoggingOut, isFalse);
+  });
+
+  test('dispose calls syncProvider.disposeSync and syncManager.unregister', () {
+    vm.dispose();
+    verify(mockSyncProvider.disposeSync()).called(1);
+    verify(mockSyncManager.unregister(mockSyncProvider.syncPendingActions))
+        .called(1);
   });
 }
