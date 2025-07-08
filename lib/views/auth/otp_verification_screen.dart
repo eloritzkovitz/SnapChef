@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
+import '../../utils/ui_util.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -14,7 +15,6 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController otpController = TextEditingController();
   bool _loading = false;
-  String? _error;
   int _secondsRemaining = 60;
   Timer? _timer;
   bool _canResend = false;
@@ -52,28 +52,35 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Future<void> _resendOtp(AuthViewModel authViewModel) async {
     setState(() {
       _loading = true;
-      _error = null;
     });
-    try {
-      await authViewModel.resendOTP(widget.email);
+    await authViewModel.resendOTP(widget.email);
+    setState(() => _loading = false);
+    if (authViewModel.infoMessage != null) {
       _startTimer();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP resent! Please check your email.')),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to resend OTP. Please try again.';
-      });
-    } finally {
-      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
+
+    // Show message from ViewModel using UIUtil
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authViewModel.errorMessage != null) {
+        showError(context, authViewModel.errorMessage!);
+        authViewModel.errorMessage = null;
+      }
+      if (authViewModel.infoMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authViewModel.infoMessage!)),
+        );
+        authViewModel.infoMessage = null;
+      }
+      if (authViewModel.otpVerified) {
+        Navigator.pushReplacementNamed(context, '/login');
+        authViewModel.otpVerified = false;
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -111,7 +118,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-                errorText: _error,
               ),
               keyboardType: TextInputType.number,
             ),
@@ -122,33 +128,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        setState(() {
-                          _loading = true;
-                          _error = null;
-                        });
-                        try {
-                          await authViewModel.verifyOTP(
-                            widget.email,
-                            otpController.text,
-                            context,
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Email verified! Please log in.')),
-                            );
-                            Navigator.pushReplacementNamed(context, '/login');
-                          }
-                        } catch (e) {
-                          setState(() {
-                            _error = 'Invalid OTP. Please try again.';
-                          });
-                        } finally {
-                          setState(() => _loading = false);
-                        }
-                      },
+                      onPressed: _loading
+                          ? null
+                          : () async {
+                              setState(() {
+                                _loading = true;
+                              });
+                              await authViewModel.verifyOTP(
+                                widget.email,
+                                otpController.text,
+                                context,
+                              );
+                              setState(() => _loading = false);
+                            },
                       child: const Text('Verify'),
                     ),
                   ),

@@ -5,29 +5,32 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   @override
   bool isLoading = false;
 
-  String? _errorMessage;
+  @override
+  String? errorMessage;
+  @override
+  String? infoMessage;
+  @override
+  bool otpVerified = false;  
+  
   bool _isLoggingOut = false;
 
-  bool shouldThrowOnVerify = false;
-  bool shouldThrowOnResend = false;
-  bool shouldThrowOnRequestReset = false;
-  bool shouldThrowOnConfirmReset = false;
-
-  @override
-  String? get errorMessage => _errorMessage;
+  bool shouldFailOnVerify = false;
+  bool shouldFailOnResend = false;
+  bool shouldFailOnRequestReset = false;
+  bool shouldFailOnConfirmReset = false; 
 
   @override
   bool get isLoggingOut => _isLoggingOut;
 
   @override
   void setError(String? message) {
-    _errorMessage = message;
+    errorMessage = message;
     notifyListeners();
   }
 
   @override
   void clearError() {
-    _errorMessage = null;
+    errorMessage = null;
     notifyListeners();
   }
 
@@ -50,10 +53,12 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   }
 
   @override
-  Future<void> googleSignIn(BuildContext context, Future<void> Function() fetchUserProfile) async {}
+  Future<void> googleSignIn(
+      BuildContext context, Future<void> Function() fetchUserProfile) async {}
 
   @override
-  Future<void> login(String email, String password, BuildContext context, Future<void> Function() fetchUserProfile) async {}
+  Future<void> login(String email, String password, BuildContext context,
+      Future<void> Function() fetchUserProfile) async {}
 
   @override
   Future<void> logout(BuildContext context) async {}
@@ -62,41 +67,59 @@ class MockAuthViewModel extends ChangeNotifier implements AuthViewModel {
   Future<void> refreshTokens() async {}
 
   @override
-  Future<bool> signup(String firstName, String lastName, String email, String password, BuildContext context) async => true;
+  Future<bool> signup(String firstName, String lastName, String email,
+          String password, BuildContext context) async =>
+      true;
 
   @override
   Future<void> requestPasswordReset(String email, BuildContext context) async {
-    if (shouldThrowOnRequestReset) {
-      setError('Failed to resend code. Please try again.');
-      throw Exception('Request failed');
+    if (shouldFailOnRequestReset) {
+      errorMessage = 'Failed to resend code. Please try again.';
+      notifyListeners();
+      return;
     }
-    setError(null);
+    errorMessage = null;
+    infoMessage = 'Reset code sent! Please check your email.';
+    notifyListeners();
   }
 
   @override
   Future<void> verifyOTP(String email, String otp, BuildContext context) async {
-    if (shouldThrowOnVerify) {
-      setError('Invalid OTP. Please try again.');
-      throw Exception('Invalid OTP');
+    if (shouldFailOnVerify) {
+      errorMessage = 'Invalid OTP. Please try again.';
+      otpVerified = false;
+      notifyListeners();
+      return;
     }
-    setError(null);   
+    errorMessage = null;
+    infoMessage = 'Email verified! Please log in.';
+    otpVerified = true;
+    notifyListeners();
   }
 
   @override
-  Future<void> resendOTP(String email) async {
-    if (shouldThrowOnResend) {
-      setError('Failed to resend OTP. Please try again.');
-      throw Exception('Resend failed');
+  Future<bool> resendOTP(String email) async {
+    if (shouldFailOnResend) {
+      errorMessage = 'Failed to resend OTP. Please try again.';
+      notifyListeners();
+      return false;
     }
-    setError(null);    
+    errorMessage = null;
+    infoMessage = 'OTP resent! Please check your email.';
+    notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> confirmPasswordReset(String email, String otp, String newPassword, BuildContext context) async {
-    if (shouldThrowOnConfirmReset) {
-      setError('Failed to reset password. Please try again.');
-      throw Exception('Reset failed');
+  Future<void> confirmPasswordReset(String email, String otp,
+      String newPassword, BuildContext context) async {
+    if (shouldFailOnConfirmReset) {
+      errorMessage = 'Failed to reset password. Please try again.';
+      notifyListeners();
+      return;
     }
-    setError(null);
+    errorMessage = null;
+    infoMessage = 'Password reset successful! Please log in.';
+    notifyListeners();
   }
 }

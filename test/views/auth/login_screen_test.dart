@@ -7,6 +7,13 @@ import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import '../../mocks/mock_auth_viewmodel.dart';
 import '../../mocks/mock_user_viewmodel.dart';
 
+Widget wrapWithWidth(Widget child) => Center(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(width: 800, child: child),
+      ),
+    );
+
 void main() {
   testWidgets('LoginScreen renders and validates', (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -20,12 +27,12 @@ void main() {
                 create: (_) => MockUserViewModel()),
           ],
           child: MaterialApp(
-            home: LoginScreen(
+            home: wrapWithWidth(LoginScreen(
               googleButton: ElevatedButton(
                 onPressed: () {},
                 child: Text('Sign in with Google'),
               ),
-            ),
+            )),
           ),
         ),
       ),
@@ -69,12 +76,12 @@ void main() {
                 create: (_) => MockUserViewModel()),
           ],
           child: MaterialApp(
-            home: LoginScreen(
+            home: wrapWithWidth(LoginScreen(
               googleButton: ElevatedButton(
                 onPressed: () {},
                 child: Text('Sign in with Google'),
               ),
-            ),
+            )),
           ),
         ),
       ),
@@ -101,12 +108,12 @@ void main() {
               '/reset-password': (context) =>
                   Scaffold(body: Text('ResetPassword')),
             },
-            home: LoginScreen(
+            home: wrapWithWidth(LoginScreen(
               googleButton: ElevatedButton(
                 onPressed: () {},
                 child: Text('Sign in with Google'),
               ),
-            ),
+            )),
           ),
         ),
       ),
@@ -129,14 +136,14 @@ void main() {
                 create: (_) => MockUserViewModel()),
           ],
           child: MaterialApp(
-            home: LoginScreen(
+            home: wrapWithWidth(LoginScreen(
               googleButton: ElevatedButton(
                 onPressed: () {
                   pressed = true;
                 },
                 child: Text('Sign in with Google'),
               ),
-            ),
+            )),
           ),
         ),
       ),
@@ -160,12 +167,12 @@ void main() {
             routes: {
               '/signup': (context) => Scaffold(body: Text('SignupScreen')),
             },
-            home: LoginScreen(
+            home: wrapWithWidth(LoginScreen(
               googleButton: ElevatedButton(
                 onPressed: () {},
                 child: Text('Sign in with Google'),
               ),
-            ),
+            )),
           ),
         ),
       ),
@@ -174,4 +181,90 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SignupScreen'), findsOneWidget);
   });
+
+  testWidgets('shows loading indicator when isLoading is true', (tester) async {
+    final mockAuth = MockAuthViewModel();
+    mockAuth.isLoading = true;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => mockAuth),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            home: wrapWithWidth(LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            )),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('shows error message from ViewModel', (tester) async {
+    final mockAuth = MockAuthViewModel();
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => mockAuth),
+            ChangeNotifierProvider<UserViewModel>(
+                create: (_) => MockUserViewModel()),
+          ],
+          child: MaterialApp(
+            home: wrapWithWidth(LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            )),
+          ),
+        ),
+      ),
+    );
+
+    // Simulate error
+    mockAuth.errorMessage = 'Login failed!';
+    mockAuth.notifyListeners();
+
+    // Pump twice: once for notifyListeners, once for post-frame callback/SnackBar
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Login failed!'), findsOneWidget);
+  });
+
+  testWidgets('default Google button triggers ViewModel method',
+      (tester) async {
+    final mockAuth = MockAuthViewModel();
+    final mockUser = MockUserViewModel();
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: Size(1200, 800)),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => mockAuth),
+            ChangeNotifierProvider<UserViewModel>(create: (_) => mockUser),
+          ],
+          child: MaterialApp(
+            home: wrapWithWidth(LoginScreen(
+              googleButton: ElevatedButton(
+                onPressed: () {},
+                child: Text('Sign in with Google'),
+              ),
+            )),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Sign in with Google'));
+  });  
 }

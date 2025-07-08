@@ -11,8 +11,14 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => MockAuthViewModel(),
-        child:
-            MaterialApp(home: OtpVerificationScreen(email: 'test@example.com')),
+        child: MaterialApp(
+          home: OtpVerificationScreen(email: 'test@example.com'),
+          routes: {
+            '/login': (context) => const Scaffold(body: Text('Login Screen')),
+            '/confirm-reset': (context) =>
+                const Scaffold(body: Text('Confirm Reset')),
+          },
+        ),
       ),
     );
 
@@ -47,7 +53,7 @@ void main() {
 
   testWidgets('shows error when OTP is invalid', (tester) async {
     final mockAuth = MockAuthViewModel();
-    mockAuth.shouldThrowOnVerify = true;
+    mockAuth.shouldFailOnVerify = true;
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => mockAuth,
@@ -65,7 +71,7 @@ void main() {
 
   testWidgets('shows error when resend OTP fails', (tester) async {
     final mockAuth = MockAuthViewModel();
-    mockAuth.shouldThrowOnResend = true;
+    mockAuth.shouldFailOnResend = true;
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => mockAuth,
@@ -80,5 +86,5 @@ void main() {
     await tester.pump(); // Finish loading and show error
     expect(
         find.text('Failed to resend OTP. Please try again.'), findsOneWidget);
-  });  
+  });
 }

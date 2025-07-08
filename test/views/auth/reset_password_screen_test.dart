@@ -6,11 +6,18 @@ import 'package:snapchef/viewmodels/auth_viewmodel.dart';
 import '../../mocks/mock_auth_viewmodel.dart';
 
 void main() {
-  testWidgets('ResetPasswordScreen renders and validates', (WidgetTester tester) async {
+  testWidgets('ResetPasswordScreen renders and validates',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => MockAuthViewModel(),
-        child: MaterialApp(home: ResetPasswordScreen()),
+        child: MaterialApp(
+          home: ResetPasswordScreen(),
+          routes: {
+            '/confirm-reset': (context) =>
+                const Scaffold(body: Text('Confirm Reset')),
+          },
+        ),
       ),
     );
 

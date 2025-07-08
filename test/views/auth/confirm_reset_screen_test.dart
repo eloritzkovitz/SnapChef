@@ -12,7 +12,12 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => MockAuthViewModel(),
-        child: MaterialApp(home: ConfirmResetScreen(email: 'test@example.com')),
+        child: MaterialApp(
+          home: ConfirmResetScreen(email: 'test@example.com'),
+          routes: {
+            '/login': (context) => const Scaffold(body: Text('Login Screen')),
+          },
+        ),
       ),
     );
 
@@ -49,25 +54,27 @@ void main() {
 
   testWidgets('shows error when resend code fails', (tester) async {
     final mockAuth = MockAuthViewModel();
-    mockAuth.shouldThrowOnRequestReset = true;
+    mockAuth.shouldFailOnRequestReset = true;
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => mockAuth,
         child: MaterialApp(home: ConfirmResetScreen(email: 'test@example.com')),
       ),
     );
+    // Fast-forward timer to enable button
     await tester.pump(const Duration(seconds: 61));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Resend Code'));
     await tester.pump(); // Start loading
     await tester.pump(); // Finish loading and show error
+    // The error should be shown as a snackbar or dialog
     expect(
         find.text('Failed to resend code. Please try again.'), findsOneWidget);
   });
 
   testWidgets('shows error when reset fails', (tester) async {
     final mockAuth = MockAuthViewModel();
-    mockAuth.shouldThrowOnConfirmReset = true;
+    mockAuth.shouldFailOnConfirmReset = true;
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthViewModel>(
         create: (_) => mockAuth,

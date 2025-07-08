@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
-import '../../../viewmodels/auth_viewmodel.dart';
-import '../../../viewmodels/user_viewmodel.dart';
 import '../../theme/colors.dart';
+import '../../utils/ui_util.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
   final Widget? googleButton;
@@ -24,6 +25,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+
+    // Show error from ViewModel using UIUtil
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authViewModel.errorMessage != null) {
+        showError(context, authViewModel.errorMessage!);
+        authViewModel.errorMessage = null;
+      }
+    });
 
     return Scaffold(
       resizeToAvoidBottomInset: true,

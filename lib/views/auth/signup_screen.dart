@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'otp_verification_screen.dart';
-import '../../../viewmodels/auth_viewmodel.dart';
+import '../../utils/ui_util.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -22,7 +23,15 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
-    final primaryColor = Theme.of(context).primaryColor;   
+    final primaryColor = Theme.of(context).primaryColor;
+
+    // Show error from ViewModel using UIUtil
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authViewModel.errorMessage != null) {
+        showError(context, authViewModel.errorMessage!);
+        authViewModel.errorMessage = null;
+      }
+    });
 
     return Scaffold(
       body: SafeArea(

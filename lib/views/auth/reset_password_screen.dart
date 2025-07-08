@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../viewmodels/auth_viewmodel.dart';
+import '../../utils/ui_util.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -12,11 +13,17 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
   bool _loading = false;
-  String? _error;
 
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authViewModel.errorMessage != null) {
+        showError(context, authViewModel.errorMessage!);
+        authViewModel.errorMessage = null;
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +56,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(Icons.email, color: Colors.grey),
-                errorText: _error,
               ),
               keyboardType: TextInputType.emailAddress,
             ),
@@ -60,30 +66,27 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () async {                       
+                        if (emailController.text.isEmpty ||
+                            !emailController.text.contains('@')) {
+                          return;
+                        }
                         setState(() {
                           _loading = true;
-                          _error = null;
                         });
-                        try {
-                          await authViewModel.requestPasswordReset(
-                            emailController.text,
+                        await authViewModel.requestPasswordReset(
+                          emailController.text,
+                          context,
+                        );
+                        setState(() => _loading = false);
+                        // Only navigate if there was no error
+                        if (authViewModel.errorMessage == null &&
+                            context.mounted) {
+                          Navigator.pushNamed(
                             context,
+                            '/confirm-reset',
+                            arguments: emailController.text,
                           );
-                          if (context.mounted) {
-                            Navigator.pushNamed(
-                              context,
-                              '/confirm-reset',
-                              arguments: emailController.text,
-                            );
-                          }
-                        } catch (e) {
-                          setState(() {
-                            _error =
-                                'Failed to send reset code. Please try again.';
-                          });
-                        } finally {
-                          setState(() => _loading = false);
                         }
                       },
                       child: const Text('Send Reset Code'),
