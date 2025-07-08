@@ -28,6 +28,7 @@ import 'package:snapchef/providers/connectivity_provider.dart' as _i18;
 import 'package:snapchef/repositories/user_repository.dart' as _i22;
 import 'package:snapchef/services/auth_service.dart' as _i16;
 import 'package:snapchef/services/friend_service.dart' as _i24;
+import 'package:snapchef/services/socket_service.dart' as _i26;
 import 'package:snapchef/services/user_service.dart' as _i14;
 
 // ignore_for_file: type=lint
@@ -4210,4 +4211,60 @@ class MockFriendService extends _i1.Mock implements _i24.FriendService {
         returnValue: _i13.Future<void>.value(),
         returnValueForMissingStub: _i13.Future<void>.value(),
       ) as _i13.Future<void>);
+}
+
+/// A class which mocks [SocketService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSocketService extends _i1.Mock implements _i26.SocketService {
+  @override
+  _i13.Stream<Map<String, dynamic>> get userStatsStream => (super.noSuchMethod(
+        Invocation.getter(#userStatsStream),
+        returnValue: _i13.Stream<Map<String, dynamic>>.empty(),
+        returnValueForMissingStub: _i13.Stream<Map<String, dynamic>>.empty(),
+      ) as _i13.Stream<Map<String, dynamic>>);
+
+  @override
+  _i13.Stream<Map<String, dynamic>> get friendUpdateStream =>
+      (super.noSuchMethod(
+        Invocation.getter(#friendUpdateStream),
+        returnValue: _i13.Stream<Map<String, dynamic>>.empty(),
+        returnValueForMissingStub: _i13.Stream<Map<String, dynamic>>.empty(),
+      ) as _i13.Stream<Map<String, dynamic>>);
+
+  @override
+  _i13.Stream<Map<String, dynamic>> get notificationStream =>
+      (super.noSuchMethod(
+        Invocation.getter(#notificationStream),
+        returnValue: _i13.Stream<Map<String, dynamic>>.empty(),
+        returnValueForMissingStub: _i13.Stream<Map<String, dynamic>>.empty(),
+      ) as _i13.Stream<Map<String, dynamic>>);
+
+  @override
+  _i13.Future<void> connect(String? userId) => (super.noSuchMethod(
+        Invocation.method(
+          #connect,
+          [userId],
+        ),
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
+
+  @override
+  void disconnect() => super.noSuchMethod(
+        Invocation.method(
+          #disconnect,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 }
