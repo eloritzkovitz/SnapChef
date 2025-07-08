@@ -29,6 +29,7 @@ import 'package:snapchef/viewmodels/friend_viewmodel.dart';
 import 'package:snapchef/viewmodels/ingredient_viewmodel.dart';
 import 'package:snapchef/viewmodels/main_viewmodel.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
+import 'package:snapchef/viewmodels/recipe_viewmodel.dart';
 import 'package:snapchef/viewmodels/shared_recipe_viewmodel.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/views/auth/confirm_reset_screen.dart';
@@ -49,6 +50,7 @@ import '../mocks/mock_ingredient_service.dart';
 import '../mocks/mock_main_viewmodel.dart';
 import '../mocks/mock_notification_service.dart';
 import '../mocks/mock_notifications_viewmodel.dart';
+import '../mocks/mock_recipe_viewmodel.dart';
 import '../mocks/mock_shared_recipe_viewmodel.dart';
 import '../mocks/mock_socket_service.dart';
 import '../mocks/mock_fridge_service.dart';
@@ -59,6 +61,7 @@ import '../mocks/mock_fridge_repository.dart';
 import '../mocks/mock_cookbook_repository.dart';
 import '../mocks/mock_shared_recipe_repository.dart';
 import '../mocks/mock_user_repository.dart';
+import '../mocks/mock_user_viewmodel.dart';
 import '../viewmodels/cookbook_viewmodel_test.mocks.dart'
     hide
         MockAppDatabase,
@@ -72,7 +75,6 @@ import '../viewmodels/fridge_viewmodel_test.mocks.dart'
         MockSyncProvider,
         MockFridgeService,
         MockFridgeRepository;
-import '../viewmodels/friend_viewmodel_test.mocks.dart' hide MockFriendService;
 
 void main() {
   setUpAll(() async {
@@ -136,6 +138,11 @@ void main() {
     }
     if (!getIt.isRegistered<FridgeRepository>()) {
       getIt.registerSingleton<FridgeRepository>(MockFridgeRepository());
+    }
+
+    // Recipe
+    if (!getIt.isRegistered<RecipeViewModel>()) {
+      getIt.registerSingleton<RecipeViewModel>(MockRecipeViewModel());
     }
 
     // Cookbook
@@ -237,9 +244,54 @@ void main() {
 
   testWidgets('Navigates to MainScreen', (WidgetTester tester) async {
     final mockNotificationsViewModel = GetIt.I<NotificationsViewModel>();
+    final mockConnectivityProvider =
+        GetIt.I<ConnectivityProvider>() as MockConnectivityProvider;
+    final mockUserViewModel =
+        MockUserViewModel(connectivityProvider: mockConnectivityProvider);
+    final mockMainViewModel = GetIt.I<MainViewModel>();
+    final mockIngredientViewModel = GetIt.I<IngredientViewModel>();
+    final mockFridgeViewModel = GetIt.I<FridgeViewModel>();
+    final mockRecipeViewModel = GetIt.I<RecipeViewModel>();
+    final mockCookbookViewModel = GetIt.I<CookbookViewModel>();
+
+    // Set the connectivity state for your handwritten mock    
+    mockConnectivityProvider.isOffline = false;
+
+    // Register the same mockUserViewModel instance in GetIt
+    final getIt = GetIt.instance;
+    if (getIt.isRegistered<UserViewModel>()) {
+      getIt.unregister<UserViewModel>();
+    }
+    getIt.registerSingleton<UserViewModel>(mockUserViewModel);
+
     await tester.pumpWidget(
-      ChangeNotifierProvider<NotificationsViewModel>.value(
-        value: mockNotificationsViewModel,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<NotificationsViewModel>.value(
+            value: mockNotificationsViewModel,
+          ),
+          ChangeNotifierProvider<UserViewModel>.value(
+            value: mockUserViewModel,
+          ),
+          ChangeNotifierProvider<MainViewModel>.value(
+            value: mockMainViewModel,
+          ),
+          ChangeNotifierProvider<ConnectivityProvider>.value(
+            value: mockConnectivityProvider,
+          ),
+          ChangeNotifierProvider<IngredientViewModel>.value(
+            value: mockIngredientViewModel,
+          ),
+          ChangeNotifierProvider<FridgeViewModel>.value(
+            value: mockFridgeViewModel,
+          ),
+          ChangeNotifierProvider<RecipeViewModel>.value(
+            value: mockRecipeViewModel,
+          ),
+          ChangeNotifierProvider<CookbookViewModel>.value(
+            value: mockCookbookViewModel,
+          ),
+        ],
         child: const MyApp(initialRoute: '/main'),
       ),
     );

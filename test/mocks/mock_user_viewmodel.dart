@@ -5,13 +5,18 @@ import 'package:snapchef/providers/connectivity_provider.dart';
 
 import 'mock_connectivity_provider.dart';
 
-class MockUserViewModel extends ChangeNotifier implements UserViewModel {
-  @override
-  ConnectivityProvider get connectivityProvider => MockConnectivityProvider();
-
+class MockUserViewModel extends ChangeNotifier implements UserViewModel { 
   final Future<void> Function()? fetchUserDataOverride;
+  final ConnectivityProvider? _connectivityProvider;
+  
+  @override
+  ConnectivityProvider get connectivityProvider =>
+      _connectivityProvider ?? MockConnectivityProvider();
 
-  MockUserViewModel({this.fetchUserDataOverride});
+ MockUserViewModel({
+    this.fetchUserDataOverride,
+    ConnectivityProvider? connectivityProvider,
+  }) : _connectivityProvider = connectivityProvider;
 
   Future<void> Function({
     String? firstName,
