@@ -258,6 +258,7 @@ class CookbookViewModel extends BaseViewModel with SortFilterMixin<Recipe> {
       final newImageUrl = await cookbookRepository.regenerateRecipeImage(
           cookbookId, recipeId, payload);
       final index = _recipes.indexWhere((r) => r.id == recipeId);
+      if (index == -1) return false;
       if (index != -1) {
         _recipes[index] = _recipes[index].copyWith(imageURL: newImageUrl);
         applyFiltersAndSorting();
@@ -318,6 +319,12 @@ class CookbookViewModel extends BaseViewModel with SortFilterMixin<Recipe> {
       int oldIndex, int newIndex, String cookbookId) async {
     if (oldIndex < newIndex) {
       newIndex -= 1;
+    }
+    if (oldIndex < 0 ||
+        oldIndex >= _recipes.length ||
+        newIndex < 0 ||
+        newIndex >= _recipes.length) {
+      return;
     }
     final recipe = filteredItems.removeAt(oldIndex);
     filteredItems.insert(newIndex, recipe);
