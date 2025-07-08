@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
@@ -153,4 +155,16 @@ class MockNotificationsViewModel extends ChangeNotifier
     _notifications = value;
     notifyListeners();
   }
+
+  @override  
+  Timer? get cleanupTimerInternal => throw UnimplementedError();
+
+  @override  
+  List<AppNotification> get notificationsInternal => throw UnimplementedError();
+  
+  @override  
+  Timer? get refreshTimerInternal => throw UnimplementedError();
+
+  @override  
+  StreamSubscription<AppNotification>? get wsSubscriptionInternal => throw UnimplementedError();
 }
