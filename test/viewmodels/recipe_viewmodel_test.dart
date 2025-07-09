@@ -26,8 +26,7 @@ void main() async {
 
   setUp(() {
     mockRecipeService = MockRecipeService();
-    vm = RecipeViewModel(recipeService: mockRecipeService);
-    vm.isLoading = false;
+    vm = RecipeViewModel(recipeService: mockRecipeService);    
     vm.recipe = '';
     vm.imageUrl = '';
     vm.generatedRecipe = null;

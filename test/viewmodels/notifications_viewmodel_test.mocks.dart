@@ -335,15 +335,12 @@ class MockBackendNotificationService extends _i1.Mock
       ) as String);
 
   @override
-  set notificationStream(
-          _i11.Stream<_i3.AppNotification>? _notificationStream) =>
-      super.noSuchMethod(
-        Invocation.setter(
-          #notificationStream,
-          _notificationStream,
-        ),
-        returnValueForMissingStub: null,
-      );
+  _i11.Stream<_i3.AppNotification> get notificationStream =>
+      (super.noSuchMethod(
+        Invocation.getter(#notificationStream),
+        returnValue: _i11.Stream<_i3.AppNotification>.empty(),
+        returnValueForMissingStub: _i11.Stream<_i3.AppNotification>.empty(),
+      ) as _i11.Stream<_i3.AppNotification>);
 
   @override
   _i11.Future<List<_i3.AppNotification>> fetchNotifications() =>
@@ -430,31 +427,6 @@ class MockBackendNotificationService extends _i1.Mock
         returnValue: _i11.Future<void>.value(),
         returnValueForMissingStub: _i11.Future<void>.value(),
       ) as _i11.Future<void>);
-
-  @override
-  void connectToWebSocket(
-    String? userToken,
-    String? userId,
-  ) =>
-      super.noSuchMethod(
-        Invocation.method(
-          #connectToWebSocket,
-          [
-            userToken,
-            userId,
-          ],
-        ),
-        returnValueForMissingStub: null,
-      );
-
-  @override
-  void disconnectWebSocket() => super.noSuchMethod(
-        Invocation.method(
-          #disconnectWebSocket,
-          [],
-        ),
-        returnValueForMissingStub: null,
-      );
 }
 
 /// A class which mocks [ConnectivityProvider].
@@ -494,6 +466,16 @@ class MockConnectivityProvider extends _i1.Mock
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  _i11.Future<void> checkInternetAndServer() => (super.noSuchMethod(
+        Invocation.method(
+          #checkInternetAndServer,
+          [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
 
   @override
   void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(

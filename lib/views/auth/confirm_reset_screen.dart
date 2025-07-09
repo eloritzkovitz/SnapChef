@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
+import '../../utils/ui_util.dart';
 
 class ConfirmResetScreen extends StatefulWidget {
   final String? email;
@@ -55,21 +56,10 @@ class _ConfirmResetScreenState extends State<ConfirmResetScreen> {
       _loading = true;
       _error = null;
     });
-    try {
-      await authViewModel.requestPasswordReset(email, context);
+    await authViewModel.requestPasswordReset(email, context);
+    setState(() => _loading = false);
+    if (authViewModel.errorMessage == null) {
       _startTimer();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Reset code resent! Please check your email.')),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to resend code. Please try again.';
-      });
-    } finally {
-      setState(() => _loading = false);
     }
   }
 
@@ -78,6 +68,28 @@ class _ConfirmResetScreenState extends State<ConfirmResetScreen> {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final String email = widget.email ??
         (ModalRoute.of(context)?.settings.arguments as String? ?? '');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authViewModel.errorMessage != null) {
+        showError(context, authViewModel.errorMessage!);
+        authViewModel.errorMessage = null;
+      }
+      if (authViewModel.infoMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authViewModel.infoMessage!)),
+        );
+        // Navigate if password reset was successful
+        if (authViewModel.infoMessage ==
+                'Password reset successful! Please log in.' &&
+            context.mounted) {
+          // Clear the infoMessage before navigating to avoid duplicate snackbars
+          authViewModel.infoMessage = null;
+          Navigator.pushReplacementNamed(context, '/login');
+        } else {
+          authViewModel.infoMessage = null;
+        }
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -143,25 +155,24 @@ class _ConfirmResetScreenState extends State<ConfirmResetScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () async {
+                          if (otpController.text.isEmpty ||
+                              passwordController.text.isEmpty) {
+                            setState(() {
+                              _error = 'Please fill in all fields.';
+                            });
+                            return;
+                          }
                           setState(() {
                             _loading = true;
                             _error = null;
                           });
-                          try {
-                            await authViewModel.confirmPasswordReset(
-                              email,
-                              otpController.text,
-                              passwordController.text,
-                              context,
-                            );
-                          } catch (e) {
-                            setState(() {
-                              _error =
-                                  'Failed to reset password. Please try again.';
-                            });
-                          } finally {
-                            setState(() => _loading = false);
-                          }
+                          await authViewModel.confirmPasswordReset(
+                            email,
+                            otpController.text,
+                            passwordController.text,
+                            context,
+                          );
+                          setState(() => _loading = false);
                         },
                         child: const Text('Set New Password'),
                       ),

@@ -4,15 +4,22 @@ import 'package:snapchef/models/recipe.dart';
 import 'package:snapchef/viewmodels/recipe_viewmodel.dart';
 
 class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
-
   @override
   bool isLoading = false;
+
+  @override
+  bool isLoggingOut = false;
+
+  @override
+  String? errorMessage;
 
   @override
   String recipe = 'Mock Recipe Title\nMock Step 1\nMock Step 2';
 
   @override
   String imageUrl = 'https://example.com/mock_image.jpg';
+
+  bool regenerateImageCallback = false;
 
   @override
   final List<Ingredient> selectedIngredients = [
@@ -65,6 +72,42 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
   );
 
   @override
+  void setLoading(bool value) {
+    isLoading = value;
+    notifyListeners();
+  }
+
+  @override
+  void setLoggingOut(bool value) {
+    isLoggingOut = value;
+    notifyListeners();
+  }
+
+  @override
+  void setError(String? message) {
+    errorMessage = message;
+    notifyListeners();
+  }
+
+  @override
+  void clearError() {
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    selectedIngredients.clear();
+    generatedRecipe = null;
+    recipe = '';
+    imageUrl = '';
+    isLoading = false;
+    isLoggingOut = false;
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  @override
   Future<void> generateRecipe({
     String? mealType,
     String? cuisine,
@@ -73,10 +116,10 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
     int? prepTime,
     Map<String, dynamic>? preferences,
   }) async {
-    isLoading = true;
-    notifyListeners();
+    regenerateImageCallback = true;
+    setLoading(true);
     await Future.delayed(const Duration(milliseconds: 10));
-    isLoading = false;
+    setLoading(false);
     recipe = 'Mock Recipe Title\nMock Step 1\nMock Step 2';
     imageUrl = 'https://example.com/mock_image.jpg';
     generatedRecipe = Recipe(
@@ -109,32 +152,31 @@ class MockRecipeViewModel extends ChangeNotifier implements RecipeViewModel {
     Map<String, dynamic>? preferences,
     List<String>? ingredients,
   }) async {
-    isLoading = true;
-    notifyListeners();
+    regenerateImageCallback = true;    
     await Future.delayed(const Duration(milliseconds: 10));
-    imageUrl = 'https://example.com/mock_image_regenerated.jpg';
-    if (generatedRecipe != null) {
-      generatedRecipe = generatedRecipe!.copyWith(imageURL: imageUrl);
-    }
-    isLoading = false;
     notifyListeners();
   }
-  
+
   @override
   void addIngredient(Ingredient ingredient) {
-   
+    selectedIngredients.add(ingredient);
+    notifyListeners();
   }
-  
+
   @override
-  void clearSelectedIngredients() {   
+  void clearSelectedIngredients() {
+    selectedIngredients.clear();
+    notifyListeners();
   }
-  
+
   @override
-  bool isIngredientSelected(Ingredient ingredient) {    
-    throw UnimplementedError();
+  bool isIngredientSelected(Ingredient ingredient) {
+    return selectedIngredients.any((i) => i.id == ingredient.id);
   }
-  
+
   @override
-  void removeIngredient(Ingredient ingredient) {    
+  void removeIngredient(Ingredient ingredient) {
+    selectedIngredients.removeWhere((i) => i.id == ingredient.id);
+    notifyListeners();
   }
 }

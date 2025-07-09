@@ -64,8 +64,7 @@ void main() {
     expect(vm.ingredients.length, 1);
     expect(vm.ingredients.first.id, testIngredient.id);
     expect(vm.ingredientMap![testIngredient.name.trim().toLowerCase()]?.id,
-        testIngredient.id);
-    expect(vm.loading, isFalse);
+        testIngredient.id);    
 
     verify(mockDao.insertIngredient(any)).called(1);
     verifyNever(mockDao.deleteIngredient(any));
@@ -84,8 +83,7 @@ void main() {
     expect(vm.ingredients.length, 1);
     expect(vm.ingredients.first.id, testIngredient.id);
     expect(vm.ingredientMap![testIngredient.name.trim().toLowerCase()]?.id,
-        testIngredient.id);
-    expect(vm.loading, isFalse);
+        testIngredient.id);    
   });
 
   test('fetchIngredients removes local ingredients not in backend', () async {

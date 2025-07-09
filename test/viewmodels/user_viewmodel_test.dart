@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -8,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/database/app_database.dart' as db;
 import 'package:snapchef/database/daos/user_dao.dart';
 import 'package:snapchef/database/daos/user_stats_dao.dart';
+import 'package:snapchef/services/socket_service.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/models/user.dart' as model;
 import 'package:snapchef/models/preferences.dart';
@@ -26,14 +29,40 @@ import 'package:snapchef/services/user_service.dart';
   MockSpec<UserRepository>(),
   MockSpec<UserService>(),
   MockSpec<FriendService>(),
+  MockSpec<SocketService>(),
 ])
 import 'user_viewmodel_test.mocks.dart';
+
+class DummyBuildContext extends Fake implements BuildContext {
+  final bool _mounted;
+  DummyBuildContext([this._mounted = true]);
+  @override
+  bool get mounted => _mounted;
+
+  @override
+  Widget get widget => Container();
+
+  @override
+  List<DiagnosticsNode> describeMissingAncestor(
+      {required Type expectedAncestorType}) {
+    return [DiagnosticsNode.message('missing ancestor')];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #findAncestorWidgetOfExactType) {
+      return null;
+    }
+    return super.noSuchMethod(invocation);
+  }
+}
 
 model.User get testUser => model.User(
       id: 'u1',
       firstName: 'Alice',
       lastName: 'Tester',
       email: 'alice@example.com',
+      profilePicture: 'https://example.com/profile.jpg',
       fridgeId: 'fridge1',
       cookbookId: 'cookbook1',
       friends: [],
@@ -56,6 +85,7 @@ void main() async {
   late MockAppDatabase mockDb;
   late MockUserDao mockUserDao;
   late MockUserStatsDao mockUserStatsDao;
+  late MockSocketService mockSocketService;
 
   setUp(() {
     GetIt.I.reset();
@@ -66,6 +96,7 @@ void main() async {
     mockDb = MockAppDatabase();
     mockUserDao = MockUserDao();
     mockUserStatsDao = MockUserStatsDao();
+    mockSocketService = MockSocketService();
 
     // Register dependencies
     GetIt.I.registerSingleton<db.AppDatabase>(mockDb);
@@ -73,6 +104,7 @@ void main() async {
     GetIt.I.registerSingleton<UserRepository>(mockUserRepository);
     GetIt.I.registerSingleton<UserService>(mockUserService);
     GetIt.I.registerSingleton<FriendService>(mockFriendService);
+    GetIt.I.registerSingleton<SocketService>(mockSocketService);
 
     when(mockDb.userDao).thenReturn(mockUserDao);
     when(mockDb.userStatsDao).thenReturn(mockUserStatsDao);
@@ -231,5 +263,224 @@ void main() async {
     await vm.removeFriend('u2');
     verify(mockFriendService.removeFriend('u2')).called(1);
     verify(mockUserStatsDao.deleteUserStats('u2')).called(1);
+  });
+
+  test('clear resets all fields and cancels subscriptions', () async {
+    vm.userForTest = testUser;
+    vm.sharedUserName = "abc";
+    vm.sharedUserProfilePic = "pic";
+    vm.clear();
+    expect(vm.user, isNull);
+    expect(vm.userStats, isNull);
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+
+    // Call clear again to ensure no error when already null
+    vm.clear();
+    expect(vm.user, isNull);
+    expect(vm.userStats, isNull);
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+  });
+
+  test('updateUser throws on error', () async {
+    when(mockUserRepository.updateUserRemote(
+      firstName: anyNamed('firstName'),
+      lastName: anyNamed('lastName'),
+      password: anyNamed('password'),
+      profilePicture: anyNamed('profilePicture'),
+    )).thenThrow(Exception('fail'));
+    expect(
+      () => vm.updateUser(
+        firstName: 'Bob',
+        lastName: 'Smith',
+        password: 'pass',
+        profilePicture: File('dummy.png'),
+      ),
+      throwsException,
+    );
+  });
+
+  test('updateFcmToken does nothing if token is null or empty', () async {
+    vm.userForTest = testUser;
+    await vm.updateFcmToken(null);
+    await vm.updateFcmToken('');
+    // Should not throw
+  });
+
+  test('updateFcmToken throws on error', () async {
+    when(mockUserRepository.updateFcmTokenRemote(any))
+        .thenThrow(Exception('fail'));
+    vm.userForTest = testUser;
+    expect(() => vm.updateFcmToken('token123'), throwsException);
+  });
+
+  test('getFriends calls fetchUserData and returns friends', () async {
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+    final friends = await vm.getFriends();
+    expect(friends, isA<List>());
+  });
+
+  test('fetchUserInfo sets sharedUserName/profilePic from remote', () async {
+    final mockUserService = MockUserService();
+    GetIt.I.unregister<UserService>();
+    GetIt.I.registerSingleton<UserService>(mockUserService);
+    when(mockUserService.getUserProfile(any)).thenAnswer((_) async => testUser);
+    await vm.fetchUserInfo(userId: 'u1', currentUserId: 'u2');
+    expect(vm.sharedUserName, isNotNull);
+    expect(vm.sharedUserProfilePic, isNotNull);
+  });
+
+  test(
+      'fetchUserInfo sets sharedUserName/profilePic from local if remote fails',
+      () async {
+    final mockUserService = MockUserService();
+    GetIt.I.unregister<UserService>();
+    GetIt.I.registerSingleton<UserService>(mockUserService);
+    when(mockUserService.getUserProfile(any)).thenThrow(Exception('fail'));
+    // Use Friend object if that's what your code expects
+    when(mockUserRepository.getFriendsMap(any)).thenAnswer((_) async => {
+          'u1': db.Friend(
+              friendName: 'Friend',
+              friendProfilePicture: 'pic',
+              id: 1,
+              userId: '',
+              friendId: '',
+              friendEmail: '')
+        });
+    await vm.fetchUserInfo(userId: 'u1', currentUserId: 'u2');
+    expect(vm.sharedUserName, equals('Friend'));
+    expect(vm.sharedUserProfilePic, equals('pic'));
+  });
+
+  test('fetchUserInfo sets sharedUserName/profilePic to null if all fails',
+      () async {
+    final mockUserService = MockUserService();
+    GetIt.I.unregister<UserService>();
+    GetIt.I.registerSingleton<UserService>(mockUserService);
+    when(mockUserService.getUserProfile(any)).thenThrow(Exception('fail'));
+    when(mockUserRepository.getFriendsMap(any)).thenThrow(Exception('fail'));
+    await vm.fetchUserInfo(userId: 'u1', currentUserId: 'u2');
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+  });
+
+  test('listenForUserStatsUpdates triggers fetchUserStats on event', () async {
+    final controller = StreamController<Map<String, dynamic>>();
+    when(mockSocketService.userStatsStream)
+        .thenAnswer((_) => controller.stream);
+    when(mockDb.userStatsDao).thenAnswer((_) => mockUserStatsDao);
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockUserRepository.fetchUserRemote())
+        .thenAnswer((_) async => testUser);
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenAnswer((_) async => {'recipes': 5});
+    when(mockUserRepository.storeUserStatsLocal(any, any))
+        .thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsLocal(any))
+        .thenAnswer((_) async => {'recipes': 5});
+
+    vm.listenForUserStatsUpdates('u1');
+    controller.add({'userId': 'u1'});
+    await Future.delayed(Duration.zero);
+    await controller.close();
+  });
+
+  test('fetchUserData handles db error gracefully', () async {
+    when(mockUserRepository.fetchUserLocal()).thenThrow(Exception('db error'));
+    when(mockConnectivity.isOffline).thenReturn(true);
+    await vm.fetchUserData();
+    expect(vm.user, isNull);
+  });
+
+  test('fetchUserData handles 401 and token refresh', () async {
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockUserRepository.fetchUserRemote()).thenThrow(Exception('401'));
+    when(mockUserRepository.fetchUserRemote())
+        .thenAnswer((_) async => testUser);
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenAnswer((_) async => {'recipes': 5});
+    when(mockUserRepository.storeUserStatsLocal(any, any))
+        .thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsLocal(any))
+        .thenAnswer((_) async => {'recipes': 5});
+    // You may need to mock AuthService.refreshTokens if used via GetIt
+    await vm.fetchUserData();
+    expect(vm.user, isNotNull);
+  });
+
+  test('fetchUserStats returns early if id is null', () async {
+    SharedPreferences.setMockInitialValues({});
+    await vm.fetchUserStats();
+    expect(vm.userStats, isNull);
+  });
+
+  test('fetchUserStats falls back to local on error or null', () async {
+    SharedPreferences.setMockInitialValues({'userId': 'u1'});
+    when(mockUserRepository.fetchUserStatsLocal(any))
+        .thenAnswer((_) async => {'recipes': 42});
+
+    // Remote throws
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenThrow(Exception('fail'));
+    await vm.fetchUserStats();
+    expect(vm.userStats!['recipes'], 42);
+
+    // Remote returns null
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenAnswer((_) async => null);
+    await vm.fetchUserStats();
+    expect(vm.userStats!['recipes'], 42);
+  });
+
+  test('clear disconnects socket and cancels subscriptions', () async {
+    // Covers clear() logic
+    vm.clear();
+    expect(vm.user, isNull);
+    expect(vm.userStats, isNull);
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+  });
+
+  test('updateFcmToken throws if repository throws', () async {
+    when(mockUserRepository.updateFcmTokenRemote(any))
+        .thenThrow(Exception('fail'));
+    vm.userForTest = testUser;
+    expect(() => vm.updateFcmToken('token123'), throwsException);
+  });
+
+  test('listenForFriendUpdates triggers fetchUserData on event', () async {
+    final controller = StreamController<Map<String, dynamic>>();
+    when(mockSocketService.friendUpdateStream)
+        .thenAnswer((_) => controller.stream);
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+
+    vm.listenForFriendUpdates('u1');
+    controller.add({'userId': 'u1'});
+    await Future.delayed(Duration.zero);
+    await controller.close();
+  });
+
+  test('removeFriend throws if service fails', () async {
+    when(mockFriendService.removeFriend(any)).thenThrow(Exception('fail'));
+    expect(() => vm.removeFriend('u2'), throwsException);
+  });
+
+  test('listenForFcmTokenRefresh does not throw', () {
+    vm.listenForFcmTokenRefresh();
+  }, skip: true);
+
+  test('fetchUserProfile falls back to local if remote fails', () async {
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockUserRepository.fetchUserProfileRemote(any))
+        .thenThrow(Exception('fail'));
+    when(mockUserRepository.fetchFriendLocal(any, any))
+        .thenAnswer((_) async => testUser);
+    final user = await vm.fetchUserProfile('u2');
+    expect(user, isNotNull);
   });
 }

@@ -78,7 +78,9 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? initialRoute;
+  final Widget? loginScreenGoogleButton;
+  const MyApp({super.key, this.initialRoute, this.loginScreenGoogleButton});
 
   @override
   Widget build(BuildContext context) {
@@ -93,24 +95,25 @@ class MyApp extends StatelessWidget {
 
         // ViewModels
         ChangeNotifierProvider<MainViewModel>.value(value: getIt<MainViewModel>()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
-        ChangeNotifierProvider(create: (_) => UserViewModel()),
-        ChangeNotifierProvider(create: (_) => IngredientViewModel()),
-        ChangeNotifierProvider(create: (_) => FridgeViewModel()),
-        ChangeNotifierProvider(create: (_) => RecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => SharedRecipeViewModel()),
-        ChangeNotifierProvider(create: (_) => CookbookViewModel()),
-        ChangeNotifierProvider(create: (_) => FriendViewModel()),
-        ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
+        ChangeNotifierProvider<AuthViewModel>.value(value: getIt<AuthViewModel>()),
+        ChangeNotifierProvider<UserViewModel>.value(value: getIt<UserViewModel>()),
+        ChangeNotifierProvider<IngredientViewModel>.value(value: getIt<IngredientViewModel>()),
+        ChangeNotifierProvider<FridgeViewModel>.value(value: getIt<FridgeViewModel>()),
+        ChangeNotifierProvider<RecipeViewModel>.value(value: getIt<RecipeViewModel>()),
+        ChangeNotifierProvider<CookbookViewModel>.value(value: getIt<CookbookViewModel>()),
+        ChangeNotifierProvider<SharedRecipeViewModel>.value(value: getIt<SharedRecipeViewModel>()),        
+        ChangeNotifierProvider<FriendViewModel>.value(value: getIt<FriendViewModel>()),
+        ChangeNotifierProvider<NotificationsViewModel>.value(value: getIt<NotificationsViewModel>() ), 
       ],
       child: Consumer<ConnectivityProvider>(
         builder: (context, connectivity, child) {
           return MaterialApp(
+            initialRoute: initialRoute,
             theme: appTheme,
             navigatorObservers: [StatusBarObserver(context), routeObserver],
             home: AnimatedSplashScreen(),
             routes: {
-              '/login': (context) => LoginScreen(),
+              '/login': (context) => LoginScreen(googleButton: loginScreenGoogleButton),
               '/signup': (context) => SignupScreen(),
               '/reset-password': (context) => const ResetPasswordScreen(),
               '/confirm-reset': (context) => const ConfirmResetScreen(),

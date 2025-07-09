@@ -44,6 +44,17 @@ class NotificationsViewModel extends BaseViewModel {
   Timer? _refreshTimer;
   Timer? _cleanupTimer;
 
+  // Add getters for testing purposes
+  @visibleForTesting
+  List<AppNotification> get notificationsInternal => _notifications;
+  @visibleForTesting
+  Timer? get refreshTimerInternal => _refreshTimer;
+  @visibleForTesting
+  Timer? get cleanupTimerInternal => _cleanupTimer;
+  @visibleForTesting
+  StreamSubscription<AppNotification>? get wsSubscriptionInternal =>
+      _wsSubscription;
+
   // Alerts: only future expiry/grocery notifications
   List<AppNotification> get alerts => _notifications
       .where((n) =>

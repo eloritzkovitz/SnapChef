@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapchef/providers/sync_provider.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:mockito/mockito.dart';
@@ -6,6 +7,9 @@ import 'package:mockito/mockito.dart';
 class MockConnectivityProvider extends Mock implements ConnectivityProvider {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
   late SyncProvider syncProvider;
 
   setUp(() {

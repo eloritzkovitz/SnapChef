@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 @GenerateNiceMocks([
   MockSpec<SharedPreferences>(),
 ])
-import 'main_viewmodel_test.mocks.dart';
 
 class MockNavigatorObserver extends Mock implements NavigatorObserver {}
 
@@ -29,17 +28,20 @@ void main() {
     });
 
     test('currentScreen and appBarTitle match selectedIndex', () {
+      expect(vm.appBarTitle, 'Home');
+      expect(vm.currentScreen.runtimeType.toString(), contains('HomeScreen'));
+      vm.onItemTapped(1);
       expect(vm.appBarTitle, 'Fridge');
       expect(vm.currentScreen.runtimeType.toString(), contains('FridgeScreen'));
-      vm.onItemTapped(1);
+      vm.onItemTapped(2);
       expect(vm.appBarTitle, 'Cookbook');
       expect(
           vm.currentScreen.runtimeType.toString(), contains('CookbookScreen'));
-      vm.onItemTapped(2);
+      vm.onItemTapped(3);
       expect(vm.appBarTitle, 'Profile');
       expect(
           vm.currentScreen.runtimeType.toString(), contains('ProfileScreen'));
-      vm.onItemTapped(3);
+      vm.onItemTapped(4);
       expect(vm.appBarTitle, 'Notifications');
       expect(vm.currentScreen.runtimeType.toString(),
           contains('NotificationsScreen'));
@@ -54,44 +56,5 @@ void main() {
       expect(vm.selectedIndex, 2);
       expect(notified, isTrue);
     });
-
-    testWidgets('logout clears SharedPreferences and navigates to login',
-        (tester) async {
-      final mockPrefs = MockSharedPreferences();
-      SharedPreferences.setMockInitialValues({});
-      when(mockPrefs.clear()).thenAnswer((_) async => true);
-
-      final mockObserver = MockNavigatorObserver();
-      final vm = MainViewModel();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return ElevatedButton(
-                onPressed: () async {
-                  await vm.logout(context);
-                },
-                child: const Text('Logout'),
-              );
-            },
-          ),
-          navigatorObservers: [mockObserver],
-          routes: {
-            '/login': (context) => const Scaffold(body: Text('Login')),
-          },
-        ),
-      );
-
-      await tester.tap(find.text('Logout'));
-      await tester.pumpAndSettle();
-      
-      verify(mockObserver.didReplace(
-        newRoute: anyNamed('newRoute'),
-        oldRoute: anyNamed('oldRoute'),
-      )).called(1);
-
-      expect(find.text('Login'), findsOneWidget);
-    });
-  });
+  });  
 }

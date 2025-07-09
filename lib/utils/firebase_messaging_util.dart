@@ -1,11 +1,22 @@
 import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+// Top-level variables for testability
+Future<void> Function(RemoteMessage) firebaseMessagingBackgroundHandler =
+    FirebaseMessagingUtil.firebaseMessagingBackgroundHandler;
+Future<void> Function() requestNotificationPermissions =
+    FirebaseMessagingUtil.requestNotificationPermissions;
+Future<String?> Function() getDeviceToken =
+    FirebaseMessagingUtil.getDeviceToken;
+void Function() listenForForegroundMessages =
+    FirebaseMessagingUtil.listenForForegroundMessages;
+
 class FirebaseMessagingUtil {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   /// Background message handler for Firebase Messaging.
-  static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  static Future<void> firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
     log('Handling a background message: ${message.messageId}');
   }
 
@@ -23,7 +34,8 @@ class FirebaseMessagingUtil {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       log('User granted notification permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
       log('User granted provisional notification permission');
     } else {
       log('User declined or has not accepted notification permission');

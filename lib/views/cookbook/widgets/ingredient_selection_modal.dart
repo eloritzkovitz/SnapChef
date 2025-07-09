@@ -84,7 +84,7 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
             const SizedBox(height: 16),
             // Ingredient List
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,             
+              height: MediaQuery.of(context).size.height * 0.5,
               child: ListView.builder(
                 itemCount: _filteredIngredients.length,
                 itemBuilder: (context, index) {
@@ -94,16 +94,23 @@ class _IngredientSelectionModalState extends State<IngredientSelectionModal> {
 
                   return ListTile(
                     leading: (ingredient.imageURL.isNotEmpty)
-                        ? Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white,                              
-                              borderRadius: BorderRadius.circular(
-                                  8),
-                              image: DecorationImage(
-                                image: NetworkImage(ingredient.imageURL),
-                                fit: BoxFit.contain,
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              ingredient.imageURL,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                width: 48,
+                                height: 48,
+                                color: Colors.grey,
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                               ),
                             ),
                           )

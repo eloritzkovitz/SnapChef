@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:snapchef/viewmodels/fridge_viewmodel.dart';
+import 'package:snapchef/viewmodels/ingredient_viewmodel.dart';
 import 'mock_ingredient_list_controller.dart';
 import 'package:snapchef/models/ingredient.dart';
 
@@ -24,6 +25,9 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
     notifyListeners();
   }
 
+  bool addGrocerySuccess = true;
+  bool addFridgeSuccess = true;
+
   @override
   List<Ingredient> get ingredients => [
         Ingredient(
@@ -43,6 +47,12 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
       ];
 
   @override
+  Future<void> fetchData({
+    required String fridgeId,
+    required IngredientViewModel ingredientViewModel,
+  }) async {}
+
+  @override
   Future<void> fetchFridgeIngredients(
       String fridgeId, ingredientViewModel) async {}
 
@@ -52,7 +62,7 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
   @override
   Future<bool> addFridgeItem(String fridgeId, String id, String name,
           String category, String? imageURL, int quantity) async =>
-      true;
+      addFridgeSuccess;
 
   @override
   Future<bool> updateFridgeItem(
@@ -65,7 +75,7 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
   @override
   Future<bool> addGroceryItem(String fridgeId, String id, String name,
           String category, String? imageURL, int quantity) async =>
-      true;
+      addGrocerySuccess;
 
   @override
   Future<bool> updateGroceryItem(

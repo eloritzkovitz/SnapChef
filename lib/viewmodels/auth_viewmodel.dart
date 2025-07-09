@@ -3,11 +3,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../core/base_viewmodel.dart';
 import '../core/session_manager.dart';
 import '../services/auth_service.dart';
-import '../utils/ui_util.dart';
 
 class AuthViewModel extends BaseViewModel {
   final AuthService _authService;
   final GoogleSignIn _googleSignIn;
+
+  @override
+  String? errorMessage;
+  String? infoMessage;
+  bool otpVerified = false;
 
   // Constructor with optional parameters for dependency injection
   AuthViewModel({
@@ -50,7 +54,7 @@ class AuthViewModel extends BaseViewModel {
       }
     } catch (e) {
       if (context.mounted) {
-        UIUtil.showError(context, 'Google Sign-In failed: $e');
+        errorMessage = 'Google Sign-In failed: $e';
       }
     } finally {
       setLoading(false);
@@ -88,11 +92,11 @@ class AuthViewModel extends BaseViewModel {
           );
           // If the error indicates that there is a mismatch in the details,
           // show an error message.
-        } else if (error.contains('Wrong username or password')) {          
-          UIUtil.showError(context, 'Wrong username or password. Please try again.');
+        } else if (error.contains('Wrong username or password')) {
+          errorMessage = 'Wrong username or password. Please try again.';
         } else {
           // For any other error, show a generic error message.
-          UIUtil.showError(context, error);
+          errorMessage = error;
         }
       }
     } finally {
@@ -115,7 +119,7 @@ class AuthViewModel extends BaseViewModel {
       return true;
     } catch (e) {
       if (context.mounted) {
-        UIUtil.showError(context, e.toString());
+        errorMessage = e.toString();
       }
       return false;
     } finally {
@@ -132,7 +136,7 @@ class AuthViewModel extends BaseViewModel {
       notifyListeners();
       if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      if (context.mounted) errorMessage = e.toString();
     }
   }
 
@@ -149,26 +153,36 @@ class AuthViewModel extends BaseViewModel {
   /// If successful, navigates to the login screen.
   Future<void> verifyOTP(String email, String otp, BuildContext context) async {
     setLoading(true);
+    errorMessage = null;
+    infoMessage = null;
+    otpVerified = false;
     try {
       await _authService.verifyOTP(email, otp);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email verified! Please log in.')),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
-      }
+      infoMessage = 'Email verified! Please log in.';
+      otpVerified = true;
+      notifyListeners();
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      errorMessage = 'Invalid OTP. Please try again.';
+      notifyListeners();
     } finally {
       setLoading(false);
     }
   }
 
   /// Resends the OTP to the user's email.
-  Future<void> resendOTP(String email) async {
+  Future<bool> resendOTP(String email) async {
     setLoading(true);
+    errorMessage = null;
+    infoMessage = null;
     try {
       await _authService.resendOTP(email);
+      infoMessage = 'OTP resent! Please check your email.';
+      notifyListeners();
+      return true;
+    } catch (e) {
+      errorMessage = 'Failed to resend OTP. Please try again.';
+      notifyListeners();
+      return false;
     } finally {
       setLoading(false);
     }
@@ -177,16 +191,15 @@ class AuthViewModel extends BaseViewModel {
   /// Requests a password reset by sending a reset code to the user's email.
   Future<void> requestPasswordReset(String email, BuildContext context) async {
     setLoading(true);
+    errorMessage = null;
+    infoMessage = null;
     try {
       await _authService.requestPasswordReset(email);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Reset code sent! Please check your email.')),
-        );
-      }
+      infoMessage = 'Reset code sent! Please check your email.';
+      notifyListeners();
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      errorMessage = 'Failed to send reset code. Please try again.';
+      notifyListeners();
     } finally {
       setLoading(false);
     }
@@ -196,17 +209,15 @@ class AuthViewModel extends BaseViewModel {
   Future<void> confirmPasswordReset(String email, String otp,
       String newPassword, BuildContext context) async {
     setLoading(true);
+    errorMessage = null;
+    infoMessage = null;
     try {
       await _authService.confirmPasswordReset(email, otp, newPassword);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Password reset successful! Please log in.')),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
-      }
+      infoMessage = 'Password reset successful! Please log in.';
+      notifyListeners();
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      errorMessage = 'Failed to reset password. Please try again.';
+      notifyListeners();
     } finally {
       setLoading(false);
     }

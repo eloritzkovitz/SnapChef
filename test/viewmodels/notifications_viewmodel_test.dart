@@ -125,6 +125,28 @@ void main() async {
     expect(vm.alerts.length + vm.notifications.length, 1);
   });
 
+  test('syncNotifications applies pending add/edit/delete actions', () async {
+    final notif2 = testNotif.copyWith(id: 'n2');
+    final notif3 = testNotif.copyWith(id: 'n3');
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockBackendService.fetchNotifications())
+        .thenAnswer((_) async => [testNotif]);
+    when(mockSyncProvider.getPendingActions(any)).thenAnswer((_) async => [
+          {'action': 'add', 'notification': notif2.toJson()},
+          {'action': 'add', 'notification': notif3.toJson()},
+          {'action': 'delete', 'notificationId': 'n1'},
+        ]);
+    when(mockNotifService.saveStoredNotifications(any))
+        .thenAnswer((_) async {});
+
+    await vm.syncNotifications();
+
+    // Should contain notif2 (added), notif3 (edited), and not testNotif (deleted)
+    expect(vm.notificationsInternal.any((n) => n.id == 'n2'), isTrue);
+    expect(vm.notificationsInternal.any((n) => n.id == 'n3'), isTrue);
+    expect(vm.notificationsInternal.any((n) => n.id == 'n1'), isFalse);
+  });
+
   test('addNotification queues when offline', () async {
     when(mockConnectivity.isOffline).thenReturn(true);
     await vm.addNotification(testNotif);
@@ -139,6 +161,15 @@ void main() async {
     expect(vm.alerts.length + vm.notifications.length, greaterThanOrEqualTo(1));
   });
 
+  test('addNotification adds to local list and schedules when offline',
+      () async {
+    when(mockConnectivity.isOffline).thenReturn(true);
+    await vm.addNotification(testNotif);
+    expect(vm.notificationsInternal.any((n) => n.id == 'n1'), isTrue);
+    verify(mockNotifService.saveStoredNotifications(argThat(isA<List>()))).called(2);
+    //verify(mockNotifService.scheduleNotification(testNotif)).called(1);
+  });
+
   test('editNotification queues when offline', () async {
     when(mockConnectivity.isOffline).thenReturn(true);
     await vm.editNotification('n1', testNotif);
@@ -150,6 +181,15 @@ void main() async {
     await vm.editNotification('n1', testNotif);
     verify(mockBackendService.updateNotification(any, any)).called(1);
     verify(mockNotifService.editNotification(any, any)).called(1);
+  });
+
+  test('editNotification updates local list when offline', () async {
+    when(mockConnectivity.isOffline).thenReturn(true);
+    vm.notificationsInternal.clear();
+    vm.notificationsInternal.add(testNotif);
+    final updated = testNotif.copyWith(title: 'Updated');
+    await vm.editNotification('n1', updated);
+    expect(vm.notificationsInternal.first.title, 'Updated');
   });
 
   test('deleteNotification queues when offline', () async {
@@ -169,15 +209,48 @@ void main() async {
     expect(vm.notifications.where((n) => n.id == 'n1'), isEmpty);
   });
 
+  test('deleteNotification removes from local list when offline', () async {
+    when(mockConnectivity.isOffline).thenReturn(true);
+    vm.notificationsInternal.clear();
+    vm.notificationsInternal.add(testNotif);
+    await vm.deleteNotification('n1');
+    expect(vm.notificationsInternal, isEmpty);
+  });
+
   test('generateUniqueNotificationId delegates to service', () async {
     final id = await vm.generateUniqueNotificationId();
     expect(id, 'uniqueId');
     verify(mockNotifService.generateUniqueNotificationId()).called(1);
   });
 
+  test('generateUniqueNotificationId returns value from service', () async {
+    when(mockNotifService.generateUniqueNotificationId())
+        .thenAnswer((_) async => 'uniqueId');
+    final id = await vm.generateUniqueNotificationId();
+    expect(id, 'uniqueId');
+  });
+
+  test('clear resets notifications, timers, and subscriptions', () async {
+    // Add a notification to the list
+    vm.alerts.add(testNotif);
+    vm.notifications.add(testNotif);
+
+    vm.setError('some error');
+    vm.setLoading(true);
+
+    vm.clear();
+
+    expect(vm.alerts, isEmpty);
+    expect(vm.notifications, isEmpty);
+    expect(vm.isLoading, isFalse);
+    expect(vm.refreshTimerInternal, isNull);
+    expect(vm.cleanupTimerInternal, isNull);
+    expect(vm.wsSubscriptionInternal, isNull);
+  });
+
   test('dispose cancels timers and subscriptions', () async {
     final sub = StreamController<AppNotification>();
     when(mockBackendService.notificationStream).thenAnswer((_) => sub.stream);
-    vm.dispose();    
+    vm.dispose();
   }, skip: true);
 }

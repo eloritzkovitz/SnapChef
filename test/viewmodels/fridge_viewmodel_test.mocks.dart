@@ -168,6 +168,16 @@ class MockConnectivityProvider extends _i1.Mock
       );
 
   @override
+  _i11.Future<void> checkInternetAndServer() => (super.noSuchMethod(
+        Invocation.method(
+          #checkInternetAndServer,
+          [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
   void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
@@ -1210,8 +1220,15 @@ class MockIngredientViewModel extends _i1.Mock
       ) as List<_i17.Ingredient>);
 
   @override
-  bool get loading => (super.noSuchMethod(
-        Invocation.getter(#loading),
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  bool get isLoggingOut => (super.noSuchMethod(
+        Invocation.getter(#isLoggingOut),
         returnValue: false,
         returnValueForMissingStub: false,
       ) as bool);
@@ -1232,6 +1249,51 @@ class MockIngredientViewModel extends _i1.Mock
         returnValue: _i11.Future<void>.value(),
         returnValueForMissingStub: _i11.Future<void>.value(),
       ) as _i11.Future<void>);
+
+  @override
+  void clear() => super.noSuchMethod(
+        Invocation.method(
+          #clear,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setLoading(bool? value) => super.noSuchMethod(
+        Invocation.method(
+          #setLoading,
+          [value],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setLoggingOut(bool? value) => super.noSuchMethod(
+        Invocation.method(
+          #setLoggingOut,
+          [value],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setError(String? message) => super.noSuchMethod(
+        Invocation.method(
+          #setError,
+          [message],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearError() => super.noSuchMethod(
+        Invocation.method(
+          #clearError,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 
   @override
   void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(

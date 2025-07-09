@@ -167,6 +167,16 @@ class MockConnectivityProvider extends _i1.Mock
       );
 
   @override
+  _i11.Future<void> checkInternetAndServer() => (super.noSuchMethod(
+        Invocation.method(
+          #checkInternetAndServer,
+          [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
   void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,

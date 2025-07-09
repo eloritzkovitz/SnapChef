@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+void Function(BuildContext, String) showError = UIUtil.showError;
+void Function(BuildContext) showBackOnline = UIUtil.showBackOnline;
+void Function(BuildContext) showOffline = UIUtil.showOffline;
+
 class UIUtil {
   // --- SnackBar Utility Methods ---
 

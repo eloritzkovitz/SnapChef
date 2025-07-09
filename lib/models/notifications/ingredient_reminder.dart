@@ -28,6 +28,26 @@ class IngredientReminder implements AppNotification {
   @override
   String get type => typeEnum.name;
 
+  IngredientReminder copyWith({
+    String? id,
+    String? ingredientName,
+    String? title,
+    String? body,
+    DateTime? scheduledTime,
+    ReminderType? typeEnum,
+    String? recipientId,
+  }) {
+    return IngredientReminder(
+      id: id ?? this.id,
+      ingredientName: ingredientName ?? this.ingredientName,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      scheduledTime: scheduledTime ?? this.scheduledTime,
+      typeEnum: typeEnum ?? this.typeEnum,
+      recipientId: recipientId ?? this.recipientId,
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

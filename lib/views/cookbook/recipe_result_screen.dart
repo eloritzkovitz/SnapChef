@@ -17,6 +17,7 @@ class RecipeResultScreen extends StatefulWidget {
   final String? difficulty;
   final int? cookingTime;
   final int? prepTime;
+  final Widget Function(String imageUrl)? imageBuilder;
 
   const RecipeResultScreen({
     super.key,
@@ -28,6 +29,7 @@ class RecipeResultScreen extends StatefulWidget {
     this.difficulty,
     this.cookingTime,
     this.prepTime,
+    this.imageBuilder,
   });
 
   @override
@@ -75,6 +77,7 @@ class _RecipeResultScreenState extends State<RecipeResultScreen> {
               child: DisplayRecipeWidget(
                 recipeString: widget.recipe,
                 imageUrl: ImageUtil().getFullImageUrl(_currentImageUrl),
+                imageBuilder: widget.imageBuilder,
               ),
             ),
           ],
