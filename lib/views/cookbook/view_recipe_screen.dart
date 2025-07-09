@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:snapchef/models/ingredient.dart';
+import 'package:snapchef/views/cookbook/edit_recipe_screen.dart';
 import '../../models/notifications/share_notification.dart';
 import '../../models/recipe.dart';
 import '../../models/user.dart';
@@ -11,7 +13,6 @@ import '../../viewmodels/user_viewmodel.dart';
 import '../../widgets/base_screen.dart';
 import '../../widgets/display_recipe_widget.dart';
 import '../../widgets/snapchef_appbar.dart';
-import './widgets/edit_recipe_modal.dart';
 
 class ViewRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -38,64 +39,75 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
     _recipe = widget.recipe;
   }
 
-  // Show the edit recipe modal
-  Future<void> _showEditRecipeDialog(BuildContext context) async {
+  // Show the edit recipe screen
+  Future<void> _showEditRecipeScreen(BuildContext context) async {
     final cookbookViewModel =
         Provider.of<CookbookViewModel>(context, listen: false);
 
-    await showDialog(
-      context: context,
-      builder: (context) => EditRecipeModal(
-        recipeObj: _recipe,
-        onSave: ({
-          required String title,
-          required String description,
-          required String mealType,
-          required String cuisineType,
-          required String difficulty,
-          required int prepTime,
-          required int cookingTime,
-        }) async {
-          final success = await cookbookViewModel.updateRecipe(
-            cookbookId: widget.cookbookId,
-            recipeId: _recipe.id,
-            title: title,
-            description: description,
-            mealType: mealType,
-            cuisineType: cuisineType,
-            difficulty: difficulty,
-            prepTime: prepTime,
-            cookingTime: cookingTime,
-            ingredients: _recipe.ingredients,
-            instructions: _recipe.instructions,
-            imageURL: _recipe.imageURL,
-            rating: _recipe.rating,
-          );
-          if (success) {
-            setState(() {
-              _recipe = _recipe.copyWith(
-                title: title,
-                description: description,
-                mealType: mealType,
-                cuisineType: cuisineType,
-                difficulty: difficulty,
-                prepTime: prepTime,
-                cookingTime: cookingTime,
-              );
-            });
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Recipe updated successfully')),
-              );
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditRecipeScreen(
+          recipeObj: _recipe,
+          onSave: ({
+            required String title,
+            required String description,
+            required String mealType,
+            required String cuisineType,
+            required String difficulty,
+            required int prepTime,
+            required int cookingTime,
+            required List<String> instructions,
+            required List<Ingredient> ingredients,
+            required String imageURL,
+            required double? rating,
+            required String raw,
+          }) async {
+            final success = await cookbookViewModel.updateRecipe(
+              cookbookId: widget.cookbookId,
+              recipeId: _recipe.id,
+              title: title,
+              description: description,
+              mealType: mealType,
+              cuisineType: cuisineType,
+              difficulty: difficulty,
+              prepTime: prepTime,
+              cookingTime: cookingTime,
+              ingredients: ingredients,
+              instructions: instructions,
+              imageURL: imageURL,
+              rating: rating,
+            );
+            if (success) {
+              setState(() {
+                _recipe = _recipe.copyWith(
+                  title: title,
+                  description: description,
+                  mealType: mealType,
+                  cuisineType: cuisineType,
+                  difficulty: difficulty,
+                  prepTime: prepTime,
+                  cookingTime: cookingTime,
+                  instructions: instructions,
+                  ingredients: ingredients,
+                  imageURL: imageURL,
+                  rating: rating,
+                );
+              });
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Recipe updated successfully')),
+                );
+              }
+            } else {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to update recipe')),
+                );
+              }
             }
-          } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Failed to update recipe')),
-              );
-            }
-          }
-        },
+          },
+        ),
       ),
     );
   }
@@ -468,7 +480,7 @@ class _ViewRecipeScreenState extends State<ViewRecipeScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
-                _showEditRecipeDialog(context);
+                _showEditRecipeScreen(context);
               }
               if (value == 'regenerate_image' && !isOffline) {
                 _regenerateRecipeImage(context);
