@@ -6,6 +6,7 @@ import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:snapchef/viewmodels/cookbook_viewmodel.dart';
 import 'package:snapchef/viewmodels/notifications_viewmodel.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
+import 'package:snapchef/views/cookbook/edit_recipe_screen.dart';
 import 'package:snapchef/views/cookbook/view_recipe_screen.dart';
 import 'package:snapchef/models/recipe.dart';
 import 'package:snapchef/models/ingredient.dart';
@@ -112,13 +113,14 @@ void main() {
       expect(find.text('Edit Recipe'), findsOneWidget);
       await tester.tap(find.text('Edit Recipe'));
       await safePumpAndSettle(tester);
-      expect(find.byType(AlertDialog), findsOneWidget);
 
-      // Close modal (simulate cancel)
-      if (find.text('Cancel').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Cancel').first);
-        await safePumpAndSettle(tester);
-      }
+      // Should navigate to EditRecipeScreen
+      expect(find.byType(EditRecipeScreen), findsOneWidget);
+
+      // Simulate back navigation (pop the screen)
+      await tester.pageBack();
+      await safePumpAndSettle(tester); 
+      expect(find.byType(ViewRecipeScreen), findsOneWidget);
 
       // Open popup menu and tap Favorite
       await tester.tap(find.byType(PopupMenuButton<String>));
@@ -248,7 +250,7 @@ void main() {
       final Icon shareIcon = tester.widget(shareIconFinder);
       expect(shareIcon.color, Colors.black);
     });
-  });  
+  });
 
   group('DisplayRecipeWidget', () {
     Widget buildDisplayRecipeWidget(
