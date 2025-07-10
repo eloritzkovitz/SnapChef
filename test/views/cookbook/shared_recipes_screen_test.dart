@@ -127,16 +127,14 @@ void main() {
       rating: 0,
       source: RecipeSource.ai,
     );
-    final sharedRecipe = SharedRecipe(
-      id: 's2',
+    // Use a grouped recipe for "Shared by me"
+    final groupedRecipe = GroupedSharedRecipe(
       recipe: recipe,
-      fromUser: 'userA',
-      toUser: 'userB',
-      sharedAt: DateTime.now(),
-      status: 'active',
+      sharedWithUserIds: ['userB'],
     );
     final sharedRecipeViewModel = MockSharedRecipeViewModel();
-    sharedRecipeViewModel.sharedByMeRecipes!.add(sharedRecipe);
+    // Make sure your mock supports this property!
+    sharedRecipeViewModel.groupedSharedByMeRecipes = [groupedRecipe];
 
     await tester.pumpWidget(
         buildTestWidget(sharedRecipeViewModel: sharedRecipeViewModel));

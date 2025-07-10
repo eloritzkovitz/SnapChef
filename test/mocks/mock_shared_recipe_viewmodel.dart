@@ -14,6 +14,14 @@ class MockSharedRecipeViewModel extends ChangeNotifier
   List<SharedRecipe>? get sharedByMeRecipes => _sharedByMeRecipes;
 
   @override
+  List<GroupedSharedRecipe> get groupedSharedByMeRecipes => _groupedSharedByMeRecipes;
+  List<GroupedSharedRecipe> _groupedSharedByMeRecipes = [];
+
+  set groupedSharedByMeRecipes(List<GroupedSharedRecipe> value) {
+    _groupedSharedByMeRecipes = value;
+  }
+
+  @override
   bool get isLoading => false;
 
   @override
