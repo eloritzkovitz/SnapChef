@@ -32,3 +32,10 @@ class SharedRecipe {
     );
   }
 }
+
+class GroupedSharedRecipe {
+  final Recipe recipe;
+  final List<String> sharedWithUserIds;
+
+  GroupedSharedRecipe({required this.recipe, required this.sharedWithUserIds});
+}

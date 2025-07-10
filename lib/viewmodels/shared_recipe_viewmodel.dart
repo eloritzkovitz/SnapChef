@@ -15,7 +15,7 @@ class SharedRecipeViewModel extends BaseViewModel {
   final SharedRecipeRepository sharedRecipeRepository =
       GetIt.I<SharedRecipeRepository>();
   final SyncProvider syncProvider = GetIt.I<SyncProvider>();
-  final SyncManager syncManager = GetIt.I<SyncManager>();  
+  final SyncManager syncManager = GetIt.I<SyncManager>();
 
   @override
   void dispose() {
@@ -28,6 +28,25 @@ class SharedRecipeViewModel extends BaseViewModel {
     syncManager.register(syncProvider.syncPendingActions);
     syncProvider.initSync(connectivityProvider);
     syncProvider.loadPendingActions();
+  }
+
+  /// Returns a list of shared recipes grouped by recipe ID.
+  /// Each group contains the recipe and a list of user IDs it was shared with.
+  List<GroupedSharedRecipe> get groupedSharedByMeRecipes {
+    if (sharedByMeRecipes == null) return [];
+    final Map<String, GroupedSharedRecipe> grouped = {};
+    for (final shared in sharedByMeRecipes!) {
+      final recipeId = shared.recipe.id;
+      if (grouped.containsKey(recipeId)) {
+        grouped[recipeId]!.sharedWithUserIds.add(shared.toUser);
+      } else {
+        grouped[recipeId] = GroupedSharedRecipe(
+          recipe: shared.recipe,
+          sharedWithUserIds: [shared.toUser],
+        );
+      }
+    }
+    return grouped.values.toList();
   }
 
   /// Fetches recipes shared with or by the user.
@@ -82,7 +101,7 @@ class SharedRecipeViewModel extends BaseViewModel {
         } else {
           mergedWithMe.removeWhere((r) => r.id == id);
         }
-      }      
+      }
     }
 
     sharedWithMeRecipes = result['sharedWithMe'] ?? [];
