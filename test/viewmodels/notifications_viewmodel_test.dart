@@ -304,4 +304,28 @@ void main() async {
     expect(vm.isLoading, isTrue);
     expect(notified, isTrue);
   });
+
+  test('addNotification sets error on failure', () async {
+    when(mockBackendService.createNotification(any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.addNotification(testNotif);
+    expect(vm.errorMessage, isNotNull);
+  });
+
+  test('editNotification sets error on failure', () async {
+    when(mockBackendService.updateNotification(any, any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.editNotification('n1', testNotif);
+    expect(vm.errorMessage, isNotNull);
+  });
+
+  test('deleteNotification sets error on failure', () async {
+    when(mockBackendService.deleteNotification(any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.deleteNotification('n1');
+    expect(vm.errorMessage, isNotNull);
+  });
 }
