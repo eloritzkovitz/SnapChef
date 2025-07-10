@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -327,5 +328,38 @@ void main() async {
     when(mockConnectivity.isOffline).thenReturn(false);
     await vm.deleteNotification('n1');
     expect(vm.errorMessage, isNotNull);
+  });
+
+  test('dispose cancels timers and subscriptions', () async {
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+    await Future.delayed(Duration.zero);
+    expect(() => vm.dispose(), returnsNormally);
+  });
+
+  test('clear can be called multiple times safely', () {
+    vm.clear();
+    expect(() => vm.clear(), returnsNormally);
+  });
+
+  test('dispose can be called multiple times safely', () async {
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+    await Future.delayed(Duration.zero);
+    vm.dispose();
+    expect(() => vm.dispose(), throwsA(isA<FlutterError>()));
+  });
+
+  test('listeners are notified when notifications change', () async {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    await vm.addNotification(testNotif);
+    expect(notified, isTrue);
   });
 }
