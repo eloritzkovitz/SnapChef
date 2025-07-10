@@ -55,6 +55,14 @@ class NotificationsViewModel extends BaseViewModel {
   StreamSubscription<AppNotification>? get wsSubscriptionInternal =>
       _wsSubscription;
 
+  @visibleForTesting
+  set refreshTimerInternal(Timer? t) => _refreshTimer = t;
+  @visibleForTesting
+  set cleanupTimerInternal(Timer? t) => _cleanupTimer = t;
+  @visibleForTesting
+  set wsSubscriptionInternal(StreamSubscription<AppNotification>? s) =>
+      _wsSubscription = s;
+
   // Alerts: only future expiry/grocery notifications
   List<AppNotification> get alerts => _notifications
       .where((n) =>

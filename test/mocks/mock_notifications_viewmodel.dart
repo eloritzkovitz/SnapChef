@@ -167,4 +167,16 @@ class MockNotificationsViewModel extends ChangeNotifier
 
   @override  
   StreamSubscription<AppNotification>? get wsSubscriptionInternal => throw UnimplementedError();
+  
+  @override
+  set cleanupTimerInternal(Timer? t) {   
+  }
+  
+  @override
+  set refreshTimerInternal(Timer? t) {  
+  }
+  
+  @override
+  set wsSubscriptionInternal(StreamSubscription<AppNotification>? s) {  
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:snapchef/providers/sync_provider.dart';
@@ -164,7 +167,8 @@ void main() async {
     when(mockConnectivity.isOffline).thenReturn(true);
     await vm.addNotification(testNotif);
     expect(vm.notificationsInternal.any((n) => n.id == 'n1'), isTrue);
-    verify(mockNotifService.saveStoredNotifications(argThat(isA<List>()))).called(2);
+    verify(mockNotifService.saveStoredNotifications(argThat(isA<List>())))
+        .called(2);
     //verify(mockNotifService.scheduleNotification(testNotif)).called(1);
   });
 
@@ -228,21 +232,76 @@ void main() async {
     expect(id, 'uniqueId');
   });
 
-  test('clear resets notifications, timers, and subscriptions', () async {
-    // Add a notification to the list
-    vm.alerts.add(testNotif);
-    vm.notifications.add(testNotif);
-
+  test(
+      'clear resets all fields, cancels timers/subscriptions, and notifies listeners',
+      () async {
+    // Add notifications and set loading/error
+    vm.notificationsInternal.add(testNotif);
     vm.setError('some error');
     vm.setLoading(true);
 
+    // Set up dummy timers and subscription
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm
+      ..refreshTimerInternal?.cancel()
+      ..cleanupTimerInternal?.cancel();
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+
+    bool notified = false;
+    vm.addListener(() {
+      notified = true;
+    });
+
     vm.clear();
 
-    expect(vm.alerts, isEmpty);
-    expect(vm.notifications, isEmpty);
+    expect(vm.notificationsInternal, isEmpty);
     expect(vm.isLoading, isFalse);
+    expect(vm.errorMessage, isNull);
     expect(vm.refreshTimerInternal, isNull);
     expect(vm.cleanupTimerInternal, isNull);
     expect(vm.wsSubscriptionInternal, isNull);
-  });  
+    expect(notified, isTrue);
+  });
+
+  test('alerts and notifications getters filter correctly', () async {
+    final now = DateTime.now();
+    final futureNotif = testNotif.copyWith(
+      id: 'future',
+      scheduledTime: now.add(const Duration(hours: 2)),
+      typeEnum: ReminderType.expiry,
+    );
+    final pastNotif = testNotif.copyWith(
+      id: 'past',
+      scheduledTime: now.subtract(const Duration(hours: 2)),
+      typeEnum: ReminderType.expiry,
+    );
+    vm.notificationsInternal
+      ..clear()
+      ..addAll([futureNotif, pastNotif]);
+
+    // Only future expiry/grocery are alerts
+    expect(vm.alerts.length, 1);
+    expect(vm.alerts.first.id, 'future');
+    // Past expiry/grocery are notifications
+    expect(vm.notifications.any((n) => n.id == 'past'), isTrue);
+  });
+
+  test('setError sets errorMessage and notifies', () {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    vm.setError('err');
+    expect(vm.errorMessage, 'err');
+    expect(notified, isTrue);
+  });
+
+  test('setLoading sets isLoading and notifies', () {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    vm.setLoading(true);
+    expect(vm.isLoading, isTrue);
+    expect(notified, isTrue);
+  });
 }
