@@ -5,15 +5,15 @@ import 'package:snapchef/providers/connectivity_provider.dart';
 
 import 'mock_connectivity_provider.dart';
 
-class MockUserViewModel extends ChangeNotifier implements UserViewModel { 
+class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   final Future<void> Function()? fetchUserDataOverride;
   final ConnectivityProvider? _connectivityProvider;
-  
+
   @override
   ConnectivityProvider get connectivityProvider =>
       _connectivityProvider ?? MockConnectivityProvider();
 
- MockUserViewModel({
+  MockUserViewModel({
     this.fetchUserDataOverride,
     ConnectivityProvider? connectivityProvider,
   }) : _connectivityProvider = connectivityProvider;
@@ -166,9 +166,11 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
   }
 
   // Mock implementation for shared user data
-
+  String _sharedUserName = 'Test User';
   @override
-  String get sharedUserName => 'Test User';
+  String get sharedUserName => _sharedUserName;
+  @override
+  set sharedUserName(String? value) => _sharedUserName = value ?? '';
 
   @override
   String get sharedUserProfilePic => '';
