@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 @GenerateNiceMocks([
   MockSpec<SharedPreferences>(),
 ])
-
 class MockNavigatorObserver extends Mock implements NavigatorObserver {}
 
 class DummyContext extends Mock implements BuildContext {}
@@ -56,5 +55,19 @@ void main() {
       expect(vm.selectedIndex, 2);
       expect(notified, isTrue);
     });
-  });  
+
+    test('clear resets selectedIndex and notifies listeners', () {
+      vm.onItemTapped(3);
+      expect(vm.selectedIndex, 3);
+
+      var notified = false;
+      vm.addListener(() {
+        notified = true;
+      });
+
+      vm.clear();
+      expect(vm.selectedIndex, 0);
+      expect(notified, isTrue);
+    });
+  });
 }
