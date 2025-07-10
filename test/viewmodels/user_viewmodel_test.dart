@@ -11,6 +11,7 @@ import 'package:snapchef/database/app_database.dart' as db;
 import 'package:snapchef/database/daos/user_dao.dart';
 import 'package:snapchef/database/daos/user_stats_dao.dart';
 import 'package:snapchef/services/socket_service.dart';
+import 'package:snapchef/utils/firebase_messaging_util.dart';
 import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import 'package:snapchef/models/user.dart' as model;
 import 'package:snapchef/models/preferences.dart';
@@ -20,6 +21,7 @@ import 'package:snapchef/services/auth_service.dart';
 import 'package:snapchef/services/friend_service.dart';
 import 'package:snapchef/services/user_service.dart';
 
+import '../mocks/mock_firebase_messaging_util.dart';
 @GenerateNiceMocks([
   MockSpec<AuthService>(),
   MockSpec<db.AppDatabase>(),
@@ -38,10 +40,8 @@ class DummyBuildContext extends Fake implements BuildContext {
   DummyBuildContext([this._mounted = true]);
   @override
   bool get mounted => _mounted;
-
   @override
   Widget get widget => Container();
-
   @override
   List<DiagnosticsNode> describeMissingAncestor(
       {required Type expectedAncestorType}) {
@@ -77,6 +77,12 @@ void main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
+  requestNotificationPermissions =
+      MockFirebaseMessagingUtil.requestNotificationPermissions;
+  getDeviceToken = MockFirebaseMessagingUtil.getDeviceToken;
+  listenForForegroundMessages =
+      MockFirebaseMessagingUtil.listenForForegroundMessages;
+
   late UserViewModel vm;
   late MockUserRepository mockUserRepository;
   late MockConnectivityProvider mockConnectivity;
@@ -105,6 +111,14 @@ void main() async {
     GetIt.I.registerSingleton<UserService>(mockUserService);
     GetIt.I.registerSingleton<FriendService>(mockFriendService);
     GetIt.I.registerSingleton<SocketService>(mockSocketService);
+
+    MockFirebaseMessagingUtil.listenedForForegroundMessages = false;
+    MockFirebaseMessagingUtil.requestedPermissions = false;
+    //if (GetIt.I.isRegistered<FirebaseMessagingUtil>()) {
+    //GetIt.I.unregister<FirebaseMessagingUtil>();
+    //}
+    //GetIt.I
+    //.registerSingleton<FirebaseMessagingUtil>(MockFirebaseMessagingUtil());
 
     when(mockDb.userDao).thenReturn(mockUserDao);
     when(mockDb.userStatsDao).thenReturn(mockUserStatsDao);
@@ -156,6 +170,31 @@ void main() async {
     expect(vm.isLoading, isFalse);
   });
 
+  test('fetchUserData handles db error gracefully', () async {
+    when(mockUserRepository.fetchUserLocal()).thenThrow(Exception('db error'));
+    when(mockConnectivity.isOffline).thenReturn(true);
+    await vm.fetchUserData();
+    expect(vm.user, isNull);
+  });
+
+  test('fetchUserData handles 401 and token refresh', () async {
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockUserRepository.fetchUserRemote()).thenThrow(Exception('401'));
+    when(mockUserRepository.fetchUserRemote())
+        .thenAnswer((_) async => testUser);
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenAnswer((_) async => {'recipes': 5});
+    when(mockUserRepository.storeUserStatsLocal(any, any))
+        .thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserStatsLocal(any))
+        .thenAnswer((_) async => {'recipes': 5});
+    // You may need to mock AuthService.refreshTokens if used via GetIt
+    await vm.fetchUserData();
+    expect(vm.user, isNotNull);
+  });
+
   test('updateUser updates user and fetches new data', () async {
     when(mockUserRepository.updateUserRemote(
       firstName: anyNamed('firstName'),
@@ -175,6 +214,24 @@ void main() async {
     );
 
     expect(vm.isLoading, isFalse);
+  });
+
+  test('updateUser sets errorMessage on error', () async {
+    when(mockUserRepository.updateUserRemote(
+      firstName: anyNamed('firstName'),
+      lastName: anyNamed('lastName'),
+      password: anyNamed('password'),
+      profilePicture: anyNamed('profilePicture'),
+    )).thenThrow(Exception('fail'));
+
+    await vm.updateUser(
+      firstName: 'Bob',
+      lastName: 'Smith',
+      password: 'pass',
+      profilePicture: File('dummy.png'),
+    );
+
+    expect(vm.errorMessage, contains('Failed to update profile'));
   });
 
   test('updateUserPreferences updates preferences and stores locally',
@@ -207,6 +264,20 @@ void main() async {
     expect(vm.user!.fcmToken, 'token123');
   });
 
+  test('updateFcmToken does nothing if token is null or empty', () async {
+    vm.userForTest = testUser;
+    await vm.updateFcmToken(null);
+    await vm.updateFcmToken('');
+    // Should not throw
+  });
+
+  test('updateFcmToken throws on error', () async {
+    when(mockUserRepository.updateFcmTokenRemote(any))
+        .thenThrow(Exception('fail'));
+    vm.userForTest = testUser;
+    expect(() => vm.updateFcmToken('token123'), throwsException);
+  });
+
   test('fetchUserProfile returns remote user if online', () async {
     when(mockConnectivity.isOffline).thenReturn(false);
     when(mockUserRepository.fetchUserProfileRemote('u2'))
@@ -227,6 +298,16 @@ void main() async {
     final user = await vm.fetchUserProfile('u2');
     expect(user, isNotNull);
     expect(user!.id, testUser.id);
+  });
+
+  test('fetchUserProfile falls back to local if remote fails', () async {
+    when(mockConnectivity.isOffline).thenReturn(false);
+    when(mockUserRepository.fetchUserProfileRemote(any))
+        .thenThrow(Exception('fail'));
+    when(mockUserRepository.fetchFriendLocal(any, any))
+        .thenAnswer((_) async => testUser);
+    final user = await vm.fetchUserProfile('u2');
+    expect(user, isNotNull);
   });
 
   test('fetchUserStats fetches remote and caches locally', () async {
@@ -254,65 +335,28 @@ void main() async {
     expect(vm.userStats!['recipes'], 3);
   });
 
-  test('removeFriend calls service and refreshes', () async {
-    when(mockFriendService.removeFriend('u2')).thenAnswer((_) async {});
-    when(mockDb.userStatsDao).thenReturn(mockUserStatsDao);
-    when(mockUserStatsDao.deleteUserStats('u2')).thenAnswer((_) async {});
-    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
-
-    await vm.removeFriend('u2');
-    verify(mockFriendService.removeFriend('u2')).called(1);
-    verify(mockUserStatsDao.deleteUserStats('u2')).called(1);
-  });
-
-  test('clear resets all fields and cancels subscriptions', () async {
-    vm.userForTest = testUser;
-    vm.sharedUserName = "abc";
-    vm.sharedUserProfilePic = "pic";
-    vm.clear();
-    expect(vm.user, isNull);
+  test('fetchUserStats returns early if id is null', () async {
+    SharedPreferences.setMockInitialValues({});
+    await vm.fetchUserStats();
     expect(vm.userStats, isNull);
-    expect(vm.sharedUserName, isNull);
-    expect(vm.sharedUserProfilePic, isNull);
-
-    // Call clear again to ensure no error when already null
-    vm.clear();
-    expect(vm.user, isNull);
-    expect(vm.userStats, isNull);
-    expect(vm.sharedUserName, isNull);
-    expect(vm.sharedUserProfilePic, isNull);
   });
 
-  test('updateUser throws on error', () async {
-    when(mockUserRepository.updateUserRemote(
-      firstName: anyNamed('firstName'),
-      lastName: anyNamed('lastName'),
-      password: anyNamed('password'),
-      profilePicture: anyNamed('profilePicture'),
-    )).thenThrow(Exception('fail'));
-    expect(
-      () => vm.updateUser(
-        firstName: 'Bob',
-        lastName: 'Smith',
-        password: 'pass',
-        profilePicture: File('dummy.png'),
-      ),
-      throwsException,
-    );
-  });
+  test('fetchUserStats falls back to local on error or null', () async {
+    SharedPreferences.setMockInitialValues({'userId': 'u1'});
+    when(mockUserRepository.fetchUserStatsLocal(any))
+        .thenAnswer((_) async => {'recipes': 42});
 
-  test('updateFcmToken does nothing if token is null or empty', () async {
-    vm.userForTest = testUser;
-    await vm.updateFcmToken(null);
-    await vm.updateFcmToken('');
-    // Should not throw
-  });
-
-  test('updateFcmToken throws on error', () async {
-    when(mockUserRepository.updateFcmTokenRemote(any))
+    // Remote throws
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
         .thenThrow(Exception('fail'));
-    vm.userForTest = testUser;
-    expect(() => vm.updateFcmToken('token123'), throwsException);
+    await vm.fetchUserStats();
+    expect(vm.userStats!['recipes'], 42);
+
+    // Remote returns null
+    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
+        .thenAnswer((_) async => null);
+    await vm.fetchUserStats();
+    expect(vm.userStats!['recipes'], 42);
   });
 
   test('getFriends calls fetchUserData and returns friends', () async {
@@ -365,6 +409,40 @@ void main() async {
     expect(vm.sharedUserProfilePic, isNull);
   });
 
+  test('removeFriend calls service and refreshes', () async {
+    when(mockFriendService.removeFriend('u2')).thenAnswer((_) async {});
+    when(mockDb.userStatsDao).thenReturn(mockUserStatsDao);
+    when(mockUserStatsDao.deleteUserStats('u2')).thenAnswer((_) async {});
+    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
+
+    await vm.removeFriend('u2');
+    verify(mockFriendService.removeFriend('u2')).called(1);
+    verify(mockUserStatsDao.deleteUserStats('u2')).called(1);
+  });
+
+  test('removeFriend throws if service fails', () async {
+    when(mockFriendService.removeFriend(any)).thenThrow(Exception('fail'));
+    expect(() => vm.removeFriend('u2'), throwsException);
+  });
+
+  test('clear resets all fields and cancels subscriptions', () async {
+    vm.userForTest = testUser;
+    vm.sharedUserName = "abc";
+    vm.sharedUserProfilePic = "pic";
+    vm.clear();
+    expect(vm.user, isNull);
+    expect(vm.userStats, isNull);
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+
+    // Call clear again to ensure no error when already null
+    vm.clear();
+    expect(vm.user, isNull);
+    expect(vm.userStats, isNull);
+    expect(vm.sharedUserName, isNull);
+    expect(vm.sharedUserProfilePic, isNull);
+  });
+
   test('listenForUserStatsUpdates triggers fetchUserStats on event', () async {
     final controller = StreamController<Map<String, dynamic>>();
     when(mockSocketService.userStatsStream)
@@ -388,71 +466,6 @@ void main() async {
     await controller.close();
   });
 
-  test('fetchUserData handles db error gracefully', () async {
-    when(mockUserRepository.fetchUserLocal()).thenThrow(Exception('db error'));
-    when(mockConnectivity.isOffline).thenReturn(true);
-    await vm.fetchUserData();
-    expect(vm.user, isNull);
-  });
-
-  test('fetchUserData handles 401 and token refresh', () async {
-    when(mockUserRepository.fetchUserLocal()).thenAnswer((_) async => testUser);
-    when(mockConnectivity.isOffline).thenReturn(false);
-    when(mockUserRepository.fetchUserRemote()).thenThrow(Exception('401'));
-    when(mockUserRepository.fetchUserRemote())
-        .thenAnswer((_) async => testUser);
-    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
-    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
-        .thenAnswer((_) async => {'recipes': 5});
-    when(mockUserRepository.storeUserStatsLocal(any, any))
-        .thenAnswer((_) async {});
-    when(mockUserRepository.fetchUserStatsLocal(any))
-        .thenAnswer((_) async => {'recipes': 5});
-    // You may need to mock AuthService.refreshTokens if used via GetIt
-    await vm.fetchUserData();
-    expect(vm.user, isNotNull);
-  });
-
-  test('fetchUserStats returns early if id is null', () async {
-    SharedPreferences.setMockInitialValues({});
-    await vm.fetchUserStats();
-    expect(vm.userStats, isNull);
-  });
-
-  test('fetchUserStats falls back to local on error or null', () async {
-    SharedPreferences.setMockInitialValues({'userId': 'u1'});
-    when(mockUserRepository.fetchUserStatsLocal(any))
-        .thenAnswer((_) async => {'recipes': 42});
-
-    // Remote throws
-    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
-        .thenThrow(Exception('fail'));
-    await vm.fetchUserStats();
-    expect(vm.userStats!['recipes'], 42);
-
-    // Remote returns null
-    when(mockUserRepository.fetchUserStatsRemote(userId: anyNamed('userId')))
-        .thenAnswer((_) async => null);
-    await vm.fetchUserStats();
-    expect(vm.userStats!['recipes'], 42);
-  });
-
-  test('clear disconnects socket and cancels subscriptions', () async {
-    // Covers clear() logic
-    vm.clear();
-    expect(vm.user, isNull);
-    expect(vm.userStats, isNull);
-    expect(vm.sharedUserName, isNull);
-    expect(vm.sharedUserProfilePic, isNull);
-  });
-
-  test('updateFcmToken throws if repository throws', () async {
-    when(mockUserRepository.updateFcmTokenRemote(any))
-        .thenThrow(Exception('fail'));
-    vm.userForTest = testUser;
-    expect(() => vm.updateFcmToken('token123'), throwsException);
-  });
-
   test('listenForFriendUpdates triggers fetchUserData on event', () async {
     final controller = StreamController<Map<String, dynamic>>();
     when(mockSocketService.friendUpdateStream)
@@ -465,22 +478,36 @@ void main() async {
     await controller.close();
   });
 
-  test('removeFriend throws if service fails', () async {
-    when(mockFriendService.removeFriend(any)).thenThrow(Exception('fail'));
-    expect(() => vm.removeFriend('u2'), throwsException);
+  test('deleteUser deletes user, clears local, and navigates', () async {
+    final mockContext = DummyBuildContext();
+    when(mockDb.userDao).thenReturn(mockUserDao);
+    when(mockUserRepository.deleteUserRemote()).thenAnswer((_) async {});
+    when(mockUserDao.deleteUser(testUser.id)).thenAnswer((_) async => 1);
+    SharedPreferences.setMockInitialValues({'userId': 'u1'});
+
+    vm.userForTest = testUser;
+    await vm.deleteUser(mockContext);
+
+    expect(vm.user, isNull);
   });
 
-  test('listenForFcmTokenRefresh does not throw', () {
-    vm.listenForFcmTokenRefresh();
-  }, skip: true);
+  test('deleteUser shows error if exception thrown', () async {
+    final mockContext = DummyBuildContext();
+    when(mockUserRepository.deleteUserRemote()).thenThrow(Exception('fail'));
+    // Do not call when(...) after this point!
+    await vm.deleteUser(mockContext);
+    // No throw, error handled
+  });
 
-  test('fetchUserProfile falls back to local if remote fails', () async {
-    when(mockConnectivity.isOffline).thenReturn(false);
-    when(mockUserRepository.fetchUserProfileRemote(any))
-        .thenThrow(Exception('fail'));
-    when(mockUserRepository.fetchFriendLocal(any, any))
-        .thenAnswer((_) async => testUser);
-    final user = await vm.fetchUserProfile('u2');
-    expect(user, isNotNull);
+  test('listenForFcmTokenRefresh uses MockFirebaseMessagingUtil', () async {
+    // Reset static flags
+    MockFirebaseMessagingUtil.listenedForForegroundMessages = false;
+    MockFirebaseMessagingUtil.requestedPermissions = false;
+
+    // Call the method under test
+    vm.listenForFcmTokenRefresh();
+
+    // Assert that the static method was called
+    expect(MockFirebaseMessagingUtil.listenedForForegroundMessages, isTrue);
   });
 }

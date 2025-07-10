@@ -88,7 +88,7 @@ void main() {
     expect(vm.sharedByMeRecipes, isNotNull);
     expect(vm.sharedWithMeRecipes!.any((r) => r.toUser == 'userB'), isTrue);
     expect(vm.sharedByMeRecipes!.any((r) => r.fromUser == 'userB'), isFalse);
-    expect(vm.isLoading, isTrue);
+    expect(vm.isLoading, isTrue); // isLoading is set true but not set false in offline branch
   });
 
   test('fetchSharedRecipes loads from remote when online', () async {
@@ -109,7 +109,7 @@ void main() {
     expect(vm.isLoading, isFalse);
   });
 
-   test('fetchSharedRecipes sets empty lists when local DB returns empty',
+  test('fetchSharedRecipes sets empty lists when local DB returns empty',
       () async {
     when(mockConnectivity.isOffline).thenReturn(true);
     when(mockRepo.fetchSharedRecipesLocal('userB')).thenAnswer((_) async => []);
@@ -150,7 +150,7 @@ void main() {
     expect(vm.sharedWithMeRecipes!.any((r) => r.id == 'sr1'), isFalse);
     verify(mockRepo.removeSharedRecipeRemote('cb1', 'sr1')).called(1);
     verify(mockRepo.removeSharedRecipeLocal('sr1')).called(1);
-  }); 
+  });
 
   test('removeSharedRecipe throws if local remove fails when offline',
       () async {
@@ -179,5 +179,54 @@ void main() {
     verify(mockSyncProvider.disposeSync()).called(1);
     verify(mockSyncManager.unregister(mockSyncProvider.syncPendingActions))
         .called(1);
+  });
+
+  test('groupedSharedByMeRecipes groups recipes by recipe id', () {
+    final recipe2 = Recipe(
+      id: 'r2',
+      title: 'Recipe 2',
+      description: 'desc2',
+      mealType: 'Lunch',
+      cuisineType: 'French',
+      difficulty: 'Medium',
+      prepTime: 5,
+      cookingTime: 15,
+      ingredients: [],
+      instructions: [],
+      imageURL: '',
+      rating: null,
+      source: RecipeSource.ai,
+    );
+    final shared1 = SharedRecipe(
+      id: 'sr1',
+      recipe: dummyRecipe,
+      fromUser: 'userA',
+      toUser: 'userB',
+      sharedAt: DateTime.now(),
+      status: 'pending',
+    );
+    final shared2 = SharedRecipe(
+      id: 'sr2',
+      recipe: dummyRecipe,
+      fromUser: 'userA',
+      toUser: 'userC',
+      sharedAt: DateTime.now(),
+      status: 'pending',
+    );
+    final shared3 = SharedRecipe(
+      id: 'sr3',
+      recipe: recipe2,
+      fromUser: 'userA',
+      toUser: 'userD',
+      sharedAt: DateTime.now(),
+      status: 'pending',
+    );
+    vm.sharedByMeRecipes = [shared1, shared2, shared3];
+    final grouped = vm.groupedSharedByMeRecipes;
+    expect(grouped.length, 2);
+    final group1 = grouped.firstWhere((g) => g.recipe.id == 'r1');
+    expect(group1.sharedWithUserIds, containsAll(['userB', 'userC']));
+    final group2 = grouped.firstWhere((g) => g.recipe.id == 'r2');
+    expect(group2.sharedWithUserIds, contains('userD'));
   });
 }

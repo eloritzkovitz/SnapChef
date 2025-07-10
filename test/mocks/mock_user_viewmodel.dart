@@ -25,6 +25,14 @@ class MockUserViewModel extends ChangeNotifier implements UserViewModel {
     dynamic profilePicture,
   })? updateUserCallback;
 
+  String? _errorMessage;
+
+  @override
+  String? get errorMessage => _errorMessage;
+
+  @override
+  set errorMessage(String? value) => _errorMessage = value;
+
   Future<void> Function({Map<String, dynamic>? notificationPreferences})?
       updateUserPreferencesCallback;
 

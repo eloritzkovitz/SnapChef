@@ -129,7 +129,8 @@ void main() {
         String? password,
         dynamic profilePicture,
       }) async {
-        throw Exception('Test error');
+        userViewModel.errorMessage = 'Failed to update profile: Test error';
+        userViewModel.notifyListeners();
       };
 
       await tester.pumpWidget(buildTestWidget());
@@ -137,9 +138,11 @@ void main() {
 
       await tester.ensureVisible(find.text('Save'));
       await tester.tap(find.text('Save'));
-      await tester.pump(); // Start dialog
-      await tester.pump(const Duration(milliseconds: 100)); // Let dialog show
-      await tester.pumpAndSettle();
+      await tester.pump(); // Start form submission
+
+      // Give time for the post-frame callback to show the SnackBar
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(); // Extra frame for SnackBar
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.textContaining('Failed to update profile'), findsOneWidget);
@@ -197,7 +200,8 @@ void main() {
 
     testWidgets('shows SnackBar on deleteUser error', (tester) async {
       userViewModel.deleteUserCallback = (context) async {
-        throw Exception('Delete error');
+        userViewModel.errorMessage = 'Failed to delete account: Delete error';
+        userViewModel.notifyListeners();
       };
 
       await tester.pumpWidget(buildTestWidget());
@@ -212,6 +216,8 @@ void main() {
       await tester.pump(); // Start dialog
       await tester.pump(const Duration(milliseconds: 100)); // Let dialog show
       await tester.pumpAndSettle();
+
+      await tester.pump();
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.textContaining('Failed to delete account'), findsOneWidget);
