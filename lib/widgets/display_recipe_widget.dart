@@ -39,6 +39,13 @@ class _DisplayRecipeWidgetState extends State<DisplayRecipeWidget> {
   }
 
   @override
+  void dispose() {
+    // Stop TTS when leaving the page
+    TTSWidget.stop();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final recipeObject = widget.recipeObject;
     final String recipe = recipeObject != null

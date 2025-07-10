@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:snapchef/models/shared_recipe.dart';
+import 'package:snapchef/viewmodels/user_viewmodel.dart';
 import '../../viewmodels/shared_recipe_viewmodel.dart';
 import '../../widgets/base_screen.dart';
 import 'view_shared_recipe_screen.dart';
@@ -28,15 +30,16 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
     final sharedRecipeViewModel = Provider.of<SharedRecipeViewModel>(context);
 
     final sharedWithMe = sharedRecipeViewModel.sharedWithMeRecipes ?? [];
-    final sharedByMe = sharedRecipeViewModel.sharedByMeRecipes ?? [];
+    //final sharedByMe = sharedRecipeViewModel.sharedByMeRecipes ?? [];
+    final groupedSharedByMe = sharedRecipeViewModel.groupedSharedByMeRecipes;
 
-    final recipesToShow = showSharedByMe ? sharedByMe : sharedWithMe;
+    final recipesToShow = showSharedByMe ? groupedSharedByMe : sharedWithMe;
 
     return BaseScreen(
       appBar: SnapChefAppBar(
         title: const Text('Shared Recipes',
-            style: TextStyle(fontWeight: FontWeight.bold)),               
-      ),      
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: Column(
         children: [
           Padding(
@@ -83,23 +86,56 @@ class _SharedRecipesScreenState extends State<SharedRecipesScreen> {
                 return ListView.builder(
                   itemCount: recipesToShow.length,
                   itemBuilder: (context, index) {
-                    final sharedRecipe = recipesToShow[index];
-                    return RecipeCard(
-                      key: ValueKey(sharedRecipe.recipe.id),
-                      recipe: sharedRecipe.recipe,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ViewSharedRecipeScreen(
-                              sharedRecipe: sharedRecipe,
-                              isSharedByMe:
-                                  showSharedByMe,
+                    if (showSharedByMe) {
+                      final grouped =
+                          recipesToShow[index] as GroupedSharedRecipe;
+                      return RecipeCard(
+                        key: ValueKey(grouped.recipe.id),
+                        recipe: grouped.recipe,
+                        onTap: () {
+                          final result = Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewSharedRecipeScreen(
+                                sharedRecipe: grouped,
+                                isSharedByMe: true,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    );
+                          );
+                          // ignore: unrelated_type_equality_checks
+                          if (result == true) {
+                            final userViewModel = Provider.of<UserViewModel>(
+                                context,
+                                listen: false);
+                            final cookbookId = userViewModel.cookbookId ?? '';
+                            final userId = userViewModel.user?.id ?? '';
+                            setState(() {
+                              sharedRecipeViewModel.fetchSharedRecipes(
+                                cookbookId,
+                                userId,
+                              );
+                            });
+                          }
+                        },
+                      );
+                    } else {
+                      final sharedRecipe = recipesToShow[index] as SharedRecipe;
+                      return RecipeCard(
+                        key: ValueKey(sharedRecipe.recipe.id),
+                        recipe: sharedRecipe.recipe,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewSharedRecipeScreen(
+                                sharedRecipe: sharedRecipe,
+                                isSharedByMe: false,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
                   },
                 );
               },

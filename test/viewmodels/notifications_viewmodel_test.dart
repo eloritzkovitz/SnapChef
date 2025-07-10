@@ -1,4 +1,6 @@
 import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -166,7 +168,8 @@ void main() async {
     when(mockConnectivity.isOffline).thenReturn(true);
     await vm.addNotification(testNotif);
     expect(vm.notificationsInternal.any((n) => n.id == 'n1'), isTrue);
-    verify(mockNotifService.saveStoredNotifications(argThat(isA<List>()))).called(2);
+    verify(mockNotifService.saveStoredNotifications(argThat(isA<List>())))
+        .called(2);
     //verify(mockNotifService.scheduleNotification(testNotif)).called(1);
   });
 
@@ -230,27 +233,133 @@ void main() async {
     expect(id, 'uniqueId');
   });
 
-  test('clear resets notifications, timers, and subscriptions', () async {
-    // Add a notification to the list
-    vm.alerts.add(testNotif);
-    vm.notifications.add(testNotif);
-
+  test(
+      'clear resets all fields, cancels timers/subscriptions, and notifies listeners',
+      () async {
+    // Add notifications and set loading/error
+    vm.notificationsInternal.add(testNotif);
     vm.setError('some error');
     vm.setLoading(true);
 
+    // Set up dummy timers and subscription
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm
+      ..refreshTimerInternal?.cancel()
+      ..cleanupTimerInternal?.cancel();
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+
+    bool notified = false;
+    vm.addListener(() {
+      notified = true;
+    });
+
     vm.clear();
 
-    expect(vm.alerts, isEmpty);
-    expect(vm.notifications, isEmpty);
+    expect(vm.notificationsInternal, isEmpty);
     expect(vm.isLoading, isFalse);
+    expect(vm.errorMessage, isNull);
     expect(vm.refreshTimerInternal, isNull);
     expect(vm.cleanupTimerInternal, isNull);
     expect(vm.wsSubscriptionInternal, isNull);
+    expect(notified, isTrue);
+  });
+
+  test('alerts and notifications getters filter correctly', () async {
+    final now = DateTime.now();
+    final futureNotif = testNotif.copyWith(
+      id: 'future',
+      scheduledTime: now.add(const Duration(hours: 2)),
+      typeEnum: ReminderType.expiry,
+    );
+    final pastNotif = testNotif.copyWith(
+      id: 'past',
+      scheduledTime: now.subtract(const Duration(hours: 2)),
+      typeEnum: ReminderType.expiry,
+    );
+    vm.notificationsInternal
+      ..clear()
+      ..addAll([futureNotif, pastNotif]);
+
+    // Only future expiry/grocery are alerts
+    expect(vm.alerts.length, 1);
+    expect(vm.alerts.first.id, 'future');
+    // Past expiry/grocery are notifications
+    expect(vm.notifications.any((n) => n.id == 'past'), isTrue);
+  });
+
+  test('setError sets errorMessage and notifies', () {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    vm.setError('err');
+    expect(vm.errorMessage, 'err');
+    expect(notified, isTrue);
+  });
+
+  test('setLoading sets isLoading and notifies', () {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    vm.setLoading(true);
+    expect(vm.isLoading, isTrue);
+    expect(notified, isTrue);
+  });
+
+  test('addNotification sets error on failure', () async {
+    when(mockBackendService.createNotification(any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.addNotification(testNotif);
+    expect(vm.errorMessage, isNotNull);
+  });
+
+  test('editNotification sets error on failure', () async {
+    when(mockBackendService.updateNotification(any, any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.editNotification('n1', testNotif);
+    expect(vm.errorMessage, isNotNull);
+  });
+
+  test('deleteNotification sets error on failure', () async {
+    when(mockBackendService.deleteNotification(any))
+        .thenThrow(Exception('fail'));
+    when(mockConnectivity.isOffline).thenReturn(false);
+    await vm.deleteNotification('n1');
+    expect(vm.errorMessage, isNotNull);
   });
 
   test('dispose cancels timers and subscriptions', () async {
-    final sub = StreamController<AppNotification>();
-    when(mockBackendService.notificationStream).thenAnswer((_) => sub.stream);
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+    await Future.delayed(Duration.zero);
+    expect(() => vm.dispose(), returnsNormally);
+  });
+
+  test('clear can be called multiple times safely', () {
+    vm.clear();
+    expect(() => vm.clear(), returnsNormally);
+  });
+
+  test('dispose can be called multiple times safely', () async {
+    final dummyTimer = Timer(const Duration(seconds: 1), () {});
+    final dummySub = StreamController<AppNotification>().stream.listen((_) {});
+    vm.refreshTimerInternal = dummyTimer;
+    vm.cleanupTimerInternal = dummyTimer;
+    vm.wsSubscriptionInternal = dummySub;
+    await Future.delayed(Duration.zero);
     vm.dispose();
-  }, skip: true);
+    expect(() => vm.dispose(), throwsA(isA<FlutterError>()));
+  });
+
+  test('listeners are notified when notifications change', () async {
+    bool notified = false;
+    vm.addListener(() => notified = true);
+    await vm.addNotification(testNotif);
+    expect(notified, isTrue);
+  });
 }

@@ -80,6 +80,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
     }
 
+    // Show error if present
+    if (userViewModel.errorMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(userViewModel.errorMessage!)),
+        );
+        userViewModel.errorMessage = null; // Reset after showing
+      });
+    }
+
     return Scaffold(
       appBar: SnapChefAppBar(
         title: const Text('Edit Profile',
@@ -267,14 +277,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 context); // Go back to the previous screen after successful update
                           }
                         } catch (e) {
-                          if (context.mounted) Navigator.pop(context);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content:
-                                      Text('Failed to update profile: $e')),
-                            );
-                          }
+                          if (context.mounted) Navigator.pop(context);                          
                         }
                       }
                     },
@@ -346,14 +349,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           if (context.mounted) {
                             Navigator.pop(
                                 context); // Close the loading indicator
-                          }
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content:
-                                      Text('Failed to delete account: $e')),
-                            );
-                          }
+                          }                          
                         }
                       }
                     },

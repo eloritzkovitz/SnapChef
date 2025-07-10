@@ -55,6 +55,14 @@ class NotificationsViewModel extends BaseViewModel {
   StreamSubscription<AppNotification>? get wsSubscriptionInternal =>
       _wsSubscription;
 
+  @visibleForTesting
+  set refreshTimerInternal(Timer? t) => _refreshTimer = t;
+  @visibleForTesting
+  set cleanupTimerInternal(Timer? t) => _cleanupTimer = t;
+  @visibleForTesting
+  set wsSubscriptionInternal(StreamSubscription<AppNotification>? s) =>
+      _wsSubscription = s;
+
   // Alerts: only future expiry/grocery notifications
   List<AppNotification> get alerts => _notifications
       .where((n) =>
@@ -228,74 +236,95 @@ class NotificationsViewModel extends BaseViewModel {
   /// Adds a new notification.
   Future<void> addNotification(AppNotification notification,
       [String? userId]) async {
-    if (connectivityProvider.isOffline) {
-      // Queue the action for later sync
-      GetIt.I<SyncProvider>().addPendingAction(
-        'notifications',
-        {
-          'action': 'add',
-          'notification': notification.toJson(),
-        },
-      );
-      // Optionally add to local list for immediate UI feedback
-      if (userId == null) {
-        _notifications.insert(0, notification);
-        notifyListeners();
-        // Persist to local storage
-        await _notificationService.saveStoredNotifications(_notifications);
-        // Schedule with local notifications plugin
-        await _notificationService.scheduleNotification(notification);
+    setLoading(true);
+    try {
+      if (connectivityProvider.isOffline) {
+        // Queue the action for later sync
+        GetIt.I<SyncProvider>().addPendingAction(
+          'notifications',
+          {
+            'action': 'add',
+            'notification': notification.toJson(),
+          },
+        );
+        // Optionally add to local list for immediate UI feedback
+        if (userId == null) {
+          _notifications.insert(0, notification);
+          notifyListeners();
+          // Persist to local storage
+          await _notificationService.saveStoredNotifications(_notifications);
+          // Schedule with local notifications plugin
+          await _notificationService.scheduleNotification(notification);
+        }
+        return;
       }
-      return;
-    }
-    final created = await _backendService.createNotification(notification);
-    if (userId == null) {
-      _notifications.insert(0, created);
-      notifyListeners();
+      final created = await _backendService.createNotification(notification);
+      if (userId == null) {
+        _notifications.insert(0, created);
+        notifyListeners();
+      }
+    } catch (e) {
+      setError('Failed to add notification: $e');
+    } finally {
+      setLoading(false);
     }
   }
 
   /// Updates an existing notification.
   Future<void> editNotification(
       String id, AppNotification updatedNotification) async {
-    if (connectivityProvider.isOffline) {
-      GetIt.I<SyncProvider>().addPendingAction(
-        'notifications',
-        {
-          'action': 'edit',
-          'notification': updatedNotification.toJson()..['id'] = id,
-        },
-      );
-      // Optionally update local list for immediate UI feedback
-      final idx = _notifications.indexWhere((n) => n.id == id);
-      if (idx != -1) {
-        _notifications[idx] = updatedNotification;
-        notifyListeners();
+    setLoading(true);
+    try {
+      if (connectivityProvider.isOffline) {
+        GetIt.I<SyncProvider>().addPendingAction(
+          'notifications',
+          {
+            'action': 'edit',
+            'notification': updatedNotification.toJson()..['id'] = id,
+          },
+        );
+        // Optionally update local list for immediate UI feedback
+        final idx = _notifications.indexWhere((n) => n.id == id);
+        if (idx != -1) {
+          _notifications[idx] = updatedNotification;
+          notifyListeners();
+        }
+        return;
       }
-      return;
+      final backendNotif =
+          await _backendService.updateNotification(id, updatedNotification);
+      await _notificationService.editNotification(id, backendNotif);
+    } catch (e) {
+      setError('Failed to edit notification: $e');
+    } finally {
+      setLoading(false);
     }
-    final backendNotif =
-        await _backendService.updateNotification(id, updatedNotification);
-    await _notificationService.editNotification(id, backendNotif);
   }
 
   /// Deletes a notification.
   Future<void> deleteNotification(String id) async {
-    if (connectivityProvider.isOffline) {
-      GetIt.I<SyncProvider>().addPendingAction(
-        'notifications',
-        {
-          'action': 'delete',
-          'notificationId': id,
-        },
-      );
+    setLoading(true);
+    try {
+      if (connectivityProvider.isOffline) {
+        GetIt.I<SyncProvider>().addPendingAction(
+          'notifications',
+          {
+            'action': 'delete',
+            'notificationId': id,
+          },
+        );
+        _notifications.removeWhere((n) => n.id == id);
+        notifyListeners();
+        return;
+      }
+      await _backendService.deleteNotification(id);
       _notifications.removeWhere((n) => n.id == id);
       notifyListeners();
-      return;
+    } catch (e) {
+      setError('Failed to delete notification: $e');
+    } finally {
+      setLoading(false);
     }
-    await _backendService.deleteNotification(id);
-    _notifications.removeWhere((n) => n.id == id);
-    notifyListeners();
   }
 
   @override

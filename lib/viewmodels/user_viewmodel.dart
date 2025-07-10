@@ -12,7 +12,7 @@ import '../services/auth_service.dart';
 import '../services/friend_service.dart';
 import '../services/socket_service.dart';
 import '../services/user_service.dart';
-import '../utils/ui_util.dart';
+import '../utils/firebase_messaging_util.dart';
 import '../database/app_database.dart' as db;
 import '../providers/connectivity_provider.dart';
 import '../repositories/user_repository.dart';
@@ -44,6 +44,9 @@ class UserViewModel extends BaseViewModel {
 
   StreamSubscription? _userStatsSub;
   StreamSubscription? _friendUpdateSub;
+  
+  @override
+  String? errorMessage;
 
   /// Fetches the current user's data.
   /// This method handles both local and remote data fetching.
@@ -121,7 +124,7 @@ class UserViewModel extends BaseViewModel {
           }
 
           // Update FCM token after refreshing user data
-          final fcmToken = await FirebaseMessaging.instance.getToken();
+          final fcmToken = await getDeviceToken();
           await updateFcmToken(fcmToken);
 
           if (_user != null) {
@@ -180,7 +183,8 @@ class UserViewModel extends BaseViewModel {
       // Fetch updated user from remote and store locally
       await fetchUserData();
     } catch (e) {
-      throw Exception('Failed to update profile');
+      errorMessage = 'Failed to update profile: $e';
+      notifyListeners();
     } finally {
       setLoading(false);
     }
@@ -240,9 +244,7 @@ class UserViewModel extends BaseViewModel {
 
   /// Listens for FCM token refresh and updates backend.
   void listenForFcmTokenRefresh() {
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      await updateFcmToken(newToken);
-    });
+    listenForForegroundMessages();
   }
 
   /// Delete the current user account.
@@ -261,7 +263,8 @@ class UserViewModel extends BaseViewModel {
 
       if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
-      if (context.mounted) UIUtil.showError(context, e.toString());
+      errorMessage = 'Failed to delete account: $e';
+      notifyListeners();
     } finally {
       setLoading(false);
     }
@@ -325,7 +328,7 @@ class UserViewModel extends BaseViewModel {
   /// When a user stats update is received, it fetches the updated stats.
   void listenForUserStatsUpdates(String userId) {
     _userStatsSub?.cancel();
-    _userStatsSub = socketService.userStatsStream.listen((data) {      
+    _userStatsSub = socketService.userStatsStream.listen((data) {
       if (data['userId'] == userId) {
         fetchUserStats(userId: userId);
       }
