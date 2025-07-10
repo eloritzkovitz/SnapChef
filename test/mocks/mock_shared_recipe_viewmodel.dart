@@ -54,4 +54,8 @@ class MockSharedRecipeViewModel extends ChangeNotifier
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
+  void clear() {
+  }
 }

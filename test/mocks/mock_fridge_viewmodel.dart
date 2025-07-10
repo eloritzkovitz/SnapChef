@@ -118,4 +118,8 @@ class MockFridgeViewModel extends ChangeNotifier implements FridgeViewModel {
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
+  void clear() {
+  }
 }
