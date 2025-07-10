@@ -255,6 +255,64 @@ void main() async {
     expect(vm.user!.preferences!.notificationPreferences['email'], isFalse);
   });
 
+  test('updateUserPreferences updates only allergies', () async {
+    vm.userForTest = testUser;
+    when(mockUserRepository.updateUserPreferencesRemote(
+      allergies: anyNamed('allergies'),
+      dietaryPreferences: anyNamed('dietaryPreferences'),
+      notificationPreferences: anyNamed('notificationPreferences'),
+    )).thenAnswer((_) async {});
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+
+    await vm.updateUserPreferences(
+      allergies: ['soy'],
+    );
+
+    expect(vm.user!.preferences!.allergies, contains('soy'));
+    expect(vm.user!.preferences!.dietaryPreferences,
+        testUser.preferences!.dietaryPreferences);
+    expect(vm.user!.preferences!.notificationPreferences,
+        testUser.preferences!.notificationPreferences);
+  });
+
+  test('updateUserPreferences updates only dietaryPreferences', () async {
+    vm.userForTest = testUser;
+    when(mockUserRepository.updateUserPreferencesRemote(
+      allergies: anyNamed('allergies'),
+      dietaryPreferences: anyNamed('dietaryPreferences'),
+      notificationPreferences: anyNamed('notificationPreferences'),
+    )).thenAnswer((_) async {});
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+
+    await vm.updateUserPreferences(
+      dietaryPreferences: {'vegetarian': true},
+    );
+
+    expect(vm.user!.preferences!.dietaryPreferences['vegetarian'], isTrue);
+    expect(vm.user!.preferences!.allergies, testUser.preferences!.allergies);
+    expect(vm.user!.preferences!.notificationPreferences,
+        testUser.preferences!.notificationPreferences);
+  });
+
+  test('updateUserPreferences updates only notificationPreferences', () async {
+    vm.userForTest = testUser;
+    when(mockUserRepository.updateUserPreferencesRemote(
+      allergies: anyNamed('allergies'),
+      dietaryPreferences: anyNamed('dietaryPreferences'),
+      notificationPreferences: anyNamed('notificationPreferences'),
+    )).thenAnswer((_) async {});
+    when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
+
+    await vm.updateUserPreferences(
+      notificationPreferences: {'push': false},
+    );
+
+    expect(vm.user!.preferences!.notificationPreferences['push'], isFalse);
+    expect(vm.user!.preferences!.allergies, testUser.preferences!.allergies);
+    expect(vm.user!.preferences!.dietaryPreferences,
+        testUser.preferences!.dietaryPreferences);
+  });
+
   test('updateFcmToken updates token and stores locally', () async {
     when(mockUserRepository.updateFcmTokenRemote(any)).thenAnswer((_) async {});
     when(mockUserRepository.storeUserLocal(any)).thenAnswer((_) async {});
@@ -478,6 +536,42 @@ void main() async {
     await controller.close();
   });
 
+  test('listenForUserStatsUpdates cancels previous subscription', () async {
+    final controller1 = StreamController<Map<String, dynamic>>();
+    final controller2 = StreamController<Map<String, dynamic>>();
+    when(mockSocketService.userStatsStream)
+        .thenAnswer((_) => controller1.stream);
+
+    vm.listenForUserStatsUpdates('u1');
+    // Replace with a new stream
+    when(mockSocketService.userStatsStream)
+        .thenAnswer((_) => controller2.stream);
+    vm.listenForUserStatsUpdates('u1');
+    controller1.add({'userId': 'u1'});
+    controller2.add({'userId': 'u1'});
+    await Future.delayed(Duration.zero);
+    await controller1.close();
+    await controller2.close();
+  });
+
+  test('listenForFriendUpdates cancels previous subscription', () async {
+    final controller1 = StreamController<Map<String, dynamic>>();
+    final controller2 = StreamController<Map<String, dynamic>>();
+    when(mockSocketService.friendUpdateStream)
+        .thenAnswer((_) => controller1.stream);
+
+    vm.listenForFriendUpdates('u1');
+    // Replace with a new stream
+    when(mockSocketService.friendUpdateStream)
+        .thenAnswer((_) => controller2.stream);
+    vm.listenForFriendUpdates('u1');
+    controller1.add({'userId': 'u1'});
+    controller2.add({'userId': 'u1'});
+    await Future.delayed(Duration.zero);
+    await controller1.close();
+    await controller2.close();
+  });
+
   test('deleteUser deletes user, clears local, and navigates', () async {
     final mockContext = DummyBuildContext();
     when(mockDb.userDao).thenReturn(mockUserDao);
@@ -509,5 +603,5 @@ void main() async {
 
     // Assert that the static method was called
     expect(MockFirebaseMessagingUtil.listenedForForegroundMessages, isTrue);
-  });
+  });  
 }

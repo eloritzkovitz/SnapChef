@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +5,6 @@ import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:snapchef/models/notifications/app_notification.dart';
 import 'package:snapchef/models/notifications/ingredient_reminder.dart';
 import 'package:snapchef/providers/connectivity_provider.dart';
 import 'package:snapchef/providers/sync_provider.dart';
@@ -246,11 +244,5 @@ void main() async {
     expect(vm.refreshTimerInternal, isNull);
     expect(vm.cleanupTimerInternal, isNull);
     expect(vm.wsSubscriptionInternal, isNull);
-  });
-
-  test('dispose cancels timers and subscriptions', () async {
-    final sub = StreamController<AppNotification>();
-    when(mockBackendService.notificationStream).thenAnswer((_) => sub.stream);
-    vm.dispose();
-  }, skip: true);
+  });  
 }
