@@ -52,7 +52,7 @@ SnapChef is your all-in-one AI-powered kitchen companion. Effortlessly identify 
 - **MongoDB** — Database
 - **JWT** — Authentication and authorization
 - **Nodemailer** — SMTP email delivery for OTP verification
-- **WebSockets** — Real-time updates and communication
+- **Socket.IO** — Real-time updates and communication
 - **Jest** — Testing
 
 ### Frontend
@@ -72,7 +72,7 @@ SnapChef is your all-in-one AI-powered kitchen companion. Effortlessly identify 
 - [API Reference](https://snapchef-app.vercel.app/api)
 
 ## Authors
-- [Elor Itzkovitz](https://github.com/Elor-Itz)
+- [Elor Itzkovitz](https://github.com/eloritzkovitz)
 - [Yuval Lavi](https://github.com/Yuvalya101)
 - [Adi Cahal](https://github.com/Adica6)
 - [Yonatan Cohen](https://github.com/yonatan62862)
