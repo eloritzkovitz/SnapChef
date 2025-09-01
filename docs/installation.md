@@ -48,18 +48,24 @@ This guide covers all methods for installing and running the SnapChef app on And
 
    If you're running the backend server locally, you will need to replace the address with your own IP and the correct port.
 
+3. **Add Firebase to your project:**
+   * You will need to register the application in the Firebase Console as explained in the [Firebase Documentation](https://firebase.google.com/docs/android/setup).
+   * For Android, you should place `google-services.json` in the `/android/app` folder.
+   * For iOS, you should place `GoogleService-Info.plist` in the `/ios/Runner` folder.
+   * For more information and instructions on obtaining the files, you can read [this support article](https://support.google.com/firebase/answer/7015592).
+
 ---
 
 ### Running on an Android Device via Android Studio
 
-3. **Open in Android Studio**
+4. **Open in Android Studio**
    - Launch Android Studio and open the project folder.
 
-4. **Connect Your Android Device**
+5. **Connect Your Android Device**
    - Enable Developer Mode and USB Debugging on your device.
    - Connect your device via USB (or via wireless).
 
-5. **Run the App**
+6. **Run the App**
    - Click the "Run" button in Android Studio.
    - Select your device from the list.
 
@@ -67,16 +73,16 @@ This guide covers all methods for installing and running the SnapChef app on And
 
 ### Running on an iOS Device via Xcode
 
-3. **Open in Xcode**
+4. **Open in Xcode**
    - Open the `ios` folder in Xcode.
 
-4. **Configure Signing**
+5. **Configure Signing**
    - Set your Apple Developer account for code signing in Xcode.
 
-5. **Connect Your iOS Device**
+6. **Connect Your iOS Device**
    - Plug in your device and trust the computer if prompted.
 
-6. **Run the App**
+7. **Run the App**
    - Select your device in Xcode.
    - Click the "Run" button to build and install the app.
 
