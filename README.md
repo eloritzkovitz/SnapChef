@@ -67,6 +67,7 @@ SnapChef is your all-in-one AI-powered kitchen companion. Effortlessly identify 
 - **Firebase Cloud Messaging** — Push notifications
 
 ## Documentation
+- [Installation](docs/installation.md)
 - [Architecture Overview](docs/architecture.md)
 - [Data Models](docs/models.md)
 - [API Reference](https://snapchef-app.vercel.app/api)
