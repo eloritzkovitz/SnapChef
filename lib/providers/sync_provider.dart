@@ -16,6 +16,8 @@ class SyncProvider extends ChangeNotifier {
   /// Map of action queue names to their pending actions.
   final Map<String, List<Map<String, dynamic>>> pendingActionQueues = {};
 
+  bool _isSyncing = false; // Indicates if a sync operation is in progress
+
   // Get sync actions
   FridgeSyncActions get fridgeSyncActions => getIt<FridgeSyncActions>();
   GrocerySyncActions get grocerySyncActions => getIt<GrocerySyncActions>();
@@ -58,6 +60,11 @@ class SyncProvider extends ChangeNotifier {
 
   /// Adds an action to a specific queue.
   void addPendingAction(String queue, Map<String, dynamic> action) {
+    // Prevent adding actions during sync
+    if (_isSyncing) {
+      log('Sync in progress. Action will be queued for next sync.');
+      return;
+    }
     pendingActionQueues.putIfAbsent(queue, () => []);
     pendingActionQueues[queue]!.add(action);
     savePendingActions();
@@ -98,6 +105,8 @@ class SyncProvider extends ChangeNotifier {
 
   /// Syncs all pending actions in all queues.
   Future<void> syncPendingActions() async {
+    if (_isSyncing) return; // Prevent re-entrancy
+    _isSyncing = true;
     for (final queue in pendingActionQueues.keys) {
       final actions = pendingActionQueues[queue];
       if (actions != null && actions.isNotEmpty) {
@@ -114,6 +123,7 @@ class SyncProvider extends ChangeNotifier {
     }
     savePendingActions();
     notifyListeners();
+    _isSyncing = false;
   }
 
   /// Saves pending actions to shared preferences.
