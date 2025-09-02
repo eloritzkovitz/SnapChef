@@ -34,6 +34,13 @@ class UIUtil {
     );
   }
 
+  /// Show sync in progress message in a SnackBar.
+  static void showSyncInProgress(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sync is in progress. Please wait...')),
+    );
+  }
+
   // --- String Formatting and Utility Methods ---
 
   /// Formats a string to capitalize the first letter in each word.
